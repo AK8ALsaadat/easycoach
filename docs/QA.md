@@ -18,11 +18,11 @@
 
 ظهر أولًا `permission denied for schema auth`: Supabase لا يمنح دور الكتابة المخصص USAGE على مخطط auth. عولج في هجرة `managed_auth_identity` بوسيط ثابت search_path يعيد هوية الجلسة فقط، دون منح auth.users أو BYPASSRLS. أُعيد الاختبار ونجح.
 
-فحص `supabase db lint --remote --level warning` لم يجد أخطاء في الدوال. أُضيفت فهارس tenant/client وروابط أحدث برنامج، وفُحص تفعيل RLS على كل الجداول وسلامة دور الكتابة ومنع DML المباشر. هذا ليس ادعاءً بإجراء مسح شامل من خدمة Supabase Advisors.
+فحص `supabase db lint --remote --level warning` لم يجد أخطاء في الدوال. نُفذ أيضًا `supabase db advisors --remote --type all --level warn`. عولجت تحذيرات الدوال ذات الصلاحيات المرتفعة والسياسات المتعددة بهجرة private_rpc_surface_and_policy_consolidation. بقي تحذير Auth واحد لمنع كلمات المرور المسربة؛ يحتاج مراجعة إعداد الخدمة قبل الإطلاق العام. النتائج في artifacts/supabase-advisors-after.json.
 
 ## حدود التشخيص
 
-ملف `.vscode/mcp.json` جاهز، لكن أدوات Supabase MCP ليست محمّلة في جلسة Codex الحالية. لذلك لم تُقرأ سجلات Postgres/Auth للساعة السابقة، ولم يُتحقق من رقم «9 أخطاء» في النص المرسل. لا توجد أسباب مختلقة لتلك الأخطاء. يلزم تشغيل MCP وتفويضه لاستكمال المراجعة التاريخية وSecurity/Performance Advisors الرسميين. فحوص التشغيل الحالية على القاعدة الفعلية نجحت.
+ملف `.vscode/mcp.json` جاهز، لكن أدوات Supabase MCP ليست محمّلة في الجلسة الحالية. لم تُقرأ سجلات Postgres/Auth التاريخية، ولم يُتحقق من رقم «9 أخطاء» في النص المرسل. يلزم تشغيل MCP وتفويضه لاستكمال مراجعتها. فحص Security/Performance Advisors الرسمي نُفذ عبر CLI، وفحوص التشغيل على القاعدة الفعلية نجحت.
 
 `db pull` حاول إنشاء shadow database وفشل لعدم وجود Docker/Podman. جرد public قبل الهجرة كان فارغًا، وسُجل في `supabase/baseline/20261107-public.json`. أُرسلت كل التغييرات عبر migration وdb push، لا من لوحة التحكم.
 
@@ -32,6 +32,6 @@
 
 لا رسائل واتساب أو بريد حقيقية، ولا بيانات أشخاص حقيقية، ولا تغيير لقاعدة بيانات مشروع آخر.
 
-## ????? ???????
+## نتيجة التسليم
 
-??? 25 ???????? ?????? ??????? ??????? ?????? ?????? ???????? ???????? ?15 ?????? ??? Supabase ?????? ??? ??? ????. ??? lint ?TypeScript? ????? npm audit --omit=dev ??? ?????.
+نجح 25 اختبارًا آليًا، واختبار المتصفح للمدرب والمتدرب والجوال، و15 تحققًا على Supabase الفعلي بعد آخر هجرة. نجح lint وTypeScript، وأظهر npm audit --omit=dev صفر ثغرات.
