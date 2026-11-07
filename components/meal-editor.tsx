@@ -29,7 +29,7 @@ export function MealEditor({
     <section className="space-y-4">
       <div className="section-title">
         <div>
-          <p className="eyebrow">MEAL BUILDER</p>
+          <p className="eyebrow">خطة الوجبات</p>
           <h2>وزّع اليوم على وجبات</h2>
         </div>
         <button

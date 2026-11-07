@@ -66,7 +66,7 @@ export function ClientPortal({ token }: { token: string }) {
           <span className="portal-icon mb-5">
             <LockKeyhole size={24} />
           </span>
-          <p className="eyebrow">YOUR TRAINING SPACE</p>
+          <p className="eyebrow">بوابة المتدرب</p>
           <h1 className="mt-3">جاهز لحصتك؟</h1>
           <p className="my-4 text-sm text-muted">
             أدخل رمز الدخول اللي أرسله لك مدربك.
@@ -102,7 +102,7 @@ export function ClientPortal({ token }: { token: string }) {
       <main className="mx-auto max-w-6xl px-5 py-8">
         <div className="portal-welcome">
           <div>
-            <p className="eyebrow">LET’S GET STRONGER</p>
+            <p className="eyebrow">خطوة جديدة نحو هدفك</p>
             <h1>
               أهلًا {data.name.split(" ")[0]}،<br />
               كل جولة تفرق.
@@ -169,7 +169,7 @@ export function ClientPortal({ token }: { token: string }) {
           </aside>
         </div>
         <footer className="mt-8 border-t py-5 text-xs text-muted">
-          مساحة المدرب · <Link href="/privacy">الخصوصية</Link>
+          إيزي كوتش · <Link href="/privacy">الخصوصية</Link>
         </footer>
       </main>
     </div>

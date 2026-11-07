@@ -2,7 +2,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  ArrowUpLeft,
   Plus,
   Users,
   Dumbbell,
@@ -157,92 +156,27 @@ export function CoachToday({ data }: { data: Snapshot }) {
     <div className="coach-home">
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">
-            COACH’S DESK /{" "}
-            {new Intl.DateTimeFormat("en", {
-              month: "short",
-              year: "numeric",
-              timeZone: "Asia/Riyadh",
-            })
-              .format(new Date())
-              .toUpperCase()}
-          </p>
+          <p className="eyebrow">لوحة التحكم</p>
           <h1>
-            شغلك اليوم، <span>على المكشوف.</span>
+            أهلًا، {data.profile!.name.split(" ")[0]}{" "}
+            <span className="greeting-dot">✦</span>
           </h1>
           <p className="mt-2 text-sm text-muted">
-            {data.profile!.name.split(" ")[0]}، عندك {tasks.length} متدرب يحتاج
-            متابعة.
+            نظرة شاملة على متدربيك وأعمالك. كل ما تحتاجه لبدء يومك.
           </p>
         </div>
-        <Link className="btn" href="/coach/clients?add=1">
-          <Plus size={17} />
-          متدرب جديد
-        </Link>
-      </div>
-      <div className="command-deck">
-        <section className="performance-hero">
-          <div className="hero-index">01 / THE ROSTER</div>
-          <div className="hero-copy">
-            <p className="text-sm text-white/55">جاهزية برامج المتدربين</p>
-            <div className="hero-number">
-              {ready}
-              <span>%</span>
-            </div>
-            <h2>
-              {needs.length
-                ? `${needs.length} متدرب ينتظر أول برنامج.`
-                : clients.length
-                  ? "كل متدرب عنده خطة."
-                  : "أول متدرب، أول خطة."}
-            </h2>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link className="hero-link" href="/coach/clients?filter=program">
-                {needs.length ? "جهّز البرامج" : "افتح قائمة المتدربين"}
-                <ArrowUpLeft size={18} />
-              </Link>
-              <Link href="/coach/library" className="hero-secondary">
-                مكتبة الحركات / 876
-              </Link>
-            </div>
-          </div>
-          <div className="hero-plates" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <i />
-          </div>
-          <div className="hero-bottom">
-            <span>{active.length} اشتراك نشط</span>
-            <span>{drafts.length} مسودات قيد التجهيز</span>
-            <span>{data.templates.length} قوالب جاهزة</span>
-          </div>
-        </section>
-        <section className="revenue-card">
-          <div className="section-title">
-            <span className="eyebrow">CASHFLOW / THIS MONTH</span>
-            <Wallet size={20} />
-          </div>
-          <p className="text-sm text-white/60">المحصّل هذا الشهر</p>
-          <strong className="revenue-number">{money(revenue)}</strong>
-          <p className="text-xs text-white/45">
-            الشهر السابق {money(previousRevenue)}
-          </p>
-          <div className="revenue-divider" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-white/55">مستحقات غير محصّلة</span>
-            <strong>{money(totalDebt)}</strong>
-          </div>
-          <Link
-            href="/coach/finance"
-            className="mt-5 flex items-center justify-between text-sm font-bold text-accent"
-          >
-            افتح سجل الدفعات
-            <ArrowLeft size={18} />
+        <div className="dashboard-actions">
+          <Link className="btn-secondary" href="/coach/library">
+            <Dumbbell size={17} />
+            مكتبة التدريب
           </Link>
-        </section>
+          <Link className="btn" href="/coach/clients?add=1">
+            <Plus size={17} />
+            متدرب جديد
+          </Link>
+        </div>
       </div>
-      <div className="stat-strip">
+      <div className="stat-strip" aria-label="ملخص المتدربين">
         {[
           {
             label: "قائمة المتدربين",
@@ -272,6 +206,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
           <button
             key={s.key}
             onClick={() => setFilter(s.key)}
+            aria-pressed={filter === s.key}
             className={filter === s.key ? "strip-active" : ""}
           >
             <s.icon size={19} />
@@ -280,12 +215,88 @@ export function CoachToday({ data }: { data: Snapshot }) {
           </button>
         ))}
       </div>
+      <div className="command-deck">
+        <section className="performance-hero">
+          <div className="readiness-copy">
+            <span className="summary-label">
+              <span /> متابعة البرامج
+            </span>
+            <h2>
+              {needs.length
+                ? "خطط جاهزة. بداية أقوى."
+                : clients.length
+                  ? "برامج متدربيك جاهزة"
+                  : "ابدأ رحلتك التدريبية"}
+            </h2>
+            <p>
+              {needs.length
+                ? `لديك ${needs.length} متدرب بانتظار أول برنامج. جهّز خطتهم وابدأ متابعة تقدمهم.`
+                : clients.length
+                  ? "كل متدرب لديه برنامج منشور. تابع تقدمهم وحدّث خططهم في الوقت المناسب."
+                  : "أضف أول متدرب، صمم برنامجه، وشاركه بوابته الخاصة."}
+            </p>
+            <Link
+              className="btn"
+              href={
+                needs.length
+                  ? "/coach/clients?filter=program"
+                  : "/coach/clients"
+              }
+            >
+              {needs.length ? "تجهيز البرامج" : "إدارة المتدربين"}
+              <ArrowLeft size={16} />
+            </Link>
+          </div>
+          <div
+            className="readiness-ring"
+            style={{ "--readiness": ready + "%" } as React.CSSProperties}
+          >
+            <div>
+              <strong>
+                {ready}
+                <small>٪</small>
+              </strong>
+              <span>جاهزية البرامج</span>
+            </div>
+          </div>
+          <div className="hero-bottom">
+            <span>
+              <Check size={14} />
+              {active.length} اشتراك نشط
+            </span>
+            <span>{drafts.length} مسودات</span>
+            <span>{data.templates.length} قوالب برامج</span>
+          </div>
+        </section>
+        <section className="revenue-card">
+          <div className="section-title">
+            <span className="summary-label">الملخص المالي</span>
+            <span className="finance-icon">
+              <Wallet size={19} />
+            </span>
+          </div>
+          <p className="text-sm text-muted">المحصّل هذا الشهر</p>
+          <strong className="revenue-number">{money(revenue)}</strong>
+          <p className="text-xs text-muted">
+            الشهر السابق {money(previousRevenue)}
+          </p>
+          <div className="revenue-divider" />
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs text-muted">المبالغ المتبقية</span>
+            <strong>{money(totalDebt)}</strong>
+          </div>
+          <Link href="/coach/finance" className="finance-link">
+            عرض الاشتراكات والدفعات
+            <ArrowLeft size={16} />
+          </Link>
+        </section>
+      </div>
       <div className="mt-6 grid items-start gap-5 xl:grid-cols-[1.6fr_1fr]">
         <section className="card">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">NEXT ACTIONS</p>
-              <h2>ابدأ بهذولا</h2>
+              <p className="eyebrow">تحتاج اهتمامك</p>
+              <h2>متابعات اليوم</h2>
             </div>
             <span className="badge">{tasks.length} متدرب</span>
           </div>
@@ -334,8 +345,8 @@ export function CoachToday({ data }: { data: Snapshot }) {
         <section className="card p-5">
           <div className="section-title">
             <div>
-              <p className="eyebrow">PROGRAM OUTPUT</p>
-              <h2>شغل الأسبوع</h2>
+              <p className="eyebrow">نشاط البرامج</p>
+              <h2>النشر هذا الأسبوع</h2>
             </div>
             <span className="metric-number">
               {week.reduce((n, d) => n + d.value, 0)}
@@ -376,8 +387,8 @@ export function CoachToday({ data }: { data: Snapshot }) {
       <section className="card mt-6 overflow-hidden">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">YOUR ATHLETES</p>
-            <h2>القائمة تحت يدك</h2>
+            <p className="eyebrow">متدربوك</p>
+            <h2>قائمة المتدربين</h2>
           </div>
           <div className="relative">
             <Search size={16} className="absolute end-3 top-3 text-muted" />
@@ -400,6 +411,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
           ].map(([k, v]) => (
             <button
               key={k}
+              aria-pressed={filter === k}
               className={filter === k ? "selected" : ""}
               onClick={() => setFilter(k)}
             >
@@ -407,7 +419,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
             </button>
           ))}
         </div>
-        <div className="overflow-x-auto">
+        <div className="roster-table overflow-x-auto">
           <table>
             <thead>
               <tr>
@@ -464,7 +476,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
                     </td>
                     <td className="whitespace-nowrap text-xs">
                       {p?.content.nutrition.calories
-                        ? `${p.content.nutrition.calories} kcal`
+                        ? `${p.content.nutrition.calories} سعرة`
                         : "—"}
                       {p?.content.nutrition.meals?.length ? (
                         <p className="text-[11px] text-muted">
@@ -475,7 +487,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
                     <td>
                       {w ? (
                         <>
-                          <strong dir="ltr">{w.weight} kg</strong>
+                          <strong dir="ltr">{w.weight} كجم</strong>
                           <p className="text-[10px] text-muted">
                             {formatDate(w.entry_date)}
                           </p>
@@ -515,6 +527,50 @@ export function CoachToday({ data }: { data: Snapshot }) {
               <p>ما فيه متدربين يطابقون هذا الفلتر.</p>
             </div>
           ) : null}
+        </div>
+        <div className="mobile-roster">
+          {visible.slice(0, 12).map((c) => {
+            const p = latest(c.id),
+              g = data.client_goals?.find((g) => g.client_id === c.id);
+            const weight = (data.weights ?? [])
+              .filter((w) => w.client_id === c.id)
+              .sort((a, b) => b.entry_date.localeCompare(a.entry_date))[0];
+            return (
+              <Link
+                href={"/coach/clients/" + c.id}
+                key={c.id}
+                className="mobile-athlete"
+              >
+                <div className="mobile-athlete-heading">
+                  <span className="roster-avatar">{c.name[0]}</span>
+                  <div className="min-w-0 flex-1">
+                    <strong>{c.name}</strong>
+                    <p>{g?.goal || "لم يُحدد الهدف"}</p>
+                  </div>
+                  <ChevronLeft size={16} />
+                </div>
+                <div className="mobile-athlete-details">
+                  <span>
+                    البرنامج<strong>{p?.name || "بانتظار التجهيز"}</strong>
+                  </span>
+                  <span>
+                    آخر وزن
+                    <strong>
+                      {weight ? weight.weight + " كجم" : "لم يُسجل"}
+                    </strong>
+                  </span>
+                  <span>
+                    المتبقي<strong>{money(debt(c.id))}</strong>
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+          {!visible.length && (
+            <div className="empty">
+              <p>لا يوجد متدربون يطابقون البحث.</p>
+            </div>
+          )}
         </div>
         <Link
           className="flex items-center justify-center gap-2 border-t p-4 text-xs font-bold"

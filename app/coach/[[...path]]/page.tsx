@@ -6,7 +6,7 @@ export default async function CoachPage({
   searchParams,
 }: {
   params: Promise<{ path?: string[] }>;
-  searchParams: Promise<{ filter?: string; add?: string }>;
+  searchParams: Promise<{ filter?: string; add?: string; q?: string }>;
 }) {
   const data = await snapshot();
   if (data.profile?.role !== "coach") redirect("/me");
@@ -26,6 +26,7 @@ export default async function CoachPage({
       initialFilter={
         (await searchParams).filter ?? ((await searchParams).add ? "add" : "")
       }
+      initialQuery={(await searchParams).q ?? ""}
       appUrl={process.env.APP_URL ?? "http://127.0.0.1:3200"}
       local={localMode()}
     />

@@ -10,11 +10,11 @@ export function Brand({ light = false }: { light?: boolean }) {
         <Dumbbell size={27} strokeWidth={2.7} />
       </span>
       <span className="text-lg">
-        مساحة المدرب
+        إيزي كوتش
         <span
           className={`block text-[10px] font-normal tracking-wide ${light ? "text-white/40" : "text-muted"}`}
         >
-          COACHING / WITHOUT LIMITS
+          بوابتك لإدارة التدريب
         </span>
       </span>
     </Link>

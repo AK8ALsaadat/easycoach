@@ -3,6 +3,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  Menu,
+  X,
   ArrowLeft,
   ArrowUpLeft,
   Bell,
@@ -38,6 +40,7 @@ import { ImportClients } from "./import-clients";
 import { ClientProgress, PortalControl } from "./client-progress";
 import { ExerciseCatalog } from "./exercise-catalog";
 import { CoachToday } from "./coach-today";
+import { useDialog } from "./use-dialog";
 
 const methods = [
   { value: "bank", label: "تحويل بنكي" },
@@ -164,23 +167,23 @@ export function LinkBox({
 }
 
 const nav = [
-  { href: "/coach", label: "اليوم", icon: LayoutDashboard, key: "today" },
-  { href: "/coach/clients", label: "العملاء", icon: Users, key: "clients" },
+  { href: "/coach", label: "نظرة عامة", icon: LayoutDashboard, key: "today" },
+  { href: "/coach/clients", label: "المتدربون", icon: Users, key: "clients" },
   {
     href: "/coach/library",
-    label: "البرامج والتمارين",
+    label: "مكتبة التدريب",
     icon: Dumbbell,
     key: "library",
   },
   {
     href: "/coach/finance",
-    label: "الباقات والدفعات",
+    label: "الاشتراكات والمالية",
     icon: Wallet,
     key: "finance",
   },
   {
     href: "/coach/settings",
-    label: "الإعدادات والخصوصية",
+    label: "الإعدادات",
     icon: Settings,
     key: "settings",
   },
@@ -190,6 +193,7 @@ export function Workspace({
   section,
   clientId,
   initialFilter = "",
+  initialQuery = "",
   appUrl,
   local,
 }: {
@@ -197,100 +201,147 @@ export function Workspace({
   section: string;
   clientId?: string;
   initialFilter?: string;
+  initialQuery?: string;
   appUrl: string;
   local: boolean;
 }) {
   const [mobile, setMobile] = useState(false);
+  const sidebarRef = useDialog<HTMLElement>(mobile, () => setMobile(false));
   const client = data.clients.find((c) => c.id === clientId && !c.archived);
   return (
-    <div className="min-h-screen md:grid md:grid-cols-[228px_minmax(0,1fr)]">
+    <div className="portal-shell">
+      <a className="skip-link" href="#portal-content">
+        انتقل إلى المحتوى
+      </a>
+      {mobile && (
+        <div className="sidebar-backdrop" onClick={() => setMobile(false)} />
+      )}
       <aside
-        className={`${mobile ? "block" : "hidden"} sticky top-0 z-40 h-auto bg-ink px-5 py-7 md:block md:h-screen`}
+        ref={sidebarRef}
+        tabIndex={-1}
+        id="portal-sidebar"
+        className={`portal-sidebar ${mobile ? "sidebar-open" : ""}`}
+        aria-label="التنقل في البورتال"
       >
-        <Brand light />
-        <p className="mt-11 mb-3 px-4 text-[10px] tracking-wide text-white/30">
-          إدارة أعمالك
-        </p>
-        <nav className="space-y-2" aria-label="القائمة الرئيسية">
+        <div className="sidebar-brand">
+          <Brand light />
+          <button
+            className="sidebar-close"
+            aria-label="إغلاق القائمة"
+            onClick={() => setMobile(false)}
+          >
+            <X size={20} />
+          </button>
+        </div>
+        <div className="workspace-label">
+          <span className="workspace-dot" /> مساحة المدرب{" "}
+        </div>
+        <p className="nav-group-label">إدارة منصتك</p>
+        <nav aria-label="القائمة الرئيسية">
           {nav.map((item) => (
             <Link
               key={item.key}
               href={item.href}
+              onClick={() => setMobile(false)}
               aria-current={section === item.key ? "page" : undefined}
               className={`nav-item ${section === item.key ? "nav-active" : ""}`}
             >
-              <item.icon size={18} />
-              {item.label}
-              {section === item.key ? (
-                <span className="ms-auto size-1.5 rounded-full bg-accent" />
-              ) : null}
+              <item.icon size={19} />
+              <span>{item.label}</span>
+              {item.key === "clients" && (
+                <span className="nav-count">
+                  {data.clients.filter((c) => !c.archived).length}
+                </span>
+              )}
+              {section === item.key && item.key !== "clients" && (
+                <ChevronLeft size={14} className="ms-auto" />
+              )}
             </Link>
           ))}
         </nav>
-        <div className="sidebar-score">
-          <span>ACTIVE ROSTER</span>
-          <strong>
-            {data.clients
-              .filter((c) => !c.archived)
-              .length.toString()
-              .padStart(2, "0")}
-          </strong>
-          <p>متدرب في قائمتك</p>
-          <Link href="/coach/clients?add=1">أضف متدربًا جديدًا ←</Link>
+        <div className="sidebar-tip">
+          <span className="sidebar-tip-icon">
+            <Dumbbell size={21} />
+          </span>
+          <h3>من الخطة إلى التقدم</h3>
+          <p>ابنِ حصة متكاملة من مكتبة التمارين، وخصصها لكل متدرب.</p>
+          <Link href="/coach/library" onClick={() => setMobile(false)}>
+            استكشف مكتبة التدريب <ArrowLeft size={14} />
+          </Link>
         </div>
-        <div className="mt-12 border-t border-white/10 pt-5">
-          <div className="flex items-center gap-3">
-            <Avatar name={data.profile!.name} />
-            <div>
-              <p className="text-sm font-medium text-white">
-                {data.profile!.name}
-              </p>
-              <p className="text-[11px] text-white/40">حساب مدرب</p>
-            </div>
+        <div className="sidebar-account">
+          <Avatar name={data.profile!.name} />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">
+              {data.profile!.name}
+            </p>
+            <p className="text-xs text-white/50">حساب المدرب</p>
           </div>
           <form action={logoutAction}>
-            <button className="mt-4 flex min-h-11 items-center gap-2 text-xs text-white/50">
-              <LogOut size={14} />
-              تسجيل الخروج
+            <button
+              className="logout-button"
+              aria-label="تسجيل الخروج"
+              title="تسجيل الخروج"
+            >
+              <LogOut size={18} />
             </button>
           </form>
         </div>
       </aside>
-      <div className="min-w-0">
-        <header className="sticky top-0 z-30 flex min-h-19 flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-5 py-3 backdrop-blur lg:px-9">
+      <div className="portal-body">
+        <header className="portal-header">
           <div className="flex items-center gap-3">
             <button
-              className="btn-secondary md:hidden"
-              onClick={() => setMobile(!mobile)}
+              className="mobile-menu"
+              aria-label="فتح القائمة"
+              aria-controls="portal-sidebar"
               aria-expanded={mobile}
+              onClick={() => setMobile(true)}
             >
-              القائمة
+              <Menu size={21} />
             </button>
-            <span className="text-xs text-muted">
-              مساحتك <ChevronLeft className="mx-1 inline" size={12} />{" "}
-              <span className="text-ink">
-                {nav.find((n) => n.key === section)?.label}
-              </span>
-            </span>
+            <div className="portal-breadcrumb">
+              <span>إيزي كوتش</span>
+              <ChevronLeft size={13} />
+              <strong>{nav.find((n) => n.key === section)?.label}</strong>
+              {client && (
+                <>
+                  <ChevronLeft size={13} />
+                  <span>{client.name}</span>
+                </>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="hidden text-xs text-muted sm:flex sm:items-center sm:gap-2">
-              <CalendarDays size={15} />
+          <form action="/coach/clients" className="portal-search">
+            <Search size={17} />
+            <input
+              name="q"
+              aria-label="البحث في المتدربين"
+              placeholder="ابحث عن متدرب…"
+              defaultValue={initialQuery}
+            />
+            <button type="submit" aria-label="بحث">
+              <ArrowLeft size={15} />
+            </button>
+          </form>
+          <div className="header-tools">
+            <span className="header-date">
+              <CalendarDays size={16} />
               {formatDate(riyadhToday())}
             </span>
             <Link
               href="/coach/settings"
               aria-label="طلبات تحتاج مراجعتك"
-              className="relative rounded-full border p-2"
+              className="header-notifications"
             >
-              <Bell size={17} />
+              <Bell size={19} />
               {data.join_requests.some((r) => r.status === "pending") ||
               data.privacy_requests.some((r) => r.status === "pending") ? (
-                <span className="absolute end-1 top-1 size-2 rounded-full bg-teal" />
+                <span />
               ) : null}
             </Link>
-            <span className="hidden text-xs text-muted lg:block">
-              توقيت الرياض
+            <span className="header-avatar">
+              {data.profile!.name.slice(0, 1)}
             </span>
           </div>
         </header>
@@ -300,7 +351,7 @@ export function Workspace({
             رسائل حقيقية
           </div>
         ) : null}
-        <main className="mx-auto max-w-[1550px] p-5 pb-12 lg:p-9">
+        <main id="portal-content" className="portal-content">
           {section === "today" ? (
             <CoachToday data={data} />
           ) : section === "clients" ? (
@@ -314,7 +365,12 @@ export function Workspace({
                 />
               )
             ) : (
-              <Clients data={data} initialFilter={initialFilter} />
+              <Clients
+                key={initialQuery}
+                data={data}
+                initialFilter={initialFilter}
+                initialQuery={initialQuery}
+              />
             )
           ) : section === "library" ? (
             <Library data={data} />
@@ -325,7 +381,7 @@ export function Workspace({
           )}
         </main>
         <footer className="flex flex-wrap justify-between gap-3 border-t px-5 py-5 text-[11px] text-muted lg:px-9">
-          <span>مساحة المدرب / BUILT FOR THE WORK</span>
+          <span>إيزي كوتش · بوابتك لإدارة التدريب</span>
           <Link href="/privacy" className="underline">
             الخصوصية · مسودة للمراجعة
           </Link>
@@ -460,12 +516,14 @@ function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
 function Clients({
   data,
   initialFilter,
+  initialQuery,
 }: {
   data: Snapshot;
   initialFilter: string;
+  initialQuery: string;
 }) {
   const router = useRouter();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [filter, setFilter] = useState(
     initialFilter === "add" ? "" : initialFilter,
   );
@@ -486,7 +544,7 @@ function Clients({
         : filter === "renew"
           ? Boolean(
               currentSubscription(data, c.id) &&
-                currentSubscription(data, c.id)!.end_date <= addDays(today, 7),
+              currentSubscription(data, c.id)!.end_date <= addDays(today, 7),
             )
           : filter === "balance"
             ? data.subscriptions.some(
@@ -1097,8 +1155,8 @@ function Library({ data }: { data: Snapshot }) {
   return (
     <>
       <Heading
-        title="مكتبتك، بطريقتك"
-        text="تمارين وقوالب خاصة بك. انسخ، خصّص، ثم انشر لكل عميل."
+        title="مكتبة التدريب"
+        text="تمارين توضيحية، قوالب برامج، ومكتبتك الخاصة في مكان واحد."
       >
         <button
           className="btn"
@@ -1112,7 +1170,7 @@ function Library({ data }: { data: Snapshot }) {
           قالب جديد
         </button>
       </Heading>
-      <div className="mb-6 flex gap-2">
+      <div className="library-tabs">
         <button
           className={tab === "catalog" ? "btn" : "btn-secondary"}
           onClick={() => {
@@ -1120,7 +1178,7 @@ function Library({ data }: { data: Snapshot }) {
             setEditor(false);
           }}
         >
-          الحركات العالمية · 876
+          مكتبة الحركات · 876
         </button>
         <button
           className={tab === "templates" ? "btn" : "btn-secondary"}

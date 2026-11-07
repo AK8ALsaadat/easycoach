@@ -42,7 +42,7 @@ export function WeightPanel({
     <section className={"weight-panel " + (compact ? "" : "card p-5")}>
       <div className="section-title">
         <div>
-          <p className="eyebrow">BODYWEIGHT / KG</p>
+          <p className="eyebrow">متابعة الوزن · كجم</p>
           <h2 className="flex items-center gap-2">
             <Scale size={20} />
             متابعة الوزن
@@ -86,8 +86,8 @@ export function WeightPanel({
           >
             <defs>
               <linearGradient id="weight-fill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0" stopColor="#ff5a24" stopOpacity=".2" />
-                <stop offset="1" stopColor="#ff5a24" stopOpacity="0" />
+                <stop offset="0" stopColor="#3677f2" stopOpacity=".2" />
+                <stop offset="1" stopColor="#3677f2" stopOpacity="0" />
               </linearGradient>
             </defs>
             {[35, 80, 125].map((y) => (
@@ -108,7 +108,7 @@ export function WeightPanel({
             <polyline
               points={points.join(" ")}
               fill="none"
-              stroke="#ff5a24"
+              stroke="#3677f2"
               strokeWidth="3"
               strokeLinejoin="round"
             />
@@ -118,7 +118,7 @@ export function WeightPanel({
                 cx={p.split(",")[0]}
                 cy={p.split(",")[1]}
                 r="3"
-                fill="#ff5a24"
+                fill="#3677f2"
               />
             ))}
           </svg>

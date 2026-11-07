@@ -1,4 +1,5 @@
-import Image from "next/image";
+import { ExerciseIcon } from "./exercise-icon";
+import { catalogById, exerciseName, exerciseInstructions } from "@/lib/catalog";
 import type { Program } from "@/lib/model";
 import { formatDate } from "@/lib/dates";
 import { Play, Timer, Utensils } from "lucide-react";
@@ -36,22 +37,23 @@ export function ProgramView({
           <div className="divide-y divide-line">
             {day.exercises.map((e, i) => (
               <article key={i} className="p-6">
-                {e.catalogId ? (
-                  <div className="mb-4 max-w-sm overflow-hidden rounded border bg-white">
-                    <Image
-                      unoptimized
-                      src={"/exercises/" + e.catalogId + ".webp"}
-                      alt={e.name}
-                      width={360}
-                      height={180}
-                      loading="lazy"
-                      className="w-full"
-                    />
+                {e.catalogId && catalogById.has(e.catalogId) ? (
+                  <div className="program-movement">
+                    <ExerciseIcon exercise={catalogById.get(e.catalogId)!} />
+                    <div>
+                      <p className="eyebrow">التمرين {i + 1}</p>
+                      <h3>{exerciseName(catalogById.get(e.catalogId)!)}</h3>
+                    </div>
                   </div>
                 ) : null}
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h3 className="font-semibold">{e.name}</h3>
+                    <h3 className="font-semibold">
+                      {e.catalogId &&
+                      catalogById.get(e.catalogId)?.name === e.name
+                        ? exerciseName(catalogById.get(e.catalogId)!)
+                        : e.name}
+                    </h3>
                     {e.description ? (
                       <p className="mt-2 max-w-2xl text-sm leading-8 text-muted">
                         {e.description}
@@ -70,6 +72,21 @@ export function ProgramView({
                     </a>
                   ) : null}
                 </div>
+                {e.catalogId && catalogById.has(e.catalogId) ? (
+                  <details className="program-instructions">
+                    <summary>طريقة أداء التمرين</summary>
+                    <ol
+                      dir="rtl"
+                      className="exercise-instructions list-inside list-decimal space-y-2 mt-3 text-sm leading-8 text-muted"
+                    >
+                      {exerciseInstructions(catalogById.get(e.catalogId)!).map(
+                        (line, step) => (
+                          <li key={step}>{line}</li>
+                        ),
+                      )}
+                    </ol>
+                  </details>
+                ) : null}
                 {e.mediaId ? (
                   <video
                     controls
@@ -103,7 +120,7 @@ export function ProgramView({
         </h2>
         <div className="my-5 grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
-            ["السعرات", program.content.nutrition.calories, "kcal"],
+            ["السعرات", program.content.nutrition.calories, "سعرة"],
             ["البروتين", program.content.nutrition.protein, "غ"],
             ["الكاربوهيدرات", program.content.nutrition.carbs, "غ"],
             ["الدهون", program.content.nutrition.fat, "غ"],
@@ -133,10 +150,10 @@ export function ProgramView({
                   {m.foods}
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="badge">{m.calories} kcal</span>
-                  <span className="badge">P {m.protein}g</span>
-                  <span className="badge">C {m.carbs}g</span>
-                  <span className="badge">F {m.fat}g</span>
+                  <span className="badge">{m.calories} سعرة</span>
+                  <span className="badge">بروتين {m.protein} غ</span>
+                  <span className="badge">كارب {m.carbs} غ</span>
+                  <span className="badge">دهون {m.fat} غ</span>
                 </div>
               </article>
             ))}

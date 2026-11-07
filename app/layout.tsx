@@ -7,7 +7,7 @@ const font = IBM_Plex_Sans_Arabic({
   display: "swap",
 });
 export const metadata: Metadata = {
-  title: { default: "مساحة المدرب", template: "%s | مساحة المدرب" },
+  title: { default: "إيزي كوتش", template: "%s | إيزي كوتش" },
   description:
     "مساحة عربية لإدارة العملاء والبرامج والاشتراكات للمدربين الشخصيين.",
   robots: { index: false, follow: false },

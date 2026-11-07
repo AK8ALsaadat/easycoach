@@ -1,5 +1,6 @@
 "use client";
-import Image from "next/image";
+import { ExerciseIcon } from "./exercise-icon";
+import { useDialog } from "./use-dialog";
 import { useState, useDeferredValue } from "react";
 import {
   Search,
@@ -15,6 +16,7 @@ import {
   muscles,
   equipment,
   exerciseName,
+  exerciseInstructions,
   type CatalogExercise,
 } from "@/lib/catalog";
 export function ExerciseCatalog({
@@ -30,6 +32,7 @@ export function ExerciseCatalog({
     [level, setLevel] = useState(""),
     [page, setPage] = useState(0),
     [selected, setSelected] = useState<CatalogExercise | null>(null);
+  const dialogRef = useDialog(Boolean(selected), () => setSelected(null));
   const deferred = useDeferredValue(query);
   const found = catalog.filter(
     (e) =>
@@ -43,8 +46,8 @@ export function ExerciseCatalog({
     <section className="catalog-panel">
       <div className="section-title">
         <div>
-          <p className="eyebrow">MOVEMENT LIBRARY / {catalog.length}</p>
-          <h2>اختر الحركة. وابنِ الحصة.</h2>
+          <p className="eyebrow">مكتبة التمارين · {catalog.length} حركة</p>
+          <h2>تمارين تناسب كل برنامج</h2>
         </div>
         {onClose ? (
           <button className="btn-secondary" onClick={onClose}>
@@ -119,7 +122,7 @@ export function ExerciseCatalog({
       {!found.length ? (
         <div className="empty">
           <SlidersHorizontal />
-          <p>جرّب اسمًا إنجليزيًا أو غيّر فلتر العضلة.</p>
+          <p>لا توجد نتائج. جرّب اسمًا آخر أو غيّر عوامل التصفية.</p>
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -130,14 +133,7 @@ export function ExerciseCatalog({
                 className="block w-full text-start"
               >
                 <div className="movement-image">
-                  <Image
-                    unoptimized
-                    src={"/exercises/" + e.id + ".webp"}
-                    alt={"وضعيتا " + e.name}
-                    loading="lazy"
-                    width={360}
-                    height={180}
-                  />
+                  <ExerciseIcon exercise={e} />
                   <span>{muscles[e.primaryMuscles[0]]}</span>
                 </div>
                 <div className="px-4 pt-3">
@@ -203,9 +199,11 @@ export function ExerciseCatalog({
       {selected ? (
         <div className="modal-backdrop" onClick={() => setSelected(null)}>
           <div
+            ref={dialogRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
-            aria-label={selected.name}
+            aria-label={exerciseName(selected)}
             className="modal-sheet max-w-2xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -219,13 +217,9 @@ export function ExerciseCatalog({
                 <X size={18} />
               </button>
             </div>
-            <Image
-              unoptimized
-              src={"/exercises/" + selected.id + ".webp"}
-              alt={selected.name}
-              width={720}
-              height={360}
-              className="w-full rounded bg-white"
+            <ExerciseIcon
+              exercise={selected}
+              className="exercise-detail-icon"
             />
             <div className="my-4 flex flex-wrap gap-2">
               {selected.primaryMuscles.map((m) => (
@@ -238,10 +232,10 @@ export function ExerciseCatalog({
               </span>
             </div>
             <ol
-              dir="ltr"
-              className="list-inside list-decimal space-y-3 text-sm leading-7 text-muted"
+              dir="rtl"
+              className="exercise-instructions list-inside list-decimal space-y-3 text-sm leading-7 text-muted"
             >
-              {selected.instructions.map((line, i) => (
+              {exerciseInstructions(selected).map((line, i) => (
                 <li key={i}>{line}</li>
               ))}
             </ol>
@@ -258,8 +252,8 @@ export function ExerciseCatalog({
               </button>
             ) : null}
             <p className="mt-4 text-[10px] text-muted">
-              صور مرجعية للحركة · تعليمات المكتبة باللغة الإنجليزية. أضف توجيهك
-              بالعربية داخل الجدول.
+              رسم توضيحي لنمط الحركة · اتبع تعليمات مدربك للوزن والعدات ومدى
+              الحركة.
             </p>
           </div>
         </div>

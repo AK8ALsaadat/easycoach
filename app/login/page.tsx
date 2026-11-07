@@ -15,7 +15,7 @@ export default async function Login({
         <Brand />
         <div className="my-auto w-full max-w-md self-center py-14">
           <p className="mb-3 text-sm font-medium text-teal">
-            COACH’S ENTRANCE
+            مرحبًا بك في إيزي كوتش
           </p>
           <h1 className="text-3xl">
             خطط أقوى.
@@ -38,7 +38,9 @@ export default async function Login({
       </section>
       <aside className="relative hidden overflow-hidden bg-ink p-16 text-white lg:flex lg:flex-col lg:justify-center">
         <div className="absolute -left-28 -top-32 size-[500px] rounded-full border-[60px] border-white/[.025]" />
-        <p className="eyebrow !text-accent">THE WORK BEHIND THE WORKOUT.</p>
+        <p className="eyebrow !text-accent">
+          إدارة احترافية. تجربة تدريب أفضل.
+        </p>
         <h2 className="mt-6 max-w-lg text-4xl leading-[1.6] font-semibold">
           كل جولة محسوبة.
           <br />

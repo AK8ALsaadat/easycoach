@@ -1,4 +1,5 @@
 import data from "./exercise-data/exercises.json";
+import arabic from "./exercise-data/ar.json";
 export const muscles: Record<string, string> = {
   abdominals: "البطن",
   hamstrings: "خلفية الفخذ",
@@ -64,7 +65,12 @@ const aliases: Record<string, string> = {
 export type CatalogExercise = (typeof data)[number];
 export const catalog = data;
 export const catalogById = new Map(data.map((e) => [e.id, e]));
-export const exerciseName = (e: CatalogExercise) => aliases[e.name] ?? e.name;
+type Translation = { name: string; instructions: string[] };
+const translations: Record<string, Translation> = arabic;
+export const exerciseName = (e: CatalogExercise) =>
+  aliases[e.name] ?? translations[e.id]?.name ?? e.name;
+export const exerciseInstructions = (e: CatalogExercise) =>
+  translations[e.id]?.instructions ?? [];
 export function catalogSearch(e: CatalogExercise, query: string) {
   const terms: Record<string, string> = {
     سكوات: "squat",

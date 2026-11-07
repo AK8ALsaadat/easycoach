@@ -1,5 +1,5 @@
 "use client";
-import Image from "next/image";
+import { ExerciseIcon } from "./exercise-icon";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -22,6 +22,7 @@ import {
 import { mutate, type Result } from "@/app/actions";
 import { Notice } from "./forms";
 import { ExerciseCatalog } from "./exercise-catalog";
+import { useDialog } from "./use-dialog";
 import { VideoUpload } from "./video-upload";
 import { MealEditor } from "./meal-editor";
 function withRowIds(value: Content): Content {
@@ -36,7 +37,12 @@ function withRowIds(value: Content): Content {
     })),
   };
 }
-import { catalogById, exerciseName, type CatalogExercise } from "@/lib/catalog";
+import {
+  catalogById,
+  exerciseName,
+  exerciseInstructions,
+  type CatalogExercise,
+} from "@/lib/catalog";
 
 export function ProgramEditor({
   initial,
@@ -63,6 +69,7 @@ export function ProgramEditor({
   const [tab, setTab] = useState<"training" | "nutrition">("training");
   const [hasSaved, setHasSaved] = useState(Boolean(id));
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const catalogRef = useDialog(catalogOpen, () => setCatalogOpen(false));
   const savedId = useRef(id);
   const revision = useRef(0);
   const lock = useRef(false);
@@ -246,7 +253,7 @@ export function ProgramEditor({
         <div className="space-y-5">
           <div className="nutrition-heading">
             <div>
-              <p className="eyebrow">NUTRITION / DAILY TARGET</p>
+              <p className="eyebrow">التغذية · الأهداف اليومية</p>
               <h2>هدف اليوم، قبل تفاصيل الوجبات.</h2>
             </div>
             <span className="badge">
@@ -310,7 +317,7 @@ export function ProgramEditor({
         <>
           <div className="session-toolbar">
             <div>
-              <p className="eyebrow">SESSION BUILDER</p>
+              <p className="eyebrow">بناء الحصة التدريبية</p>
               <h2>
                 {active.exercises.length} حركات{" "}
                 <span className="text-muted">/</span>{" "}
@@ -432,24 +439,32 @@ export function ProgramEditor({
               >
                 {e.catalogId && catalogById.has(e.catalogId) ? (
                   <div className="exercise-visual">
-                    <Image
-                      unoptimized
-                      src={"/exercises/" + e.catalogId + ".webp"}
-                      alt={e.name}
-                      width={360}
-                      height={180}
-                      loading="lazy"
-                    />
+                    <ExerciseIcon exercise={catalogById.get(e.catalogId)!} />
                     <div>
                       <span className="eyebrow">
-                        MOVEMENT {String(i + 1).padStart(2, "0")}
+                        الحركة {String(i + 1).padStart(2, "0")}
                       </span>
-                      <p dir="ltr" className="text-xs text-muted">
-                        {catalogById.get(e.catalogId)?.name}
+                      <p className="text-xs text-muted">
+                        {exerciseName(catalogById.get(e.catalogId)!)}
                       </p>
                     </div>
                   </div>
                 ) : null}
+                {e.catalogId && catalogById.has(e.catalogId) && (
+                  <details className="program-instructions mb-4">
+                    <summary>شرح أداء التمرين بالعربية</summary>
+                    <ol
+                      dir="rtl"
+                      className="exercise-instructions list-inside list-decimal text-sm leading-8 text-muted"
+                    >
+                      {exerciseInstructions(catalogById.get(e.catalogId)!).map(
+                        (line, step) => (
+                          <li key={step}>{line}</li>
+                        ),
+                      )}
+                    </ol>
+                  </details>
+                )}
                 <div className="mb-4 flex items-center gap-3">
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-xs font-bold text-teal">
                     {i + 1}
@@ -748,6 +763,8 @@ export function ProgramEditor({
       {catalogOpen ? (
         <div className="modal-backdrop">
           <div
+            ref={catalogRef}
+            tabIndex={-1}
             className="modal-sheet max-w-6xl"
             role="dialog"
             aria-modal="true"
