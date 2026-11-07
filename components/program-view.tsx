@@ -1,4 +1,4 @@
-import { ExerciseIcon } from "./exercise-icon";
+import { ExerciseVisual } from "./exercise-visual";
 import { catalogById, exerciseName, exerciseInstructions } from "@/lib/catalog";
 import type { Program } from "@/lib/model";
 import { formatDate } from "@/lib/dates";
@@ -39,7 +39,12 @@ export function ProgramView({
               <article key={i} className="p-6">
                 {e.catalogId && catalogById.has(e.catalogId) ? (
                   <div className="program-movement">
-                    <ExerciseIcon exercise={catalogById.get(e.catalogId)!} />
+                    <ExerciseVisual
+                      key={e.catalogId}
+                      exercise={catalogById.get(e.catalogId)!}
+                      playable
+                      portalHash={portalHash}
+                    />
                     <div>
                       <p className="eyebrow">التمرين {i + 1}</p>
                       <h3>{exerciseName(catalogById.get(e.catalogId)!)}</h3>

@@ -173,7 +173,7 @@ export function VideoUpload({
           />
         </div>
       ) : null}
-      <p className="mt-2 text-[11px] text-muted">
+      <p className="mt-2 text-xs text-muted">
         MP4 / MOV / WebM · حتى 50 MB · فيديو شرح الحركة
       </p>
       {error ? (

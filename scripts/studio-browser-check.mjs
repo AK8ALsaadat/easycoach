@@ -86,6 +86,12 @@ try {
     .first()
     .getByRole("button", { name: "للجدول" })
     .click();
+  await page.getByLabel("ابحث في التمارين").fill("Dumbbell Flyes");
+  await page
+    .locator(".movement-card")
+    .first()
+    .getByRole("button", { name: "للجدول" })
+    .click();
   await page.getByRole("button", { name: "إغلاق", exact: true }).click();
   await page
     .locator("input[type=file]")
@@ -129,6 +135,20 @@ try {
   await portal.getByLabel("رمز دخول العميل").fill(pin);
   await portal.getByRole("button", { name: "افتح جدولي" }).click();
   await portal.getByText("شوفان وحليب وموز · مثال اصطناعي").waitFor();
+  const anatomy = portal.locator('[data-exercise-id="Dumbbell_Flyes"] img');
+  await anatomy.waitFor();
+  const anatomyUrl = new URL(await anatomy.getAttribute("src"), base);
+  assert.equal((await portal.request.get(anatomyUrl.href)).status(), 200);
+  assert.equal(
+    (await (await browser.newContext()).request.get(anatomyUrl.href)).status(),
+    404,
+  );
+  const unrelatedAnatomyUrl = new URL(anatomyUrl);
+  unrelatedAnatomyUrl.pathname = "/api/exercise-media/Pullups";
+  assert.equal(
+    (await portal.request.get(unrelatedAnatomyUrl.href)).status(),
+    404,
+  );
   await portal.getByLabel("الوزن بالكيلوجرام").fill("82.4");
   await portal.getByRole("button", { name: "تسجيل", exact: true }).click();
   await portal.getByText("تم حفظ الوزن", { exact: true }).waitFor();

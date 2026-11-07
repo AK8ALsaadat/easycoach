@@ -227,7 +227,7 @@ export function PortalControl({
         </div>
       ) : null}
       {link?.last_opened_at ? (
-        <p className="text-[11px] text-muted">
+        <p className="text-xs text-muted">
           آخر نشاط:{" "}
           {new Intl.DateTimeFormat("ar-SA", {
             dateStyle: "medium",

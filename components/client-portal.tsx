@@ -125,7 +125,7 @@ export function ClientPortal({ token }: { token: string }) {
               <RefreshCw size={15} className={busy ? "animate-spin" : ""} />
               تحديث الجدول
             </button>
-            <span className="flex items-center gap-1 text-[11px] text-white/50">
+            <span className="flex items-center gap-1 text-xs text-white/50">
               <Check size={12} />
               يتحدث تلقائيًا {updated ? "· " + updated : ""}
             </span>

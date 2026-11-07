@@ -39,6 +39,7 @@ import { ProgramEditor } from "./program-editor";
 import { ImportClients } from "./import-clients";
 import { ClientProgress, PortalControl } from "./client-progress";
 import { ExerciseCatalog } from "./exercise-catalog";
+import { exerciseName } from "@/lib/catalog";
 import { CoachToday } from "./coach-today";
 import { useDialog } from "./use-dialog";
 
@@ -224,7 +225,7 @@ export function Workspace({
         aria-label="التنقل في البورتال"
       >
         <div className="sidebar-brand">
-          <Brand light />
+          <Brand />
           <button
             className="sidebar-close"
             aria-label="إغلاق القائمة"
@@ -233,10 +234,6 @@ export function Workspace({
             <X size={20} />
           </button>
         </div>
-        <div className="workspace-label">
-          <span className="workspace-dot" /> مساحة المدرب{" "}
-        </div>
-        <p className="nav-group-label">إدارة منصتك</p>
         <nav aria-label="القائمة الرئيسية">
           {nav.map((item) => (
             <Link
@@ -259,23 +256,13 @@ export function Workspace({
             </Link>
           ))}
         </nav>
-        <div className="sidebar-tip">
-          <span className="sidebar-tip-icon">
-            <Dumbbell size={21} />
-          </span>
-          <h3>من الخطة إلى التقدم</h3>
-          <p>ابنِ حصة متكاملة من مكتبة التمارين، وخصصها لكل متدرب.</p>
-          <Link href="/coach/library" onClick={() => setMobile(false)}>
-            استكشف مكتبة التدريب <ArrowLeft size={14} />
-          </Link>
-        </div>
         <div className="sidebar-account">
           <Avatar name={data.profile!.name} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">
               {data.profile!.name}
             </p>
-            <p className="text-xs text-white/50">حساب المدرب</p>
+            <p className="text-xs text-muted">حساب المدرب</p>
           </div>
           <form action={logoutAction}>
             <button
@@ -346,7 +333,7 @@ export function Workspace({
           </div>
         </header>
         {local ? (
-          <div className="border-b border-teal/10 bg-accent/20 px-5 py-2 text-[11px] text-teal lg:px-9">
+          <div className="border-b border-teal/10 bg-accent/20 px-5 py-2 text-xs text-teal lg:px-9">
             معاينة محلية · بيانات اصطناعية محفوظة في قاعدة بيانات على جهازك · لا
             رسائل حقيقية
           </div>
@@ -380,7 +367,7 @@ export function Workspace({
             <SettingsPage data={data} />
           )}
         </main>
-        <footer className="flex flex-wrap justify-between gap-3 border-t px-5 py-5 text-[11px] text-muted lg:px-9">
+        <footer className="flex flex-wrap justify-between gap-3 border-t px-5 py-5 text-xs text-muted lg:px-9">
           <span>إيزي كوتش · بوابتك لإدارة التدريب</span>
           <Link href="/privacy" className="underline">
             الخصوصية · مسودة للمراجعة
@@ -419,7 +406,7 @@ function Heading({
     <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1>{title}</h1>
-        <p className="mt-1 text-sm text-muted">{text}</p>
+        {text && <p className="mt-1 text-sm text-muted">{text}</p>}
       </div>
       {children}
     </div>
@@ -464,7 +451,7 @@ function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
                     <Avatar name={c.name} />
                     <div>
                       <p className="whitespace-nowrap font-medium">{c.name}</p>
-                      <p className="text-[11px] text-muted">
+                      <p className="text-xs text-muted">
                         {c.trainee_user_id ? "حساب مرتبط" : c.email}
                       </p>
                     </div>
@@ -481,7 +468,7 @@ function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
                   {sub ? (
                     <div>
                       <p className="text-xs">{subscriptionState(data, sub)}</p>
-                      <p className="text-[10px] text-muted">
+                      <p className="text-xs text-muted">
                         حتى {formatDate(sub.end_date)}
                       </p>
                     </div>
@@ -1098,7 +1085,7 @@ function PaymentList({
                   <p className="text-xs">
                     {methods.find((m) => m.value === p.method)?.label}
                   </p>
-                  <p className="mt-1 text-[10px] text-muted">
+                  <p className="mt-1 text-xs text-muted">
                     {p.reference || "بدون مرجع"}
                   </p>
                 </td>
@@ -1151,17 +1138,20 @@ function Library({ data }: { data: Snapshot }) {
   const [template, setTemplate] = useState<Template | null>(null);
   const [editor, setEditor] = useState(false);
   const [exerciseId, setExerciseId] = useState("");
+  const [templateSeed, setTemplateSeed] = useState(blankContent);
+  const [templateSeedName, setTemplateSeedName] = useState("قالب جديد");
+  const [templateRevision, setTemplateRevision] = useState(0);
   const ex = data.exercises.find((e) => e.id === exerciseId);
   return (
     <>
-      <Heading
-        title="مكتبة التدريب"
-        text="تمارين توضيحية، قوالب برامج، ومكتبتك الخاصة في مكان واحد."
-      >
+      <Heading title="مكتبة التدريب" text="">
         <button
           className="btn"
           onClick={() => {
             setTemplate(null);
+            setTemplateSeed(structuredClone(blankContent));
+            setTemplateSeedName("قالب جديد");
+            setTemplateRevision((value) => value + 1);
             setEditor(true);
             setTab("templates");
           }}
@@ -1170,36 +1160,111 @@ function Library({ data }: { data: Snapshot }) {
           قالب جديد
         </button>
       </Heading>
-      <div className="library-tabs">
+      <div
+        className="library-tabs"
+        role="tablist"
+        aria-label="أقسام مكتبة التدريب"
+        onKeyDown={(event) => {
+          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
+            return;
+          event.preventDefault();
+          const tabs = Array.from(
+            event.currentTarget.querySelectorAll<HTMLButtonElement>(
+              '[role="tab"]',
+            ),
+          );
+          const index = tabs.indexOf(
+            document.activeElement as HTMLButtonElement,
+          );
+          const next =
+            event.key === "Home"
+              ? 0
+              : event.key === "End"
+                ? tabs.length - 1
+                : (index + (event.key === "ArrowLeft" ? 1 : -1) + tabs.length) %
+                  tabs.length;
+          tabs[next].focus();
+          tabs[next].click();
+        }}
+      >
         <button
-          className={tab === "catalog" ? "btn" : "btn-secondary"}
+          id="library-tab-catalog"
+          role="tab"
+          aria-controls="library-panel-catalog"
+          aria-selected={tab === "catalog"}
+          tabIndex={tab === "catalog" ? 0 : -1}
+          className={tab === "catalog" ? "library-tab-active" : ""}
           onClick={() => {
             setTab("catalog");
-            setEditor(false);
           }}
         >
-          مكتبة الحركات · 876
+          دليل التمارين · 876
         </button>
         <button
-          className={tab === "templates" ? "btn" : "btn-secondary"}
+          id="library-tab-templates"
+          role="tab"
+          aria-controls="library-panel-templates"
+          aria-selected={tab === "templates"}
+          tabIndex={tab === "templates" ? 0 : -1}
+          className={tab === "templates" ? "library-tab-active" : ""}
           onClick={() => {
             setTab("templates");
-            setEditor(false);
           }}
         >
           قوالب البرامج
         </button>
         <button
-          className={tab === "exercises" ? "btn" : "btn-secondary"}
+          id="library-tab-exercises"
+          role="tab"
+          aria-controls="library-panel-exercises"
+          aria-selected={tab === "exercises"}
+          tabIndex={tab === "exercises" ? 0 : -1}
+          className={tab === "exercises" ? "library-tab-active" : ""}
           onClick={() => setTab("exercises")}
         >
-          مكتبة التمارين
+          تماريني الخاصة
         </button>
       </div>
-      {tab === "catalog" ? (
-        <ExerciseCatalog />
-      ) : tab === "templates" ? (
-        editor ? (
+      <div
+        id="library-panel-catalog"
+        role="tabpanel"
+        aria-labelledby="library-tab-catalog"
+        hidden={tab !== "catalog"}
+      >
+        <ExerciseCatalog
+          embedded
+          selectionLabel="برنامج جديد"
+          onSelect={(exercise) => {
+            const seed = structuredClone(blankContent);
+            seed.days[0].exercises = [
+              {
+                name: exerciseName(exercise),
+                catalogId: exercise.id,
+                description: "",
+                video: "",
+                sets: 3,
+                reps: "10–12",
+                rest: 90,
+              },
+            ];
+            setTemplate(null);
+            setTemplateSeed(seed);
+            setTemplateRevision((value) => value + 1);
+            setTemplateSeedName(
+              ("برنامج " + exerciseName(exercise)).slice(0, 140),
+            );
+            setEditor(true);
+            setTab("templates");
+          }}
+        />
+      </div>
+      <div
+        id="library-panel-templates"
+        role="tabpanel"
+        aria-labelledby="library-tab-templates"
+        hidden={tab !== "templates"}
+      >
+        {editor ? (
           <section className="card p-6">
             <button
               className="mb-5 text-xs text-muted"
@@ -1208,9 +1273,9 @@ function Library({ data }: { data: Snapshot }) {
               رجوع للقوالب
             </button>
             <ProgramEditor
-              key={template?.id ?? "new"}
-              initial={template?.content ?? blankContent}
-              name={template?.name ?? "قالب جديد"}
+              key={(template?.id ?? "new") + ":" + templateRevision}
+              initial={template?.content ?? templateSeed}
+              name={template?.name ?? templateSeedName}
               id={template?.id.startsWith("copy:") ? undefined : template?.id}
               library={data.exercises}
             />
@@ -1267,8 +1332,14 @@ function Library({ data }: { data: Snapshot }) {
             title="مكتبتك تبدأ من أول قالب"
             text="أنشئ قالبًا ثم انسخ محتواه لكل عميل. التعديل على النسخة لا يغيّر القالب."
           />
-        )
-      ) : (
+        )}
+      </div>
+      <div
+        id="library-panel-exercises"
+        role="tabpanel"
+        aria-labelledby="library-tab-exercises"
+        hidden={tab !== "exercises"}
+      >
         <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,1fr)]">
           <section className="card divide-y divide-line">
             {data.exercises.length ? (
@@ -1345,7 +1416,7 @@ function Library({ data }: { data: Snapshot }) {
             />
           </section>
         </div>
-      )}
+      </div>
     </>
   );
 }
@@ -1601,7 +1672,7 @@ function SettingsPage({ data }: { data: Snapshot }) {
                   <td className="text-xs" dir="ltr">
                     {a.action}
                   </td>
-                  <td className="font-mono text-[10px] text-muted">
+                  <td className="font-mono text-xs text-muted">
                     {a.entity_id?.slice(0, 12)}
                   </td>
                 </tr>

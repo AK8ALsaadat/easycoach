@@ -55,7 +55,7 @@ export function WeightPanel({
           <p className="metric-number">
             {last ? Number(last.weight).toFixed(1) : "—"}
           </p>
-          <p className="text-[11px] text-muted">
+          <p className="text-xs text-muted">
             آخر وزن · {last ? formatDate(last.entry_date) : "لم يُسجل"}
           </p>
         </div>
@@ -66,13 +66,13 @@ export function WeightPanel({
                 (Number(last.weight) - Number(first.weight)).toFixed(1)
               : "—"}
           </p>
-          <p className="text-[11px] text-muted">التغير منذ أول تسجيل</p>
+          <p className="text-xs text-muted">التغير منذ أول تسجيل</p>
         </div>
         <div>
           <p className="metric-number">
             {ordered.length ? average.toFixed(1) : "—"}
           </p>
-          <p className="text-[11px] text-muted">
+          <p className="text-xs text-muted">
             متوسط آخر {Math.min(7, ordered.length)} تسجيلات
           </p>
         </div>
@@ -122,7 +122,7 @@ export function WeightPanel({
               />
             ))}
           </svg>
-          <div className="flex justify-between text-[10px] text-muted">
+          <div className="flex justify-between text-xs text-muted">
             <span>{formatDate(recent[0].entry_date)}</span>
             <span>{formatDate(recent.at(-1)!.entry_date)}</span>
           </div>

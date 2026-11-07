@@ -1,5 +1,5 @@
 "use client";
-import { ExerciseIcon } from "./exercise-icon";
+import { ExerciseVisual } from "./exercise-visual";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -439,7 +439,10 @@ export function ProgramEditor({
               >
                 {e.catalogId && catalogById.has(e.catalogId) ? (
                   <div className="exercise-visual">
-                    <ExerciseIcon exercise={catalogById.get(e.catalogId)!} />
+                    <ExerciseVisual
+                      key={e.catalogId}
+                      exercise={catalogById.get(e.catalogId)!}
+                    />
                     <div>
                       <span className="eyebrow">
                         الحركة {String(i + 1).padStart(2, "0")}

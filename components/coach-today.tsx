@@ -5,7 +5,6 @@ import {
   Plus,
   Users,
   Dumbbell,
-  Wallet,
   CalendarDays,
   ArrowLeft,
   Check,
@@ -157,12 +156,10 @@ export function CoachToday({ data }: { data: Snapshot }) {
       <div className="dashboard-heading">
         <div>
           <p className="eyebrow">لوحة التحكم</p>
-          <h1>
-            أهلًا، {data.profile!.name.split(" ")[0]}{" "}
-            <span className="greeting-dot">✦</span>
-          </h1>
+          <h1>نظرة عامة</h1>
           <p className="mt-2 text-sm text-muted">
-            نظرة شاملة على متدربيك وأعمالك. كل ما تحتاجه لبدء يومك.
+            أهلًا {data.profile!.name.split(" ")[0]}، هذه آخر مستجدات متدربيك
+            وأعمالك.
           </p>
         </div>
         <div className="dashboard-actions">
@@ -217,78 +214,56 @@ export function CoachToday({ data }: { data: Snapshot }) {
       </div>
       <div className="command-deck">
         <section className="performance-hero">
-          <div className="readiness-copy">
-            <span className="summary-label">
-              <span /> متابعة البرامج
+          <div className="readiness-summary">
+            <div>
+              <h2>جاهزية البرامج</h2>
+              <p>
+                {needs.length
+                  ? needs.length + " متدرب بانتظار برنامج"
+                  : "كل البرامج جاهزة للمتابعة"}
+              </p>
+            </div>
+            <strong>
+              {ready}
+              <small>٪</small>
+            </strong>
+          </div>
+          <progress
+            aria-label="جاهزية برامج المتدربين"
+            value={ready}
+            max={100}
+          />
+          <div className="readiness-footer">
+            <span>
+              {active.length} اشتراك نشط · {data.templates.length} قوالب
             </span>
-            <h2>
-              {needs.length
-                ? "خطط جاهزة. بداية أقوى."
-                : clients.length
-                  ? "برامج متدربيك جاهزة"
-                  : "ابدأ رحلتك التدريبية"}
-            </h2>
-            <p>
-              {needs.length
-                ? `لديك ${needs.length} متدرب بانتظار أول برنامج. جهّز خطتهم وابدأ متابعة تقدمهم.`
-                : clients.length
-                  ? "كل متدرب لديه برنامج منشور. تابع تقدمهم وحدّث خططهم في الوقت المناسب."
-                  : "أضف أول متدرب، صمم برنامجه، وشاركه بوابته الخاصة."}
-            </p>
             <Link
-              className="btn"
               href={
                 needs.length
                   ? "/coach/clients?filter=program"
                   : "/coach/clients"
               }
             >
-              {needs.length ? "تجهيز البرامج" : "إدارة المتدربين"}
+              إدارة البرامج
               <ArrowLeft size={16} />
             </Link>
           </div>
-          <div
-            className="readiness-ring"
-            style={{ "--readiness": ready + "%" } as React.CSSProperties}
-          >
-            <div>
-              <strong>
-                {ready}
-                <small>٪</small>
-              </strong>
-              <span>جاهزية البرامج</span>
-            </div>
-          </div>
-          <div className="hero-bottom">
-            <span>
-              <Check size={14} />
-              {active.length} اشتراك نشط
-            </span>
-            <span>{drafts.length} مسودات</span>
-            <span>{data.templates.length} قوالب برامج</span>
-          </div>
         </section>
         <section className="revenue-card">
-          <div className="section-title">
-            <span className="summary-label">الملخص المالي</span>
-            <span className="finance-icon">
-              <Wallet size={19} />
+          <div>
+            <span className="summary-label">المحصّل هذا الشهر</span>
+            <strong className="revenue-number">{money(revenue)}</strong>
+            <p>الشهر السابق {money(previousRevenue)}</p>
+          </div>
+          <div className="revenue-secondary">
+            <span>
+              المبالغ المتبقية<strong>{money(totalDebt)}</strong>
             </span>
+            <Link href="/coach/finance" className="finance-link">
+              سجل الدفعات
+              <ArrowLeft size={16} />
+            </Link>
           </div>
-          <p className="text-sm text-muted">المحصّل هذا الشهر</p>
-          <strong className="revenue-number">{money(revenue)}</strong>
-          <p className="text-xs text-muted">
-            الشهر السابق {money(previousRevenue)}
-          </p>
-          <div className="revenue-divider" />
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-muted">المبالغ المتبقية</span>
-            <strong>{money(totalDebt)}</strong>
-          </div>
-          <Link href="/coach/finance" className="finance-link">
-            عرض الاشتراكات والدفعات
-            <ArrowLeft size={16} />
-          </Link>
         </section>
       </div>
       <div className="mt-6 grid items-start gap-5 xl:grid-cols-[1.6fr_1fr]">
@@ -310,7 +285,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
             </div>
           ) : (
             <div>
-              {tasks.slice(0, 6).map(({ client: c, items, urgent }, i) => (
+              {tasks.slice(0, 5).map(({ client: c, items, urgent }, i) => (
                 <Link
                   href={"/coach/clients/" + c.id}
                   key={c.id}
@@ -321,14 +296,14 @@ export function CoachToday({ data }: { data: Snapshot }) {
                   </span>
                   <div className="min-w-0 flex-1">
                     <strong className="text-sm">{c.name}</strong>
-                    <p className="mt-1 text-[11px] text-muted">
+                    <p className="mt-1 text-xs text-muted">
                       {items.join(" / ")}
                     </p>
                   </div>
                   {urgent ? (
                     <span className="badge bg-red-50 text-red-700">منتهي</span>
                   ) : (
-                    <span className="text-[11px] text-muted">
+                    <span className="text-xs text-muted">
                       {debt(c.id) > 0
                         ? money(debt(c.id))
                         : latest(c.id)
@@ -369,7 +344,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
               </div>
             ))}
           </div>
-          <p className="mt-4 border-t pt-3 text-[11px] text-muted">
+          <p className="mt-4 border-t pt-3 text-xs text-muted">
             برامج نشرتها خلال آخر 7 أيام
           </p>
           {noWeight.length ? (
@@ -433,7 +408,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
               </tr>
             </thead>
             <tbody>
-              {visible.slice(0, 12).map((c) => {
+              {visible.slice(0, 8).map((c) => {
                 const p = latest(c.id),
                   s = current(c.id),
                   g = data.client_goals?.find((g) => g.client_id === c.id),
@@ -454,7 +429,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
                           <strong className="whitespace-nowrap">
                             {c.name}
                           </strong>
-                          <p className="text-[11px] text-muted">
+                          <p className="text-xs text-muted">
                             {g?.goal || "لم يُحدد الهدف"}
                           </p>
                         </div>
@@ -466,7 +441,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
                           <strong className="text-xs">
                             {p.content.days.length} أيام / {p.name}
                           </strong>
-                          <p className="text-[11px] text-muted">
+                          <p className="text-xs text-muted">
                             {formatDate(p.published_at!)}
                           </p>
                         </>
@@ -479,7 +454,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
                         ? `${p.content.nutrition.calories} سعرة`
                         : "—"}
                       {p?.content.nutrition.meals?.length ? (
-                        <p className="text-[11px] text-muted">
+                        <p className="text-xs text-muted">
                           {p.content.nutrition.meals.length} وجبات
                         </p>
                       ) : null}
@@ -488,7 +463,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
                       {w ? (
                         <>
                           <strong dir="ltr">{w.weight} كجم</strong>
-                          <p className="text-[10px] text-muted">
+                          <p className="text-xs text-muted">
                             {formatDate(w.entry_date)}
                           </p>
                         </>
@@ -529,7 +504,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
           ) : null}
         </div>
         <div className="mobile-roster">
-          {visible.slice(0, 12).map((c) => {
+          {visible.slice(0, 8).map((c) => {
             const p = latest(c.id),
               g = data.client_goals?.find((g) => g.client_id === c.id);
             const weight = (data.weights ?? [])

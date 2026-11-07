@@ -12,7 +12,7 @@ export function Brand({ light = false }: { light?: boolean }) {
       <span className="text-lg">
         إيزي كوتش
         <span
-          className={`block text-[10px] font-normal tracking-wide ${light ? "text-white/40" : "text-muted"}`}
+          className={`block text-xs font-normal tracking-wide ${light ? "text-white/40" : "text-muted"}`}
         >
           بوابتك لإدارة التدريب
         </span>
