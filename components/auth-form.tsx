@@ -1,0 +1,136 @@
+"use client";
+import { useRef, useState } from "react";
+import {
+  loginAction,
+  registerAction,
+  magicLinkAction,
+  type Result,
+} from "@/app/actions";
+import { Notice } from "./forms";
+export function AuthForm({ next, local }: { next: string; local: boolean }) {
+  const [register, setRegister] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<Result | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  return (
+    <div>
+      <form
+        ref={formRef}
+        onSubmit={async (event) => {
+          event.preventDefault();
+          setBusy(true);
+          try {
+            setResult(
+              await (register ? registerAction : loginAction)(
+                new FormData(event.currentTarget),
+              ),
+            );
+          } finally {
+            setBusy(false);
+          }
+        }}
+        className="space-y-5"
+      >
+        <input type="hidden" name="next" value={next} />
+        {register ? (
+          <>
+            <div>
+              <label htmlFor="auth-name">اسمك</label>
+              <input
+                className="field"
+                id="auth-name"
+                name="name"
+                required
+                minLength={2}
+                maxLength={120}
+              />
+            </div>
+            <div>
+              <label htmlFor="auth-role">نوع الحساب</label>
+              <select className="field" id="auth-role" name="role">
+                <option value="coach">مدرب</option>
+                <option value="trainee">متدرب — بدعوة من مدربي</option>
+              </select>
+            </div>
+          </>
+        ) : null}
+        <div>
+          <label htmlFor="auth-email">الإيميل</label>
+          <input
+            id="auth-email"
+            name="email"
+            className="field"
+            type="email"
+            required
+            autoComplete="email"
+            defaultValue={local ? "coach@example.test" : ""}
+          />
+        </div>
+        <div>
+          <label htmlFor="auth-password">كلمة المرور</label>
+          <input
+            id="auth-password"
+            name="password"
+            className="field"
+            type="password"
+            required
+            minLength={register ? 12 : 8}
+            autoComplete={register ? "new-password" : "current-password"}
+            defaultValue={local ? "CoachPreview!2026" : ""}
+          />
+        </div>
+        <button disabled={busy} className="btn w-full" type="submit">
+          {busy
+            ? "نتحقق من بياناتك…"
+            : register
+              ? "إنشاء حساب"
+              : "الدخول إلى مساحتك"}
+        </button>
+        {!local && !register ? (
+          <button
+            type="button"
+            disabled={busy}
+            className="btn-secondary w-full"
+            onClick={async () => {
+              if (!formRef.current) return;
+              setBusy(true);
+              try {
+                setResult(await magicLinkAction(new FormData(formRef.current)));
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            الدخول برابط على الإيميل
+          </button>
+        ) : null}
+        <Notice result={result} />
+      </form>
+      {!local ? (
+        <button
+          className="mt-5 text-sm text-teal"
+          onClick={() => {
+            setRegister(!register);
+            setResult(null);
+          }}
+        >
+          {register ? "عندك حساب؟ ادخل" : "جديد هنا؟ أنشئ حسابك"}
+        </button>
+      ) : (
+        <div className="mt-6 rounded-xl border border-dashed bg-canvas p-4 text-xs leading-7 text-muted">
+          <p className="font-bold text-ink">حسابات اصطناعية للمعاينة فقط</p>
+          <p dir="ltr" className="text-right">
+            coach@example.test · coach2@example.test
+          </p>
+          <p dir="ltr" className="text-right">
+            trainee@example.test
+          </p>
+          <p>
+            كلمة المرور للجميع: <code dir="ltr">CoachPreview!2026</code>
+          </p>
+          <p>المدرب الثاني معزول عن بيانات الأول.</p>
+        </div>
+      )}
+    </div>
+  );
+}

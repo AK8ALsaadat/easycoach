@@ -1,0 +1,1722 @@
+"use client";
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  ArrowUpLeft,
+  Bell,
+  CalendarDays,
+  Check,
+  ChevronLeft,
+  ClipboardList,
+  Copy,
+  Download,
+  Dumbbell,
+  FileText,
+  LayoutDashboard,
+  Link2,
+  LogOut,
+  Plus,
+  Search,
+  Settings,
+  Shield,
+  Users,
+  Wallet,
+} from "lucide-react";
+import { createLink, logoutAction, type Result } from "@/app/actions";
+import {
+  blankContent,
+  type Client,
+  type Snapshot,
+  type Subscription,
+  type Template,
+} from "@/lib/model";
+import {
+  addDays,
+  daysBetween,
+  formatDate,
+  money,
+  riyadhToday,
+} from "@/lib/dates";
+import { Brand } from "./brand";
+import { ActionButton, DataForm, Notice, type Field } from "./forms";
+import { ProgramEditor } from "./program-editor";
+import { ImportClients } from "./import-clients";
+
+const methods = [
+  { value: "bank", label: "تحويل بنكي" },
+  { value: "cash", label: "نقدي" },
+  { value: "other", label: "أخرى" },
+];
+const clientFields = (client?: Client): Field[] => [
+  { name: "name", label: "اسم العميل", value: client?.name, required: true },
+  {
+    name: "email",
+    label: "الإيميل",
+    type: "email",
+    value: client?.email,
+    required: true,
+  },
+  {
+    name: "phone",
+    label: "الجوال (اختياري)",
+    value: client?.phone,
+    hint: "05xxxxxxxx أو +9665xxxxxxxx",
+  },
+];
+function paid(data: Snapshot, id: string) {
+  return data.payments
+    .filter((p) => p.subscription_id === id)
+    .reduce((sum, p) => sum + Number(p.amount), 0);
+}
+function remaining(data: Snapshot, sub: Subscription) {
+  return Math.max(0, Number(sub.price) - paid(data, sub.id));
+}
+function currentSubscription(data: Snapshot, clientId: string) {
+  const today = riyadhToday();
+  const all = data.subscriptions.filter((s) => s.client_id === clientId);
+  return (
+    all.find((s) => s.start_date <= today && s.end_date >= today) ??
+    all
+      .filter((s) => s.start_date > today)
+      .sort((a, b) => a.start_date.localeCompare(b.start_date))[0] ??
+    all.sort((a, b) => b.end_date.localeCompare(a.end_date))[0]
+  );
+}
+function subscriptionState(data: Snapshot, sub: Subscription) {
+  const today = riyadhToday();
+  if (today < sub.start_date) return "لم تبدأ";
+  if (today > sub.end_date) return "منتهية";
+  if (
+    data.freezes.some(
+      (f) =>
+        f.subscription_id === sub.id &&
+        f.start_date <= today &&
+        f.end_date >= today,
+    )
+  )
+    return "مجمّدة";
+  return "نشطة";
+}
+export function LinkBox({
+  kind,
+  clientId,
+}: {
+  kind: "invite" | "join";
+  clientId?: string;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<Result | null>(null);
+  return (
+    <div>
+      <button
+        className="btn-secondary"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          try {
+            setResult(await createLink(kind, clientId));
+          } catch {
+            setResult({ ok: false, message: "تعذر إنشاء الرابط" });
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <Link2 size={16} />
+        {busy
+          ? "نجهّز الرابط…"
+          : kind === "invite"
+            ? "إنشاء دعوة آمنة"
+            : "إنشاء رابط طلب انضمام"}
+      </button>
+      {result?.url ? (
+        <div className="mt-4 rounded-xl border bg-canvas p-4">
+          <label htmlFor={`generated-${kind}`}>رابط خاص — شاركه بنفسك</label>
+          <input
+            id={`generated-${kind}`}
+            className="field"
+            dir="ltr"
+            readOnly
+            value={result.url}
+            onFocus={(e) => e.currentTarget.select()}
+          />
+          <button
+            className="btn-soft mt-3"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(result.url!);
+                setResult({ ...result, message: "تم نسخ الرابط" });
+              } catch {
+                setResult({ ...result, message: "حدد الرابط وانسخه يدويًا" });
+              }
+            }}
+          >
+            <Copy size={14} />
+            نسخ الرابط
+          </button>
+          <p className="mt-2 text-xs text-muted">
+            {kind === "invite"
+              ? "ينتهي خلال 7 أيام، لمرة واحدة، ولن يقبله إلا الحساب الموثّق بنفس إيميل العميل. إنشاء دعوة جديدة يلغي الدعوات السابقة."
+              : "ينتهي خلال 30 يومًا. الطلب يحتاج موافقتك ولا يمنح وصولًا للبيانات. إنشاء رابط جديد يلغي السابق."}
+          </p>
+        </div>
+      ) : null}
+      <Notice result={result} />
+    </div>
+  );
+}
+
+const nav = [
+  { href: "/coach", label: "اليوم", icon: LayoutDashboard, key: "today" },
+  { href: "/coach/clients", label: "العملاء", icon: Users, key: "clients" },
+  {
+    href: "/coach/library",
+    label: "البرامج والتمارين",
+    icon: Dumbbell,
+    key: "library",
+  },
+  {
+    href: "/coach/finance",
+    label: "الباقات والدفعات",
+    icon: Wallet,
+    key: "finance",
+  },
+  {
+    href: "/coach/settings",
+    label: "الإعدادات والخصوصية",
+    icon: Settings,
+    key: "settings",
+  },
+];
+export function Workspace({
+  data,
+  section,
+  clientId,
+  initialFilter = "",
+  appUrl,
+  local,
+}: {
+  data: Snapshot;
+  section: string;
+  clientId?: string;
+  initialFilter?: string;
+  appUrl: string;
+  local: boolean;
+}) {
+  const [mobile, setMobile] = useState(false);
+  const client = data.clients.find((c) => c.id === clientId && !c.archived);
+  return (
+    <div className="min-h-screen md:grid md:grid-cols-[228px_minmax(0,1fr)]">
+      <aside
+        className={`${mobile ? "block" : "hidden"} sticky top-0 z-40 h-auto bg-ink px-5 py-7 md:block md:h-screen`}
+      >
+        <Brand light />
+        <p className="mt-11 mb-3 px-4 text-[10px] tracking-wide text-white/30">
+          إدارة أعمالك
+        </p>
+        <nav className="space-y-2" aria-label="القائمة الرئيسية">
+          {nav.map((item) => (
+            <Link
+              key={item.key}
+              href={item.href}
+              aria-current={section === item.key ? "page" : undefined}
+              className={`nav-item ${section === item.key ? "nav-active" : ""}`}
+            >
+              <item.icon size={18} />
+              {item.label}
+              {section === item.key ? (
+                <span className="ms-auto size-1.5 rounded-full bg-accent" />
+              ) : null}
+            </Link>
+          ))}
+        </nav>
+        <div className="mt-10 rounded-xl border border-white/10 p-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-white/80">
+            <Shield size={16} className="text-accent" />
+            مساحة خاصة بعملائك
+          </div>
+          <p className="mt-2 text-[11px] leading-6 text-white/35">
+            كل مدرب يرى بيانات عملائه فقط. المتدرب يرى برنامجه المنشور.
+          </p>
+        </div>
+        <div className="mt-12 border-t border-white/10 pt-5">
+          <div className="flex items-center gap-3">
+            <Avatar name={data.profile!.name} />
+            <div>
+              <p className="text-sm font-medium text-white">
+                {data.profile!.name}
+              </p>
+              <p className="text-[11px] text-white/40">حساب مدرب</p>
+            </div>
+          </div>
+          <form action={logoutAction}>
+            <button className="mt-4 flex min-h-11 items-center gap-2 text-xs text-white/50">
+              <LogOut size={14} />
+              تسجيل الخروج
+            </button>
+          </form>
+        </div>
+      </aside>
+      <div className="min-w-0">
+        <header className="sticky top-0 z-30 flex min-h-19 flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-5 py-3 backdrop-blur lg:px-9">
+          <div className="flex items-center gap-3">
+            <button
+              className="btn-secondary md:hidden"
+              onClick={() => setMobile(!mobile)}
+              aria-expanded={mobile}
+            >
+              القائمة
+            </button>
+            <span className="text-xs text-muted">
+              مساحتك <ChevronLeft className="mx-1 inline" size={12} />{" "}
+              <span className="text-ink">
+                {nav.find((n) => n.key === section)?.label}
+              </span>
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="hidden text-xs text-muted sm:flex sm:items-center sm:gap-2">
+              <CalendarDays size={15} />
+              {formatDate(riyadhToday())}
+            </span>
+            <Link
+              href="/coach/settings"
+              aria-label="طلبات تحتاج مراجعتك"
+              className="relative rounded-full border p-2"
+            >
+              <Bell size={17} />
+              {data.join_requests.some((r) => r.status === "pending") ||
+              data.privacy_requests.some((r) => r.status === "pending") ? (
+                <span className="absolute end-1 top-1 size-2 rounded-full bg-teal" />
+              ) : null}
+            </Link>
+            <span className="hidden text-xs text-muted lg:block">
+              توقيت الرياض
+            </span>
+          </div>
+        </header>
+        {local ? (
+          <div className="border-b border-teal/10 bg-accent/20 px-5 py-2 text-[11px] text-teal lg:px-9">
+            معاينة محلية · بيانات اصطناعية محفوظة في قاعدة بيانات على جهازك · لا
+            رسائل حقيقية
+          </div>
+        ) : null}
+        <main className="mx-auto max-w-[1550px] p-5 pb-12 lg:p-9">
+          {section === "today" ? (
+            <Today data={data} />
+          ) : section === "clients" ? (
+            clientId ? (
+              client ? (
+                <ClientDetail data={data} client={client} appUrl={appUrl} />
+              ) : (
+                <Empty
+                  title="العميل غير متاح"
+                  text="لا يوجد هذا العميل في حسابك."
+                />
+              )
+            ) : (
+              <Clients data={data} initialFilter={initialFilter} />
+            )
+          ) : section === "library" ? (
+            <Library data={data} />
+          ) : section === "finance" ? (
+            <Finance data={data} />
+          ) : (
+            <SettingsPage data={data} />
+          )}
+        </main>
+        <footer className="flex flex-wrap justify-between gap-3 border-t px-5 py-5 text-[11px] text-muted lg:px-9">
+          <span>مساحة المدرب · أقل تفاصيل، أكثر تركيز.</span>
+          <Link href="/privacy" className="underline">
+            الخصوصية · مسودة للمراجعة
+          </Link>
+        </footer>
+      </div>
+    </div>
+  );
+}
+function Avatar({ name }: { name: string }) {
+  return (
+    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-teal/10 bg-accent/40 text-base font-semibold text-teal">
+      {name.slice(0, 1)}
+    </span>
+  );
+}
+function Empty({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="card empty">
+      <ClipboardList className="text-teal/40" size={30} />
+      <h2 className="text-ink">{title}</h2>
+      <p className="max-w-md text-sm">{text}</p>
+    </div>
+  );
+}
+function Heading({
+  title,
+  text,
+  children,
+}: {
+  title: string;
+  text: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <h1>{title}</h1>
+        <p className="mt-1 text-sm text-muted">{text}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+function Today({ data }: { data: Snapshot }) {
+  const clients = data.clients.filter((c) => !c.archived);
+  const today = riyadhToday();
+  const needs = clients.filter(
+    (c) => !data.programs.some((p) => p.client_id === c.id && p.published_at),
+  );
+  const renew = clients.filter((c) => {
+    const s = currentSubscription(data, c.id);
+    return s && s.end_date <= addDays(today, 7);
+  });
+  const balance = data.subscriptions.reduce(
+    (sum, s) => sum + remaining(data, s),
+    0,
+  );
+  const updates = clients.filter((c) => {
+    const p = data.programs.find((p) => p.client_id === c.id && p.published_at);
+    return p && daysBetween(p.published_at!.slice(0, 10), today) >= 28;
+  });
+  return (
+    <>
+      <Heading
+        title={`أهلًا، ${data.profile!.name.split(" ")[0]} 👋`}
+        text="نظرة واضحة على يومك. هذه الأشياء تحتاج اهتمامك."
+      >
+        <Link className="btn" href="/coach/clients?add=1">
+          <Plus size={17} />
+          إضافة عميل
+        </Link>
+      </Heading>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          {
+            label: "العملاء",
+            value: clients.length,
+            icon: Users,
+            sub: "في مساحتك",
+            href: "/coach/clients",
+          },
+          {
+            label: "يحتاجون برنامجًا",
+            value: needs.length,
+            icon: Dumbbell,
+            sub: "لم يُنشر لهم برنامج بعد",
+            href: "/coach/clients?filter=program",
+          },
+          {
+            label: "تجديدات قريبة",
+            value: renew.length,
+            icon: CalendarDays,
+            sub: "منتهية أو تنتهي خلال 7 أيام",
+            href: "/coach/clients?filter=renew",
+          },
+          {
+            label: "دفعات متبقية",
+            value: money(balance),
+            icon: Wallet,
+            sub: "على جميع الباقات",
+            href: "/coach/finance",
+          },
+        ].map((item, i) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className={`card p-5 transition hover:border-teal/30 ${i === 1 ? "bg-[#edf7f2]" : ""}`}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-sm text-muted">{item.label}</span>
+              <span
+                className={`flex size-9 items-center justify-center rounded-xl ${i === 1 ? "bg-white text-teal" : "bg-canvas text-muted"}`}
+              >
+                <item.icon size={18} />
+              </span>
+            </div>
+            <p className="text-[2.05rem] leading-tight font-semibold tabular-nums">
+              {item.value}
+            </p>
+            <p className="mt-3 text-[11px] text-muted">{item.sub}</p>
+          </Link>
+        ))}
+      </div>
+      <div className="mt-7 grid items-start gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(280px,1fr)]">
+        <section className="card overflow-hidden">
+          <div className="section-title px-6 pt-6">
+            <h2>على قائمة اهتمامك</h2>
+            <span className="badge">
+              {needs.length + renew.length + updates.length} متابعة
+            </span>
+          </div>
+          {!needs.length && !renew.length && !updates.length ? (
+            <div className="empty">
+              <Check className="text-teal" />
+              <p>كل شيء مرتب اليوم.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-line">
+              {[
+                ...needs.map((c) => ({
+                  c,
+                  label: "يحتاج برنامجًا",
+                  hint: "جهّز مسودة وانشرها للمتدرب",
+                  tone: true,
+                })),
+                ...renew.map((c) => ({
+                  c,
+                  label: "تجديد اشتراك",
+                  hint: `تنتهي الباقة ${formatDate(currentSubscription(data, c.id)!.end_date)}`,
+                  tone: false,
+                })),
+                ...updates.map((c) => ({
+                  c,
+                  label: "مراجعة البرنامج",
+                  hint: "مرّ 28 يومًا على آخر نشر",
+                  tone: false,
+                })),
+              ]
+                .slice(0, 8)
+                .map(({ c, label, hint, tone }, i) => (
+                  <Link
+                    href={`/coach/clients/${c.id}`}
+                    key={c.id + i}
+                    className="flex items-center gap-3 px-6 py-4 hover:bg-canvas"
+                  >
+                    <Avatar name={c.name} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{c.name}</p>
+                      <p className="text-xs text-muted">{hint}</p>
+                    </div>
+                    <span
+                      className={`badge ${tone ? "bg-accent/40 text-teal" : ""}`}
+                    >
+                      {label}
+                    </span>
+                    <ChevronLeft size={15} className="text-muted" />
+                  </Link>
+                ))}
+            </div>
+          )}
+          <Link
+            href="/coach/clients"
+            className="flex items-center justify-center gap-2 border-t p-4 text-xs font-medium text-teal"
+          >
+            كل العملاء
+            <ArrowLeft size={14} />
+          </Link>
+        </section>
+        <div className="space-y-6">
+          <section className="card p-6">
+            <p className="text-xs font-medium text-teal">
+              خطوة صغيرة، فرق كبير
+            </p>
+            <h2 className="mt-3 text-xl leading-8">
+              خلّ لكل عميل
+              <br />
+              مساحة واضحة.
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-muted">
+              ابدأ من قالب، خصّصه لعميلك، ثم انشره. كل نسخة مستقلة عن البقية.
+            </p>
+            <Link href="/coach/library" className="btn-soft mt-5 w-full">
+              افتح مكتبة البرامج
+              <ArrowUpLeft size={16} />
+            </Link>
+          </section>
+          <JoinRequests data={data} compact />
+        </div>
+      </div>
+      <section className="card mt-7 overflow-hidden">
+        <div className="section-title px-6 pt-6">
+          <h2>عملاؤك، من نظرة</h2>
+          <Link href="/coach/clients" className="text-xs font-medium text-teal">
+            عرض الكل
+          </Link>
+        </div>
+        <ClientTable data={data} clients={clients.slice(0, 5)} />
+      </section>
+    </>
+  );
+}
+function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
+  if (!clients.length)
+    return (
+      <div className="empty">
+        <Users size={28} />
+        <p>ما فيه عملاء في هذا العرض.</p>
+      </div>
+    );
+  return (
+    <div className="overflow-x-auto">
+      <table>
+        <thead>
+          <tr>
+            <th>العميل</th>
+            <th>البرنامج</th>
+            <th>الاشتراك</th>
+            <th>المتبقي</th>
+            <th aria-label="فتح ملف العميل" />
+          </tr>
+        </thead>
+        <tbody>
+          {clients.map((c) => {
+            const program = data.programs.find(
+              (p) => p.client_id === c.id && p.published_at,
+            );
+            const sub = currentSubscription(data, c.id);
+            const balance = data.subscriptions
+              .filter((s) => s.client_id === c.id)
+              .reduce((n, s) => n + remaining(data, s), 0);
+            return (
+              <tr key={c.id}>
+                <td>
+                  <Link
+                    href={`/coach/clients/${c.id}`}
+                    className="flex items-center gap-3"
+                  >
+                    <Avatar name={c.name} />
+                    <div>
+                      <p className="whitespace-nowrap font-medium">{c.name}</p>
+                      <p className="text-[11px] text-muted">
+                        {c.trainee_user_id ? "حساب مرتبط" : c.email}
+                      </p>
+                    </div>
+                  </Link>
+                </td>
+                <td>
+                  <span
+                    className={`badge ${program ? "bg-accent/30 text-teal" : "bg-amber-50 text-amber-800"}`}
+                  >
+                    {program ? "منشور" : "يحتاج برنامجًا"}
+                  </span>
+                </td>
+                <td>
+                  {sub ? (
+                    <div>
+                      <p className="text-xs">{subscriptionState(data, sub)}</p>
+                      <p className="text-[10px] text-muted">
+                        حتى {formatDate(sub.end_date)}
+                      </p>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted">بدون باقة</span>
+                  )}
+                </td>
+                <td
+                  className={
+                    balance ? "font-medium text-amber-800" : "text-muted"
+                  }
+                >
+                  {money(balance)}
+                </td>
+                <td>
+                  <Link
+                    aria-label={`فتح ملف ${c.name}`}
+                    href={`/coach/clients/${c.id}`}
+                    className="inline-flex size-8 items-center justify-center rounded-lg border"
+                  >
+                    <ChevronLeft size={15} />
+                  </Link>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+function Clients({
+  data,
+  initialFilter,
+}: {
+  data: Snapshot;
+  initialFilter: string;
+}) {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState(
+    initialFilter === "add" ? "" : initialFilter,
+  );
+  const [add, setAdd] = useState(initialFilter === "add");
+  const [importing, setImporting] = useState(false);
+  const today = riyadhToday();
+  const clients = data.clients
+    .filter(
+      (c) =>
+        !c.archived &&
+        `${c.name} ${c.email} ${c.phone}`
+          .toLowerCase()
+          .includes(query.toLowerCase()),
+    )
+    .filter((c) =>
+      filter === "program"
+        ? !data.programs.some((p) => p.client_id === c.id && p.published_at)
+        : filter === "renew"
+          ? Boolean(
+              currentSubscription(data, c.id) &&
+              currentSubscription(data, c.id)!.end_date <= addDays(today, 7),
+            )
+          : filter === "balance"
+            ? data.subscriptions.some(
+                (s) => s.client_id === c.id && remaining(data, s) > 0,
+              )
+            : true,
+    );
+  return (
+    <>
+      <Heading title="العملاء" text="كل عميل ببرنامجه واشتراكه وتفاصيله.">
+        <div className="flex gap-2">
+          <button
+            className="btn-secondary"
+            onClick={() => {
+              setImporting(!importing);
+              setAdd(false);
+            }}
+          >
+            استيراد ملف
+          </button>
+          <button
+            className="btn"
+            onClick={() => {
+              setAdd(!add);
+              setImporting(false);
+            }}
+          >
+            <Plus size={16} />
+            عميل جديد
+          </button>
+        </div>
+      </Heading>
+      {add ? (
+        <section className="card mb-6 p-6">
+          <h2 className="mb-5">إضافة عميل</h2>
+          <DataForm
+            command="client_save"
+            fields={clientFields()}
+            label="إضافة وفتح الملف"
+            onDone={(r) =>
+              router.push(`/coach/clients/${(r.data as { id: string }).id}`)
+            }
+          />
+        </section>
+      ) : null}
+      {importing ? (
+        <section className="card mb-6 p-6">
+          <ImportClients emails={data.clients.map((c) => c.email)} />
+          <a
+            className="mt-4 inline-flex text-xs text-teal underline"
+            href="/examples/clients.csv"
+            download
+          >
+            تحميل CSV اصطناعي للتجربة
+          </a>
+        </section>
+      ) : null}
+      <div className="card overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-4 p-5">
+          <div className="relative w-full max-w-sm">
+            <Search size={16} className="absolute start-3 top-3.5 text-muted" />
+            <input
+              className="field ps-10"
+              placeholder="ابحث بالاسم أو الإيميل أو الجوال…"
+              aria-label="البحث عن عميل"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {[
+              ["", "الكل"],
+              ["program", "بدون برنامج"],
+              ["renew", "تجديد قريب"],
+              ["balance", "دفعات متبقية"],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                className={filter === value ? "btn-soft" : "btn-secondary"}
+                onClick={() => setFilter(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <ClientTable clients={clients} data={data} />
+      </div>
+    </>
+  );
+}
+
+function ClientDetail({
+  data,
+  client,
+  appUrl,
+}: {
+  data: Snapshot;
+  client: Client;
+  appUrl: string;
+}) {
+  const [tab, setTab] = useState("program");
+  const [templateId, setTemplateId] = useState("");
+  const [loaded, setLoaded] = useState<Template | null>(null);
+  const draft = data.programs.find(
+    (p) => p.client_id === client.id && !p.published_at,
+  );
+  const published = data.programs.find(
+    (p) => p.client_id === client.id && p.published_at,
+  );
+  const selected = loaded ?? draft ?? published;
+  const subs = data.subscriptions.filter((s) => s.client_id === client.id);
+  const whatsapp = client.phone.replace(/^0/, "966").replace(/\D/g, "");
+  const programUrl = `${appUrl}/me?client=${client.id}`;
+  return (
+    <>
+      <Link
+        className="mb-5 inline-flex items-center gap-1 text-xs text-muted"
+        href="/coach/clients"
+      >
+        العملاء
+        <ChevronLeft size={12} />
+        ملف العميل
+      </Link>
+      <Heading
+        title={client.name}
+        text={`${client.email}${client.phone ? " · " + client.phone : ""}`}
+      >
+        <div className="flex flex-wrap gap-2">
+          <span
+            className={`badge ${client.trainee_user_id ? "bg-accent/40 text-teal" : ""}`}
+          >
+            {client.trainee_user_id ? "حسابه مرتبط" : "بانتظار ربط الحساب"}
+          </span>
+          <button
+            className="btn-secondary"
+            onClick={() =>
+              void navigator.clipboard
+                .writeText(programUrl)
+                .catch(() => window.prompt("انسخ رابط البرنامج", programUrl))
+            }
+          >
+            <Copy size={14} />
+            رابط البرنامج
+          </button>
+          {client.phone ? (
+            <a
+              className="btn-soft"
+              target="_blank"
+              rel="noopener noreferrer"
+              href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(`مرحبًا ${client.name}، برنامجك من مدربك متاح عبر الرابط الآمن: ${programUrl} — ادخل بنفس إيميل الدعوة.`)}`}
+            >
+              مشاركة عبر واتساب
+              <ArrowUpLeft size={14} />
+            </a>
+          ) : null}
+        </div>
+      </Heading>
+      <p className="mb-5 text-xs text-muted">
+        رابط البرنامج يتطلب حساب المتدرب الموثّق. واتساب يفتح مسودة ترسلها أنت،
+        ولا تُرسل أي رسالة تلقائيًا.
+      </p>
+      <div className="mb-6 flex flex-wrap gap-2">
+        {[
+          ["program", "البرنامج والتغذية"],
+          ["finance", "الباقات والدفعات"],
+          ["profile", "البيانات والدعوة"],
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={tab === key ? "btn" : "btn-secondary"}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {tab === "program" ? (
+        <section className="card p-5 sm:p-7">
+          <div className="section-title">
+            <div>
+              <h2>مسودة البرنامج</h2>
+              <p className="mt-1 text-xs text-muted">
+                {published
+                  ? `آخر نشر: ${formatDate(published.published_at!)}`
+                  : "ما فيه نسخة منشورة للعميل بعد."}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <select
+                aria-label="قالب البداية"
+                className="field max-w-60"
+                value={templateId}
+                onChange={(e) => setTemplateId(e.target.value)}
+              >
+                <option value="">ابدأ من قالب…</option>
+                {data.templates.map((t) => (
+                  <option value={t.id} key={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="btn-secondary"
+                disabled={!templateId}
+                onClick={() => {
+                  if (
+                    draft &&
+                    !window.confirm(
+                      "سيستبدل محتوى المسودة بنسخة من القالب. النسخة المنشورة لن تتغير. تتابع؟",
+                    )
+                  )
+                    return;
+                  setLoaded(
+                    structuredClone(
+                      data.templates.find((t) => t.id === templateId)!,
+                    ),
+                  );
+                }}
+              >
+                استخدام نسخة مستقلة
+              </button>
+            </div>
+          </div>
+          <ProgramEditor
+            key={
+              loaded
+                ? `template-${loaded.id}`
+                : (draft?.id ?? published?.id ?? client.id)
+            }
+            initial={selected?.content ?? blankContent}
+            name={selected?.name ?? "برنامج جديد"}
+            id={draft?.id}
+            clientId={client.id}
+            library={data.exercises}
+          />
+        </section>
+      ) : tab === "finance" ? (
+        <div className="space-y-6">
+          <details className="card p-6">
+            <summary>إضافة باقة أو تجديد</summary>
+            <div className="mt-5">
+              <SubscriptionForm data={data} client={client} />
+            </div>
+          </details>
+          {subs.length ? (
+            subs.map((s) => (
+              <SubscriptionCard
+                data={data}
+                sub={s}
+                client={client}
+                appUrl={appUrl}
+                key={s.id}
+              />
+            ))
+          ) : (
+            <Empty
+              title="ما فيه اشتراك بعد"
+              text="أضف الباقة وحدد بدايتها ونهايتها؛ تاريخ الدفع مستقل عنها."
+            />
+          )}
+        </div>
+      ) : (
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          <section className="card p-6">
+            <h2 className="mb-5">بيانات العميل</h2>
+            <DataForm
+              command="client_save"
+              base={{ id: client.id }}
+              fields={clientFields(client)}
+            />
+            <p className="mt-4 text-xs text-muted">
+              تغيير الإيميل يلغي ارتباط الحساب والدعوات السابقة؛ أنشئ دعوة جديدة
+              للإيميل الصحيح.
+            </p>
+          </section>
+          <section className="card space-y-5 p-6">
+            <h2>الوصول الآمن للمتدرب</h2>
+            <p className="text-sm text-muted">
+              لا يكفي امتلاك الرابط. لقبول الدعوة، يلزم الدخول بإيميل العميل
+              وتأكيد هويته.
+            </p>
+            <LinkBox kind="invite" clientId={client.id} />
+            {data.invitations
+              .filter(
+                (i) =>
+                  i.client_id === client.id && !i.revoked_at && !i.consumed_at,
+              )
+              .map((i) => (
+                <div
+                  className="flex flex-wrap items-center justify-between gap-2 border-t pt-4"
+                  key={i.id}
+                >
+                  <p className="text-xs text-muted">
+                    تنتهي {formatDate(i.expires_at)}
+                  </p>
+                  <ActionButton command="invite_revoke" payload={{ id: i.id }}>
+                    إلغاء الدعوة
+                  </ActionButton>
+                </div>
+              ))}
+          </section>
+        </div>
+      )}
+    </>
+  );
+}
+
+function SubscriptionForm({
+  data,
+  client,
+}: {
+  data: Snapshot;
+  client: Client;
+}) {
+  const all = data.subscriptions.filter((s) => s.client_id === client.id);
+  const latest = [...all].sort((a, b) =>
+    b.end_date.localeCompare(a.end_date),
+  )[0];
+  const [renew, setRenew] = useState(false);
+  return (
+    <div>
+      <label className="mb-4 flex items-center gap-2 font-normal">
+        <input
+          type="checkbox"
+          disabled={!latest}
+          checked={renew}
+          onChange={(e) => setRenew(e.target.checked)}
+        />
+        تجديد الباقة السابقة (يبدأ بعد انتهائها)
+      </label>
+      <DataForm
+        key={String(renew)}
+        command="subscription_create"
+        base={{
+          client_id: client.id,
+          ...(renew && latest ? { previous_id: latest.id } : {}),
+        }}
+        fields={[
+          {
+            name: "name",
+            label: "اسم الباقة",
+            required: true,
+            value: renew ? latest?.name : "تدريب شامل",
+          },
+          {
+            name: "price",
+            label: "قيمة الباقة (ريال)",
+            type: "number",
+            required: true,
+            value: renew ? latest?.price : 650,
+          },
+          {
+            name: "start_date",
+            label: "بداية الاشتراك",
+            type: "date",
+            required: true,
+            value:
+              renew && latest ? addDays(latest.end_date, 1) : riyadhToday(),
+          },
+          {
+            name: "end_date",
+            label: "نهاية الاشتراك",
+            type: "date",
+            required: true,
+            value: addDays(
+              renew && latest ? latest.end_date : riyadhToday(),
+              30,
+            ),
+          },
+        ]}
+        label={renew ? "تأكيد التجديد" : "إضافة الباقة"}
+      />
+      <p className="mt-3 text-xs text-muted">
+        إنشاء باقة لا يسجّل دفعة. سجّل الدفع بتاريخه الفعلي بشكل مستقل.
+      </p>
+    </div>
+  );
+}
+function SubscriptionCard({
+  data,
+  sub,
+  client,
+  appUrl,
+}: {
+  data: Snapshot;
+  sub: Subscription;
+  client: Client;
+  appUrl: string;
+}) {
+  const due = remaining(data, sub);
+  const frozen = data.freezes.filter((f) => f.subscription_id === sub.id);
+  const payments = data.payments.filter((p) => p.subscription_id === sub.id);
+  const whatsapp = client.phone.replace(/^0/, "966").replace(/\D/g, "");
+  return (
+    <section className="card overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b p-6">
+        <div>
+          <h2>{sub.name}</h2>
+          <p className="mt-1 text-xs text-muted">
+            {formatDate(sub.start_date)} ← {formatDate(sub.end_date)}
+          </p>
+        </div>
+        <span className="badge bg-accent/30 text-teal">
+          {subscriptionState(data, sub)}
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-3 p-6">
+        {[
+          ["قيمة الباقة", sub.price],
+          ["المدفوع", paid(data, sub.id)],
+          ["المتبقي", due],
+        ].map(([label, value]) => (
+          <div key={String(label)}>
+            <p className="text-xs text-muted">{label}</p>
+            <p className="mt-1 text-lg font-semibold">{money(value)}</p>
+          </div>
+        ))}
+      </div>
+      <div className="space-y-5 border-t p-6">
+        {due > 0 ? (
+          <details>
+            <summary className="text-sm text-teal">
+              تسجيل دفعة جزئية أو كاملة
+            </summary>
+            <div className="mt-4">
+              <DataForm
+                command="payment_add"
+                idempotent
+                base={{ subscription_id: sub.id }}
+                fields={[
+                  {
+                    name: "amount",
+                    label: "المبلغ (ريال)",
+                    type: "number",
+                    value: due,
+                    required: true,
+                  },
+                  {
+                    name: "method",
+                    label: "طريقة الدفع",
+                    type: "select",
+                    options: methods,
+                  },
+                  {
+                    name: "paid_date",
+                    label: "تاريخ الدفع الفعلي",
+                    type: "date",
+                    value: riyadhToday(),
+                    required: true,
+                  },
+                  {
+                    name: "reference",
+                    label: "مرجع العملية",
+                    hint: "مرجع فريد يساعد في منع تكرار التحويل.",
+                  },
+                ]}
+                label="إثبات الدفعة في السجل"
+              />
+            </div>
+          </details>
+        ) : null}
+        <details>
+          <summary className="text-sm">تجميد الباقة</summary>
+          <p className="mt-3 mb-4 text-xs text-muted">
+            النهاية تتمدد بعدد أيام التجميد شاملًا أول وآخر يوم، لمرة واحدة. لا
+            نقبل فترات متداخلة.
+          </p>
+          <DataForm
+            command="freeze_apply"
+            idempotent
+            base={{ subscription_id: sub.id }}
+            fields={[
+              {
+                name: "start_date",
+                label: "أول يوم تجميد",
+                type: "date",
+                value: riyadhToday(),
+                required: true,
+              },
+              {
+                name: "end_date",
+                label: "آخر يوم تجميد",
+                type: "date",
+                value: riyadhToday(),
+                required: true,
+              },
+            ]}
+            label="تطبيق التجميد والتمديد"
+          />
+          {frozen.map((f) => (
+            <p key={f.id} className="mt-3 rounded-xl bg-canvas p-3 text-xs">
+              {formatDate(f.start_date)} — {formatDate(f.end_date)} · طُبّق
+              تمديد {f.days} يومًا
+            </p>
+          ))}
+        </details>
+        {client.phone ? (
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-secondary"
+            href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(`مرحبًا ${client.name}، تنتهي باقة ${sub.name} بتاريخ ${formatDate(sub.end_date)}. للتجديد تواصل معي. تفاصيل اشتراكك: ${appUrl}/me`)}`}
+          >
+            فتح مسودة تذكير تجديد
+            <ArrowUpLeft size={14} />
+          </a>
+        ) : null}
+      </div>
+      {payments.length ? <PaymentList data={data} payments={payments} /> : null}
+    </section>
+  );
+}
+function PaymentList({
+  data,
+  payments,
+}: {
+  data: Snapshot;
+  payments: Snapshot["payments"];
+}) {
+  return (
+    <div className="overflow-x-auto border-t">
+      <table>
+        <thead>
+          <tr>
+            <th>التاريخ</th>
+            <th>المبلغ</th>
+            <th>الطريقة / المرجع</th>
+            <th>التوثيق</th>
+          </tr>
+        </thead>
+        <tbody>
+          {payments.map((p) => {
+            const reversed = data.payments.some((r) => r.reverses === p.id);
+            return (
+              <tr key={p.id}>
+                <td className="whitespace-nowrap">{formatDate(p.paid_date)}</td>
+                <td
+                  className={
+                    p.kind === "reversal" ? "text-red-700" : "font-medium"
+                  }
+                >
+                  {money(p.amount)}
+                </td>
+                <td>
+                  <p className="text-xs">
+                    {methods.find((m) => m.value === p.method)?.label}
+                  </p>
+                  <p className="mt-1 text-[10px] text-muted">
+                    {p.reference || "بدون مرجع"}
+                  </p>
+                </td>
+                <td>
+                  {p.kind === "reversal" ? (
+                    <p className="max-w-xs text-xs text-muted">
+                      عكس موثّق: {p.reason}
+                    </p>
+                  ) : reversed ? (
+                    <span className="badge">عُكست بتصحيح</span>
+                  ) : (
+                    <details className="min-w-44">
+                      <summary className="text-xs text-muted">
+                        تصحيح الدفعة
+                      </summary>
+                      <div className="mt-3 min-w-60">
+                        <DataForm
+                          command="payment_reverse"
+                          idempotent
+                          base={{ payment_id: p.id }}
+                          fields={[
+                            {
+                              name: "reason",
+                              label: "سبب التصحيح (موثق)",
+                              type: "textarea",
+                              required: true,
+                            },
+                          ]}
+                          label="عكس الدفعة مع حفظ الأصل"
+                        />
+                        <p className="mt-3 text-xs text-muted">
+                          بعد العكس، سجّل المبلغ الصحيح كدفعة جديدة بمرجع مختلف.
+                          الأصل يبقى في السجل.
+                        </p>
+                      </div>
+                    </details>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function Library({ data }: { data: Snapshot }) {
+  const [tab, setTab] = useState("templates");
+  const [template, setTemplate] = useState<Template | null>(null);
+  const [editor, setEditor] = useState(false);
+  const [exerciseId, setExerciseId] = useState("");
+  const ex = data.exercises.find((e) => e.id === exerciseId);
+  return (
+    <>
+      <Heading
+        title="مكتبتك، بطريقتك"
+        text="تمارين وقوالب خاصة بك. انسخ، خصّص، ثم انشر لكل عميل."
+      >
+        <button
+          className="btn"
+          onClick={() => {
+            setTemplate(null);
+            setEditor(true);
+            setTab("templates");
+          }}
+        >
+          <Plus size={16} />
+          قالب جديد
+        </button>
+      </Heading>
+      <div className="mb-6 flex gap-2">
+        <button
+          className={tab === "templates" ? "btn" : "btn-secondary"}
+          onClick={() => {
+            setTab("templates");
+            setEditor(false);
+          }}
+        >
+          قوالب البرامج
+        </button>
+        <button
+          className={tab === "exercises" ? "btn" : "btn-secondary"}
+          onClick={() => setTab("exercises")}
+        >
+          مكتبة التمارين
+        </button>
+      </div>
+      {tab === "templates" ? (
+        editor ? (
+          <section className="card p-6">
+            <button
+              className="mb-5 text-xs text-muted"
+              onClick={() => setEditor(false)}
+            >
+              رجوع للقوالب
+            </button>
+            <ProgramEditor
+              key={template?.id ?? "new"}
+              initial={template?.content ?? blankContent}
+              name={template?.name ?? "قالب جديد"}
+              id={template?.id.startsWith("copy:") ? undefined : template?.id}
+              library={data.exercises}
+            />
+          </section>
+        ) : data.templates.length ? (
+          <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
+            {data.templates.map((t) => (
+              <article key={t.id} className="card p-6">
+                <span className="mb-5 flex size-12 items-center justify-center rounded-xl bg-accent/30 text-teal">
+                  <ClipboardList size={23} />
+                </span>
+                <h2>{t.name}</h2>
+                <p className="mt-2 text-sm text-muted">
+                  {t.content.days.length} أيام ·{" "}
+                  {t.content.days.reduce(
+                    (sum, d) => sum + d.exercises.length,
+                    0,
+                  )}{" "}
+                  تمارين
+                </p>
+                <p className="mt-2 text-xs text-muted">
+                  آخر تعديل {formatDate(t.updated_at)}
+                </p>
+                <div className="mt-6 flex gap-2">
+                  <button
+                    className="btn-secondary"
+                    onClick={() => {
+                      setTemplate(t);
+                      setEditor(true);
+                    }}
+                  >
+                    فتح وتعديل
+                  </button>
+                  <button
+                    className="btn-soft"
+                    onClick={() => {
+                      setTemplate({
+                        ...structuredClone(t),
+                        id: "copy:" + t.id,
+                        name: t.name + " · نسخة",
+                      });
+                      setEditor(true);
+                    }}
+                  >
+                    <Copy size={14} />
+                    نسخ
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <Empty
+            title="مكتبتك تبدأ من أول قالب"
+            text="أنشئ قالبًا ثم انسخ محتواه لكل عميل. التعديل على النسخة لا يغيّر القالب."
+          />
+        )
+      ) : (
+        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,1fr)]">
+          <section className="card divide-y divide-line">
+            {data.exercises.length ? (
+              data.exercises.map((e) => (
+                <article key={e.id} className="flex items-start gap-3 p-5">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-canvas text-muted">
+                    <Dumbbell size={18} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-medium">{e.name}</h3>
+                    <p className="mt-1 text-xs leading-7 text-muted">
+                      {e.description || "بدون شرح إضافي"}
+                    </p>
+                    {e.video ? (
+                      <a
+                        className="mt-2 inline-block text-xs text-teal underline"
+                        href={e.video}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        رابط الفيديو
+                      </a>
+                    ) : null}
+                  </div>
+                  <button
+                    className="text-xs text-teal"
+                    onClick={() => setExerciseId(e.id)}
+                  >
+                    تعديل
+                  </button>
+                </article>
+              ))
+            ) : (
+              <div className="empty">أضف أول تمرين لمكتبتك.</div>
+            )}
+          </section>
+          <section className="card p-6">
+            <div className="section-title">
+              <h2>{ex ? "تعديل التمرين" : "تمرين جديد"}</h2>
+              {ex ? (
+                <button
+                  className="text-xs text-teal"
+                  onClick={() => setExerciseId("")}
+                >
+                  إضافة جديد
+                </button>
+              ) : null}
+            </div>
+            <DataForm
+              key={ex?.id ?? "new"}
+              command="exercise_save"
+              base={ex ? { id: ex.id } : {}}
+              fields={[
+                {
+                  name: "name",
+                  label: "اسم التمرين",
+                  value: ex?.name,
+                  required: true,
+                },
+                {
+                  name: "video",
+                  label: "فيديو اختياري",
+                  type: "url",
+                  value: ex?.video,
+                  hint: "رابط https فقط، بدون رفع ملفات",
+                },
+                {
+                  name: "description",
+                  label: "شرح الحركة",
+                  type: "textarea",
+                  value: ex?.description,
+                },
+              ]}
+            />
+          </section>
+        </div>
+      )}
+    </>
+  );
+}
+function Finance({ data }: { data: Snapshot }) {
+  const total = data.subscriptions.reduce((n, s) => n + Number(s.price), 0);
+  const received = data.payments.reduce((n, p) => n + Number(p.amount), 0);
+  return (
+    <>
+      <Heading
+        title="الباقات والدفعات"
+        text="تاريخ الاشتراك مستقل عن الدفع. كل حركة لها أثر واضح."
+      >
+        <a download href="/api/export" className="btn-secondary">
+          <Download size={16} />
+          تصدير السجل
+        </a>
+      </Heading>
+      <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
+        هذا سجل متابعة دفعات داخلي يديره المدرب، وليس فاتورة ضريبية أو إيصالًا
+        من بوابة دفع.
+      </p>
+      <div className="mb-7 grid gap-4 sm:grid-cols-3">
+        {[
+          ["قيمة الباقات", total],
+          ["صافي الدفعات", received],
+          ["المتبقي", total - received],
+        ].map(([label, value]) => (
+          <div key={String(label)} className="card p-6">
+            <p className="text-xs text-muted">{label}</p>
+            <p className="mt-3 text-2xl font-semibold">{money(value)}</p>
+          </div>
+        ))}
+      </div>
+      <section className="card overflow-hidden">
+        <div className="section-title px-6 pt-6">
+          <h2>الاشتراكات</h2>
+          <Link className="btn-soft" href="/coach/clients">
+            إضافة باقة من ملف العميل
+            <Plus size={14} />
+          </Link>
+        </div>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr>
+                <th>العميل</th>
+                <th>الباقة</th>
+                <th>البداية</th>
+                <th>النهاية</th>
+                <th>المتبقي</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.subscriptions.map((s) => (
+                <tr key={s.id}>
+                  <td>
+                    <Link
+                      className="text-teal"
+                      href={`/coach/clients/${s.client_id}`}
+                    >
+                      {data.clients.find((c) => c.id === s.client_id)?.name ??
+                        "عميل محذوف"}
+                    </Link>
+                  </td>
+                  <td>{s.name}</td>
+                  <td>{formatDate(s.start_date)}</td>
+                  <td>{formatDate(s.end_date)}</td>
+                  <td>{money(remaining(data, s))}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!data.subscriptions.length ? (
+            <div className="empty">ما فيه باقات بعد.</div>
+          ) : null}
+        </div>
+      </section>
+      <section className="card mt-7 overflow-hidden">
+        <h2 className="p-6">سجل الدفعات والتصحيحات</h2>
+        {data.payments.length ? (
+          <PaymentList data={data} payments={data.payments} />
+        ) : (
+          <div className="empty">أضف دفعة من ملف العميل بعد إنشاء الباقة.</div>
+        )}
+      </section>
+    </>
+  );
+}
+function JoinRequests({
+  data,
+  compact = false,
+}: {
+  data: Snapshot;
+  compact?: boolean;
+}) {
+  const pending = data.join_requests.filter((r) => r.status === "pending");
+  return (
+    <section className="card p-6">
+      <div className="section-title">
+        <h2>طلبات الانضمام</h2>
+        <span className="badge">{pending.length}</span>
+      </div>
+      {!pending.length ? (
+        <p className="text-sm leading-7 text-muted">
+          ما فيه طلبات تنتظر موافقتك. شارك رابط طلب الانضمام من الإعدادات.
+        </p>
+      ) : (
+        pending.slice(0, compact ? 3 : 100).map((r) => (
+          <div className="border-t py-4" key={r.id}>
+            <p className="font-medium">{r.name}</p>
+            <p className="mb-3 text-xs text-muted">{r.email}</p>
+            <div className="flex gap-2">
+              <ActionButton
+                command="join_review"
+                payload={{ id: r.id, approve: true }}
+                className="btn-soft"
+              >
+                موافقة وإضافة
+              </ActionButton>
+              <ActionButton
+                command="join_review"
+                payload={{ id: r.id, approve: false }}
+              >
+                رفض
+              </ActionButton>
+            </div>
+          </div>
+        ))
+      )}
+      {compact ? (
+        <Link
+          className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-teal"
+          href="/coach/settings"
+        >
+          إدارة الطلبات
+          <ArrowLeft size={13} />
+        </Link>
+      ) : (
+        <p className="mt-4 text-xs text-muted">
+          الموافقة تضيف العميل فقط. أنشئ دعوته من ملفه لربط الحساب بعد التحقق.
+        </p>
+      )}
+    </section>
+  );
+}
+function SettingsPage({ data }: { data: Snapshot }) {
+  return (
+    <>
+      <Heading
+        title="إعدادات مساحتك"
+        text="روابط الدعوة، طلبات البيانات، وسجل التغييرات."
+      />
+      <div className="grid items-start gap-6 xl:grid-cols-2">
+        <section className="card p-6">
+          <h2 className="mb-3">رابط طلب الانضمام</h2>
+          <p className="mb-5 text-sm leading-7 text-muted">
+            يقدم العميل طلبًا، وتراجعه أنت. لا يُنشأ ارتباط حساب قبل الدعوة
+            والتحقق من الإيميل.
+          </p>
+          <LinkBox kind="join" />
+        </section>
+        <section className="card p-6">
+          <h2>تصدير البيانات</h2>
+          <p className="mt-3 mb-5 text-sm text-muted">
+            تصدير خاص بعملائك فقط. احتفظ بالملفات في مكان آمن.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <a download href="/api/export" className="btn-secondary">
+              <Download size={16} />
+              كل بياناتك (JSON)
+            </a>
+            <a download href="/api/export?type=clients" className="btn-soft">
+              العملاء (CSV)
+            </a>
+          </div>
+          <Link
+            href="/privacy"
+            className="mt-5 inline-flex items-center gap-2 text-xs text-teal"
+          >
+            <FileText size={14} />
+            إشعار الخصوصية للمراجعة
+          </Link>
+        </section>
+        <JoinRequests data={data} />
+        <section className="card p-6">
+          <h2 className="mb-5">طلبات التصحيح والحذف</h2>
+          {data.privacy_requests.filter((r) => r.status === "pending")
+            .length ? (
+            data.privacy_requests
+              .filter((r) => r.status === "pending")
+              .map((r) => (
+                <details className="border-t py-4" key={r.id}>
+                  <summary>
+                    {data.clients.find((c) => c.id === r.client_id)?.name} ·{" "}
+                    {r.kind === "deletion" ? "حذف البيانات" : "تصحيح البيانات"}
+                  </summary>
+                  <p className="my-4 whitespace-pre-wrap text-sm text-muted">
+                    {r.details}
+                  </p>
+                  {r.kind === "deletion" ? (
+                    <p className="mb-4 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
+                      سيُحذف البرنامج والاسم والإيميل والجوال والدعوات ويُلغى
+                      الوصول. تبقى أرقام الدفعات مجهّلة في السجل؛ هذه سياسة
+                      أولية تحتاج مراجعة قبل الإطلاق.
+                    </p>
+                  ) : (
+                    <Link
+                      href={`/coach/clients/${r.client_id}`}
+                      className="mb-4 inline-block text-xs text-teal underline"
+                    >
+                      عدّل البيانات في ملف العميل أولًا
+                    </Link>
+                  )}
+                  <DataForm
+                    command="privacy_fulfill"
+                    base={{ id: r.id }}
+                    fields={[
+                      {
+                        name: "resolution",
+                        label: "وثّق ما تم تنفيذه",
+                        type: "textarea",
+                        required: true,
+                      },
+                    ]}
+                    label={
+                      r.kind === "deletion"
+                        ? "تنفيذ الحذف وإلغاء الوصول"
+                        : "توثيق إتمام التصحيح"
+                    }
+                  />
+                </details>
+              ))
+          ) : (
+            <p className="text-sm text-muted">لا توجد طلبات معلّقة.</p>
+          )}
+        </section>
+      </div>
+      <section className="card mt-7 overflow-hidden">
+        <h2 className="p-6">آخر التغييرات الموثّقة</h2>
+        <div className="max-h-80 overflow-auto">
+          <table>
+            <thead>
+              <tr>
+                <th>الوقت</th>
+                <th>العملية</th>
+                <th>مرجع السجل</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.audit.map((a) => (
+                <tr key={a.id}>
+                  <td className="text-xs">{formatDate(a.created_at)}</td>
+                  <td className="text-xs" dir="ltr">
+                    {a.action}
+                  </td>
+                  <td className="font-mono text-[10px] text-muted">
+                    {a.entity_id?.slice(0, 12)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
+  );
+}

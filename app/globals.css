@@ -1,0 +1,179 @@
+@import "tailwindcss";
+@theme {
+  --color-ink: #18333d;
+  --color-muted: #6d8088;
+  --color-line: #e2e9ec;
+  --color-accent: #b8ebdb;
+  --color-teal: #197b68;
+  --color-canvas: #f5f8f9;
+}
+@layer base {
+  :root {
+    color-scheme: light;
+    background: #f5f8f9;
+    color: #18333d;
+    font-size: 16px;
+  }
+  * {
+    box-sizing: border-box;
+    border-color: #e2e9ec;
+  }
+  body {
+    margin: 0;
+    line-height: 1.8;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+  button,
+  summary {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: wait;
+    opacity: 0.55;
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+  h1,
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
+  h1,
+  h2,
+  h3 {
+    line-height: 1.5;
+    text-wrap: balance;
+  }
+  h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+  }
+  h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+  input,
+  textarea,
+  select {
+    max-width: 100%;
+  }
+  input[type="email"],
+  input[type="url"] {
+    direction: ltr;
+    text-align: right;
+  }
+  input[type="date"] {
+    direction: ltr;
+  }
+  button:focus-visible,
+  a:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid #197b68;
+    outline-offset: 4px;
+  }
+  ::selection {
+    background: #b8ebdb;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th {
+    text-align: right;
+    font-weight: 500;
+    color: #6d8088;
+    background: #fafcfc;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  th,
+  td {
+    padding: 16px 20px;
+    border-bottom: 1px solid #edf1f2;
+  }
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  tbody tr:hover {
+    background: #fafdfc;
+  }
+  td {
+    font-size: 0.95rem;
+  }
+  label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  textarea {
+    resize: vertical;
+  }
+  summary {
+    font-weight: 600;
+  }
+  summary::marker {
+    color: #197b68;
+  }
+}
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line bg-white shadow-[0_3px_16px_#18333d03];
+  }
+  .field {
+    @apply w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-ink outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/10 disabled:bg-canvas;
+  }
+  .btn {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-transparent bg-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#264b57] disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2 text-sm font-medium text-ink transition hover:bg-canvas disabled:opacity-50;
+  }
+  .btn-soft {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-accent/40 px-4 py-2 text-sm font-semibold text-teal;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full bg-canvas px-3 py-1 text-xs font-medium text-muted;
+  }
+  .section-title {
+    @apply mb-5 flex flex-wrap items-center justify-between gap-3;
+  }
+  .empty {
+    @apply flex min-h-48 flex-col items-center justify-center gap-3 p-8 text-center text-muted;
+  }
+  .nav-item {
+    @apply flex min-h-12 items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/65 transition hover:bg-white/5 hover:text-white;
+  }
+  .nav-active {
+    @apply bg-[#244650] text-[#b8ebdb];
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    font-size: 14px;
+  }
+  h1 {
+    font-size: 1.6rem;
+  }
+  th,
+  td {
+    padding: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
