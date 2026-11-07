@@ -77,6 +77,44 @@ export type Database = {
           },
         ]
       }
+      client_goals: {
+        Row: {
+          client_id: string
+          coach_id: string
+          focus: string
+          goal: string
+          notes: string
+          target_weight: number | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          coach_id: string
+          focus?: string
+          goal?: string
+          notes?: string
+          target_weight?: number | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          coach_id?: string
+          focus?: string
+          goal?: string
+          notes?: string
+          target_weight?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_goals_client_id_coach_id_fkey"
+            columns: ["client_id", "coach_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id", "coach_id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           archived: boolean
@@ -311,6 +349,47 @@ export type Database = {
           },
         ]
       }
+      media_assets: {
+        Row: {
+          coach_id: string
+          created_at: string
+          filename: string
+          id: string
+          mime: string
+          path: string
+          size: number
+          status: string
+        }
+        Insert: {
+          coach_id: string
+          created_at?: string
+          filename: string
+          id: string
+          mime: string
+          path: string
+          size: number
+          status?: string
+        }
+        Update: {
+          coach_id?: string
+          created_at?: string
+          filename?: string
+          id?: string
+          mime?: string
+          path?: string
+          size?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_assets_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -364,6 +443,53 @@ export type Database = {
             columns: ["subscription_id", "coach_id"]
             isOneToOne: false
             referencedRelation: "subscriptions"
+            referencedColumns: ["id", "coach_id"]
+          },
+        ]
+      }
+      portal_links: {
+        Row: {
+          attempt_window: string
+          attempts: number
+          client_id: string
+          coach_id: string
+          expires_at: string
+          id: string
+          last_opened_at: string | null
+          proof_hash: string
+          revoked_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          attempt_window?: string
+          attempts?: number
+          client_id: string
+          coach_id: string
+          expires_at?: string
+          id?: string
+          last_opened_at?: string | null
+          proof_hash: string
+          revoked_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          attempt_window?: string
+          attempts?: number
+          client_id?: string
+          coach_id?: string
+          expires_at?: string
+          id?: string
+          last_opened_at?: string | null
+          proof_hash?: string
+          revoked_at?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_links_client_id_coach_id_fkey"
+            columns: ["client_id", "coach_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id", "coach_id"]
           },
         ]
@@ -557,6 +683,89 @@ export type Database = {
           },
         ]
       }
+      upload_sessions: {
+        Row: {
+          asset_id: string | null
+          coach_id: string
+          created_at: string
+          expires_at: string
+          filename: string | null
+          mime: string | null
+          size: number | null
+          token_hash: string
+        }
+        Insert: {
+          asset_id?: string | null
+          coach_id: string
+          created_at?: string
+          expires_at?: string
+          filename?: string | null
+          mime?: string | null
+          size?: number | null
+          token_hash: string
+        }
+        Update: {
+          asset_id?: string | null
+          coach_id?: string
+          created_at?: string
+          expires_at?: string
+          filename?: string | null
+          mime?: string | null
+          size?: number | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upload_sessions_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: true
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upload_sessions_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weight_entries: {
+        Row: {
+          client_id: string
+          coach_id: string
+          entry_date: string
+          id: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          client_id: string
+          coach_id: string
+          entry_date: string
+          id?: string
+          updated_at?: string
+          weight: number
+        }
+        Update: {
+          client_id?: string
+          coach_id?: string
+          entry_date?: string
+          id?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weight_entries_client_id_coach_id_fkey"
+            columns: ["client_id", "coach_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id", "coach_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -567,6 +776,20 @@ export type Database = {
       claim_invite: { Args: { token: string }; Returns: boolean }
       init_profile: {
         Args: { display_name: string; requested_role: string }
+        Returns: Json
+      }
+      media_access: {
+        Args: { asset: string; portal_hash?: string; proof?: string }
+        Returns: Json
+      }
+      portal_access: {
+        Args: {
+          day?: string
+          proof: string
+          remove?: boolean
+          token_hash: string
+          value?: number
+        }
         Returns: Json
       }
       public_link_info: {
@@ -581,6 +804,11 @@ export type Database = {
           token: string
         }
         Returns: boolean
+      }
+      studio_snapshot: { Args: never; Returns: Json }
+      upload_access: {
+        Args: { payload?: Json; token_hash: string }
+        Returns: Json
       }
       valid_content: { Args: { body: Json }; Returns: boolean }
     }

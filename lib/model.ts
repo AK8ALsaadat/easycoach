@@ -20,6 +20,9 @@ export const exercise = z
     sets: z.number().int().min(1).max(20),
     reps: z.string().min(1).max(60),
     rest: z.number().int().min(0).max(600),
+    catalogId: z.string().max(160).optional(),
+    mediaId: id.optional(),
+    rowId: id.optional(),
   })
   .strict();
 export const content = z
@@ -42,6 +45,22 @@ export const content = z
         protein: z.number().min(0).max(1000),
         carbs: z.number().min(0).max(1000),
         fat: z.number().min(0).max(1000),
+        meals: z
+          .array(
+            z
+              .object({
+                name: z.string().min(1).max(100),
+                time: z.string().max(40),
+                foods: z.string().max(2000),
+                calories: z.number().min(0).max(10000),
+                protein: z.number().min(0).max(1000),
+                carbs: z.number().min(0).max(1000),
+                fat: z.number().min(0).max(1000),
+              })
+              .strict(),
+          )
+          .max(12)
+          .optional(),
       })
       .strict(),
   })
@@ -55,6 +74,20 @@ export const clientInput = z.object({
 });
 const price = z.number().min(0).max(1000000).multipleOf(0.01);
 export const commands = {
+  goal_save: z.object({
+    client_id: id,
+    goal: z.string().max(100),
+    target_weight: z.number().min(20).max(400).nullable(),
+    focus: z.string().max(200),
+    notes: z.string().max(2000),
+  }),
+  weight_save: z.object({
+    client_id: id,
+    entry_date: date,
+    weight: z.number().min(20).max(400),
+  }),
+  weight_delete: z.object({ client_id: id, entry_date: date }),
+  portal_revoke: z.object({ client_id: id }),
   client_save: clientInput,
   import_clients: z.object({
     rows: z
@@ -212,6 +245,22 @@ export type PrivacyRequest = {
   resolution: string;
 };
 export type Snapshot = {
+  weights: WeightEntry[];
+  client_goals: ClientGoal[];
+  portal_links: {
+    id: string;
+    client_id: string;
+    revoked_at: string | null;
+    expires_at: string;
+    last_opened_at: string | null;
+  }[];
+  media_assets: {
+    id: string;
+    filename: string;
+    size: number;
+    status: string;
+    created_at: string;
+  }[];
   profile: Profile | null;
   clients: Client[];
   exercises: Exercise[];
@@ -229,6 +278,28 @@ export type Snapshot = {
     created_at: string;
     entity_id: string | null;
   }[];
+};
+export type WeightEntry = {
+  id: string;
+  client_id: string;
+  entry_date: string;
+  weight: number;
+  updated_at: string;
+};
+export type ClientGoal = {
+  client_id: string;
+  goal: string;
+  target_weight: number | null;
+  focus: string;
+  notes: string;
+};
+export type PortalData = {
+  name: string;
+  coach: string;
+  program: Program | null;
+  weights: WeightEntry[];
+  goal: ClientGoal | null;
+  portalHash?: string;
 };
 export const blankContent: Content = {
   days: [

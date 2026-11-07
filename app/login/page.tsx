@@ -15,12 +15,12 @@ export default async function Login({
         <Brand />
         <div className="my-auto w-full max-w-md self-center py-14">
           <p className="mb-3 text-sm font-medium text-teal">
-            أهلًا بك في مساحتك
+            COACH’S ENTRANCE
           </p>
           <h1 className="text-3xl">
-            تدريب أفضل.
+            خطط أقوى.
             <br />
-            إدارة أخف.
+            نتائج تُتابَع.
           </h1>
           <p className="mt-3 mb-8 text-muted">
             كل عملائك وبرامجهم واشتراكاتهم، بوضوح وفي مكان واحد.
@@ -38,17 +38,17 @@ export default async function Login({
       </section>
       <aside className="relative hidden overflow-hidden bg-ink p-16 text-white lg:flex lg:flex-col lg:justify-center">
         <div className="absolute -left-28 -top-32 size-[500px] rounded-full border-[60px] border-white/[.025]" />
-        <p className="text-sm text-accent">مساحة مرتبة، لشغل يستاهل.</p>
+        <p className="eyebrow !text-accent">THE WORK BEHIND THE WORKOUT.</p>
         <h2 className="mt-6 max-w-lg text-4xl leading-[1.6] font-semibold">
-          أقرب لعملائك.
+          كل جولة محسوبة.
           <br />
-          <span className="text-accent">وأبعد عن زحمة التفاصيل.</span>
+          <span className="text-accent">وكل متدرب له خطته.</span>
         </h2>
         <div className="mt-12 grid max-w-lg gap-4">
           {[
-            [Users, "عملاؤك، بدون ملفات متفرقة"],
-            [Layers3, "برامج مستقلة لكل متدرب"],
-            [Wallet, "اشتراكات ودفعات تعرف وين وصلت"],
+            [Users, "الهدف والوزن ومسار التقدم"],
+            [Layers3, "876 حركة. جدولك بتفاصيله."],
+            [Wallet, "الوجبات والباقات والدفعات"],
           ].map(([Icon, text], i) => {
             const I = Icon as typeof Check;
             return (

@@ -7,7 +7,6 @@ import {
   ArrowUpLeft,
   Bell,
   CalendarDays,
-  Check,
   ChevronLeft,
   ClipboardList,
   Copy,
@@ -20,7 +19,6 @@ import {
   Plus,
   Search,
   Settings,
-  Shield,
   Users,
   Wallet,
 } from "lucide-react";
@@ -32,17 +30,14 @@ import {
   type Subscription,
   type Template,
 } from "@/lib/model";
-import {
-  addDays,
-  daysBetween,
-  formatDate,
-  money,
-  riyadhToday,
-} from "@/lib/dates";
+import { addDays, formatDate, money, riyadhToday } from "@/lib/dates";
 import { Brand } from "./brand";
 import { ActionButton, DataForm, Notice, type Field } from "./forms";
 import { ProgramEditor } from "./program-editor";
 import { ImportClients } from "./import-clients";
+import { ClientProgress, PortalControl } from "./client-progress";
+import { ExerciseCatalog } from "./exercise-catalog";
+import { CoachToday } from "./coach-today";
 
 const methods = [
   { value: "bank", label: "تحويل بنكي" },
@@ -232,14 +227,16 @@ export function Workspace({
             </Link>
           ))}
         </nav>
-        <div className="mt-10 rounded-xl border border-white/10 p-4">
-          <div className="flex items-center gap-2 text-sm font-medium text-white/80">
-            <Shield size={16} className="text-accent" />
-            مساحة خاصة بعملائك
-          </div>
-          <p className="mt-2 text-[11px] leading-6 text-white/35">
-            كل مدرب يرى بيانات عملائه فقط. المتدرب يرى برنامجه المنشور.
-          </p>
+        <div className="sidebar-score">
+          <span>ACTIVE ROSTER</span>
+          <strong>
+            {data.clients
+              .filter((c) => !c.archived)
+              .length.toString()
+              .padStart(2, "0")}
+          </strong>
+          <p>متدرب في قائمتك</p>
+          <Link href="/coach/clients?add=1">أضف متدربًا جديدًا ←</Link>
         </div>
         <div className="mt-12 border-t border-white/10 pt-5">
           <div className="flex items-center gap-3">
@@ -305,7 +302,7 @@ export function Workspace({
         ) : null}
         <main className="mx-auto max-w-[1550px] p-5 pb-12 lg:p-9">
           {section === "today" ? (
-            <Today data={data} />
+            <CoachToday data={data} />
           ) : section === "clients" ? (
             clientId ? (
               client ? (
@@ -328,7 +325,7 @@ export function Workspace({
           )}
         </main>
         <footer className="flex flex-wrap justify-between gap-3 border-t px-5 py-5 text-[11px] text-muted lg:px-9">
-          <span>مساحة المدرب · أقل تفاصيل، أكثر تركيز.</span>
+          <span>مساحة المدرب / BUILT FOR THE WORK</span>
           <Link href="/privacy" className="underline">
             الخصوصية · مسودة للمراجعة
           </Link>
@@ -370,184 +367,6 @@ function Heading({
       </div>
       {children}
     </div>
-  );
-}
-function Today({ data }: { data: Snapshot }) {
-  const clients = data.clients.filter((c) => !c.archived);
-  const today = riyadhToday();
-  const needs = clients.filter(
-    (c) => !data.programs.some((p) => p.client_id === c.id && p.published_at),
-  );
-  const renew = clients.filter((c) => {
-    const s = currentSubscription(data, c.id);
-    return s && s.end_date <= addDays(today, 7);
-  });
-  const balance = data.subscriptions.reduce(
-    (sum, s) => sum + remaining(data, s),
-    0,
-  );
-  const updates = clients.filter((c) => {
-    const p = data.programs.find((p) => p.client_id === c.id && p.published_at);
-    return p && daysBetween(p.published_at!.slice(0, 10), today) >= 28;
-  });
-  return (
-    <>
-      <Heading
-        title={`أهلًا، ${data.profile!.name.split(" ")[0]} 👋`}
-        text="نظرة واضحة على يومك. هذه الأشياء تحتاج اهتمامك."
-      >
-        <Link className="btn" href="/coach/clients?add=1">
-          <Plus size={17} />
-          إضافة عميل
-        </Link>
-      </Heading>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          {
-            label: "العملاء",
-            value: clients.length,
-            icon: Users,
-            sub: "في مساحتك",
-            href: "/coach/clients",
-          },
-          {
-            label: "يحتاجون برنامجًا",
-            value: needs.length,
-            icon: Dumbbell,
-            sub: "لم يُنشر لهم برنامج بعد",
-            href: "/coach/clients?filter=program",
-          },
-          {
-            label: "تجديدات قريبة",
-            value: renew.length,
-            icon: CalendarDays,
-            sub: "منتهية أو تنتهي خلال 7 أيام",
-            href: "/coach/clients?filter=renew",
-          },
-          {
-            label: "دفعات متبقية",
-            value: money(balance),
-            icon: Wallet,
-            sub: "على جميع الباقات",
-            href: "/coach/finance",
-          },
-        ].map((item, i) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className={`card p-5 transition hover:border-teal/30 ${i === 1 ? "bg-[#edf7f2]" : ""}`}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm text-muted">{item.label}</span>
-              <span
-                className={`flex size-9 items-center justify-center rounded-xl ${i === 1 ? "bg-white text-teal" : "bg-canvas text-muted"}`}
-              >
-                <item.icon size={18} />
-              </span>
-            </div>
-            <p className="text-[2.05rem] leading-tight font-semibold tabular-nums">
-              {item.value}
-            </p>
-            <p className="mt-3 text-[11px] text-muted">{item.sub}</p>
-          </Link>
-        ))}
-      </div>
-      <div className="mt-7 grid items-start gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(280px,1fr)]">
-        <section className="card overflow-hidden">
-          <div className="section-title px-6 pt-6">
-            <h2>على قائمة اهتمامك</h2>
-            <span className="badge">
-              {needs.length + renew.length + updates.length} متابعة
-            </span>
-          </div>
-          {!needs.length && !renew.length && !updates.length ? (
-            <div className="empty">
-              <Check className="text-teal" />
-              <p>كل شيء مرتب اليوم.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-line">
-              {[
-                ...needs.map((c) => ({
-                  c,
-                  label: "يحتاج برنامجًا",
-                  hint: "جهّز مسودة وانشرها للمتدرب",
-                  tone: true,
-                })),
-                ...renew.map((c) => ({
-                  c,
-                  label: "تجديد اشتراك",
-                  hint: `تنتهي الباقة ${formatDate(currentSubscription(data, c.id)!.end_date)}`,
-                  tone: false,
-                })),
-                ...updates.map((c) => ({
-                  c,
-                  label: "مراجعة البرنامج",
-                  hint: "مرّ 28 يومًا على آخر نشر",
-                  tone: false,
-                })),
-              ]
-                .slice(0, 8)
-                .map(({ c, label, hint, tone }, i) => (
-                  <Link
-                    href={`/coach/clients/${c.id}`}
-                    key={c.id + i}
-                    className="flex items-center gap-3 px-6 py-4 hover:bg-canvas"
-                  >
-                    <Avatar name={c.name} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{c.name}</p>
-                      <p className="text-xs text-muted">{hint}</p>
-                    </div>
-                    <span
-                      className={`badge ${tone ? "bg-accent/40 text-teal" : ""}`}
-                    >
-                      {label}
-                    </span>
-                    <ChevronLeft size={15} className="text-muted" />
-                  </Link>
-                ))}
-            </div>
-          )}
-          <Link
-            href="/coach/clients"
-            className="flex items-center justify-center gap-2 border-t p-4 text-xs font-medium text-teal"
-          >
-            كل العملاء
-            <ArrowLeft size={14} />
-          </Link>
-        </section>
-        <div className="space-y-6">
-          <section className="card p-6">
-            <p className="text-xs font-medium text-teal">
-              خطوة صغيرة، فرق كبير
-            </p>
-            <h2 className="mt-3 text-xl leading-8">
-              خلّ لكل عميل
-              <br />
-              مساحة واضحة.
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-muted">
-              ابدأ من قالب، خصّصه لعميلك، ثم انشره. كل نسخة مستقلة عن البقية.
-            </p>
-            <Link href="/coach/library" className="btn-soft mt-5 w-full">
-              افتح مكتبة البرامج
-              <ArrowUpLeft size={16} />
-            </Link>
-          </section>
-          <JoinRequests data={data} compact />
-        </div>
-      </div>
-      <section className="card mt-7 overflow-hidden">
-        <div className="section-title px-6 pt-6">
-          <h2>عملاؤك، من نظرة</h2>
-          <Link href="/coach/clients" className="text-xs font-medium text-teal">
-            عرض الكل
-          </Link>
-        </div>
-        <ClientTable data={data} clients={clients.slice(0, 5)} />
-      </section>
-    </>
   );
 }
 function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
@@ -667,7 +486,7 @@ function Clients({
         : filter === "renew"
           ? Boolean(
               currentSubscription(data, c.id) &&
-              currentSubscription(data, c.id)!.end_date <= addDays(today, 7),
+                currentSubscription(data, c.id)!.end_date <= addDays(today, 7),
             )
           : filter === "balance"
             ? data.subscriptions.some(
@@ -826,15 +645,18 @@ function ClientDetail({
           ) : null}
         </div>
       </Heading>
-      <p className="mb-5 text-xs text-muted">
-        رابط البرنامج يتطلب حساب المتدرب الموثّق. واتساب يفتح مسودة ترسلها أنت،
-        ولا تُرسل أي رسالة تلقائيًا.
-      </p>
+      <PortalControl
+        clientId={client.id}
+        link={data.portal_links?.find(
+          (l) => l.client_id === client.id && !l.revoked_at,
+        )}
+      />
       <div className="mb-6 flex flex-wrap gap-2">
         {[
           ["program", "البرنامج والتغذية"],
           ["finance", "الباقات والدفعات"],
           ["profile", "البيانات والدعوة"],
+          ["progress", "الهدف والوزن"],
         ].map(([key, label]) => (
           <button
             key={key}
@@ -845,7 +667,9 @@ function ClientDetail({
           </button>
         ))}
       </div>
-      {tab === "program" ? (
+      {tab === "progress" ? (
+        <ClientProgress data={data} clientId={client.id} />
+      ) : tab === "program" ? (
         <section className="card p-5 sm:p-7">
           <div className="section-title">
             <div>
@@ -1265,7 +1089,7 @@ function PaymentList({
 }
 
 function Library({ data }: { data: Snapshot }) {
-  const [tab, setTab] = useState("templates");
+  const [tab, setTab] = useState("catalog");
   const [template, setTemplate] = useState<Template | null>(null);
   const [editor, setEditor] = useState(false);
   const [exerciseId, setExerciseId] = useState("");
@@ -1290,6 +1114,15 @@ function Library({ data }: { data: Snapshot }) {
       </Heading>
       <div className="mb-6 flex gap-2">
         <button
+          className={tab === "catalog" ? "btn" : "btn-secondary"}
+          onClick={() => {
+            setTab("catalog");
+            setEditor(false);
+          }}
+        >
+          الحركات العالمية · 876
+        </button>
+        <button
           className={tab === "templates" ? "btn" : "btn-secondary"}
           onClick={() => {
             setTab("templates");
@@ -1305,7 +1138,9 @@ function Library({ data }: { data: Snapshot }) {
           مكتبة التمارين
         </button>
       </div>
-      {tab === "templates" ? (
+      {tab === "catalog" ? (
+        <ExerciseCatalog />
+      ) : tab === "templates" ? (
         editor ? (
           <section className="card p-6">
             <button

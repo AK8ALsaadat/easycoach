@@ -76,7 +76,7 @@ export async function rpcLocal<T>(
     const entries = Object.entries(args);
     const sql = `select public.${name}(${entries.map(([key], i) => `${key}=>$${i + 1}`).join(",")}) as result`;
     const values = entries.map(([, value]) =>
-      typeof value === "object" ? JSON.stringify(value) : value,
+      value !== null && typeof value === "object" ? JSON.stringify(value) : value,
     );
     const result = await tx.query<{ result: T }>(sql, values);
     return result.rows[0].result;

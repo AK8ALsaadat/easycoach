@@ -95,13 +95,13 @@ export async function rpc<T>(
 export async function snapshot(): Promise<Snapshot> {
   const user = await actor();
   if (!user) redirect("/login");
-  let data = await rpc<Snapshot>("app_snapshot");
+  let data = await rpc<Snapshot>("studio_snapshot");
   if (!data.profile) {
     await rpc("init_profile", {
       display_name: user.name || "مستخدم جديد",
       requested_role: user.role,
     });
-    data = await rpc<Snapshot>("app_snapshot");
+    data = await rpc<Snapshot>("studio_snapshot");
   }
   return data;
 }

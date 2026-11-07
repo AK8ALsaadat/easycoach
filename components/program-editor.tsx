@@ -1,7 +1,19 @@
 "use client";
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, Plus, Save, Send, Trash2 } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Plus,
+  Save,
+  Send,
+  Trash2,
+  Search,
+  ArrowUp,
+  ArrowDown,
+  X,
+} from "lucide-react";
 import {
   content as contentSchema,
   type Content,
@@ -9,6 +21,22 @@ import {
 } from "@/lib/model";
 import { mutate, type Result } from "@/app/actions";
 import { Notice } from "./forms";
+import { ExerciseCatalog } from "./exercise-catalog";
+import { VideoUpload } from "./video-upload";
+import { MealEditor } from "./meal-editor";
+function withRowIds(value: Content): Content {
+  return {
+    ...value,
+    days: value.days.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) => ({
+        ...e,
+        rowId: e.rowId ?? crypto.randomUUID(),
+      })),
+    })),
+  };
+}
+import { catalogById, exerciseName, type CatalogExercise } from "@/lib/catalog";
 
 export function ProgramEditor({
   initial,
@@ -25,13 +53,16 @@ export function ProgramEditor({
 }) {
   const router = useRouter();
   const [name, setName] = useState(initialName);
-  const [plan, setPlan] = useState<Content>(() => structuredClone(initial));
+  const [plan, setPlan] = useState<Content>(() =>
+    withRowIds(structuredClone(initial)),
+  );
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [day, setDay] = useState(0);
   const [tab, setTab] = useState<"training" | "nutrition">("training");
   const [hasSaved, setHasSaved] = useState(Boolean(id));
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const savedId = useRef(id);
   const revision = useRef(0);
   const lock = useRef(false);
@@ -41,7 +72,7 @@ export function ProgramEditor({
     setResult(null);
   }
   function edit(update: (value: Content) => Content) {
-    setPlan(update);
+    setPlan((current) => withRowIds(update(current)));
     changed();
   }
   const save = useCallback(async () => {
@@ -118,6 +149,55 @@ export function ProgramEditor({
       ),
     }));
   }
+  function addCatalog(ex: CatalogExercise) {
+    if (active.exercises.length >= 40) return;
+    edit((c) => ({
+      ...c,
+      days: c.days.map((d, i) =>
+        i === day
+          ? {
+              ...d,
+              exercises: [
+                ...d.exercises.filter(
+                  (x) =>
+                    !(
+                      d.exercises.length === 1 &&
+                      x.name === "تمرين جديد" &&
+                      !x.description &&
+                      !x.video &&
+                      !x.mediaId &&
+                      !x.catalogId
+                    ),
+                ),
+                {
+                  name: exerciseName(ex),
+                  description: "",
+                  video: "",
+                  catalogId: ex.id,
+                  sets: 3,
+                  reps: "10–12",
+                  rest: 90,
+                },
+              ],
+            }
+          : d,
+      ),
+    }));
+  }
+  function moveExercise(index: number, direction: number) {
+    edit((c) => ({
+      ...c,
+      days: c.days.map((d, i) => {
+        if (i !== day) return d;
+        const list = [...d.exercises];
+        [list[index], list[index + direction]] = [
+          list[index + direction],
+          list[index],
+        ];
+        return { ...d, exercises: list };
+      }),
+    }));
+  }
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -164,9 +244,19 @@ export function ProgramEditor({
       </div>
       {tab === "nutrition" ? (
         <div className="space-y-5">
-          <p className="text-sm text-muted">
-            أهداف يحددها المدرب. لا نجمع قياسات أو بيانات طبية.
-          </p>
+          <div className="nutrition-heading">
+            <div>
+              <p className="eyebrow">NUTRITION / DAILY TARGET</p>
+              <h2>هدف اليوم، قبل تفاصيل الوجبات.</h2>
+            </div>
+            <span className="badge">
+              طاقة الماكروز{" "}
+              {plan.nutrition.protein * 4 +
+                plan.nutrition.carbs * 4 +
+                plan.nutrition.fat * 9}{" "}
+              kcal
+            </span>
+          </div>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {(
               [
@@ -211,9 +301,31 @@ export function ProgramEditor({
               }))
             }
           />
+          <MealEditor
+            nutrition={plan.nutrition}
+            onChange={(nutrition) => edit((c) => ({ ...c, nutrition }))}
+          />
         </div>
       ) : (
         <>
+          <div className="session-toolbar">
+            <div>
+              <p className="eyebrow">SESSION BUILDER</p>
+              <h2>
+                {active.exercises.length} حركات{" "}
+                <span className="text-muted">/</span>{" "}
+                {active.exercises.reduce((n, e) => n + e.sets, 0)} جولة
+              </h2>
+            </div>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setCatalogOpen(true)}
+            >
+              <Search size={16} />
+              مكتبة الحركات · 876
+            </button>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             {plan.days.map((d, i) => (
               <button
@@ -279,7 +391,16 @@ export function ProgramEditor({
                 if (plan.days.length >= 14) return;
                 edit((c) => ({
                   ...c,
-                  days: [...c.days, structuredClone(active)],
+                  days: [
+                    ...c.days,
+                    {
+                      ...structuredClone(active),
+                      exercises: active.exercises.map((e) => ({
+                        ...e,
+                        rowId: crypto.randomUUID(),
+                      })),
+                    },
+                  ],
                 }));
                 setDay(plan.days.length);
               }}
@@ -305,7 +426,30 @@ export function ProgramEditor({
           </div>
           <div className="space-y-4">
             {active.exercises.map((e, i) => (
-              <div key={i} className="rounded-xl border bg-canvas/60 p-4">
+              <div
+                key={`${day}:${e.rowId ?? i}`}
+                className="rounded-xl border bg-canvas/60 p-4"
+              >
+                {e.catalogId && catalogById.has(e.catalogId) ? (
+                  <div className="exercise-visual">
+                    <Image
+                      unoptimized
+                      src={"/exercises/" + e.catalogId + ".webp"}
+                      alt={e.name}
+                      width={360}
+                      height={180}
+                      loading="lazy"
+                    />
+                    <div>
+                      <span className="eyebrow">
+                        MOVEMENT {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <p dir="ltr" className="text-xs text-muted">
+                        {catalogById.get(e.catalogId)?.name}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
                 <div className="mb-4 flex items-center gap-3">
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-xs font-bold text-teal">
                     {i + 1}
@@ -319,6 +463,24 @@ export function ProgramEditor({
                       updateExercise(i, "name", event.target.value)
                     }
                   />
+                  <button
+                    type="button"
+                    aria-label={`رفع التمرين ${i + 1}`}
+                    className="btn-secondary !px-2"
+                    disabled={i === 0}
+                    onClick={() => moveExercise(i, -1)}
+                  >
+                    <ArrowUp size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`تنزيل التمرين ${i + 1}`}
+                    className="btn-secondary !px-2"
+                    disabled={i === active.exercises.length - 1}
+                    onClick={() => moveExercise(i, 1)}
+                  >
+                    <ArrowDown size={14} />
+                  </button>
                   <button
                     type="button"
                     aria-label={`حذف التمرين ${i + 1}`}
@@ -342,6 +504,60 @@ export function ProgramEditor({
                   >
                     <Trash2 size={17} />
                   </button>
+                </div>
+                <div className="mt-4 border-t pt-4">
+                  <VideoUpload
+                    onComplete={(mediaId) => {
+                      edit((c) => ({
+                        ...c,
+                        days: c.days.map((d, n) =>
+                          n === day
+                            ? {
+                                ...d,
+                                exercises: d.exercises.map((x) =>
+                                  x.rowId === e.rowId ? { ...x, mediaId } : x,
+                                ),
+                              }
+                            : d,
+                        ),
+                      }));
+                    }}
+                  />
+                  {e.mediaId ? (
+                    <div className="mt-3">
+                      <video
+                        controls
+                        preload="none"
+                        className="max-h-64 w-full rounded bg-black"
+                        src={"/api/media/" + e.mediaId}
+                      />
+                      <button
+                        type="button"
+                        className="mt-2 inline-flex items-center gap-1 text-xs text-red-700"
+                        onClick={() =>
+                          edit((c) => ({
+                            ...c,
+                            days: c.days.map((d, n) =>
+                              n === day
+                                ? {
+                                    ...d,
+                                    exercises: d.exercises.map((x, j) => {
+                                      if (j !== i) return x;
+                                      const next = { ...x };
+                                      delete next.mediaId;
+                                      return next;
+                                    }),
+                                  }
+                                : d,
+                            ),
+                          }))
+                        }
+                      >
+                        <X size={13} />
+                        إزالة الفيديو من الحركة
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   {(
@@ -482,8 +698,8 @@ export function ProgramEditor({
       <div className="sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white/95 p-4 shadow-lg backdrop-blur">
         <p className="max-w-md text-xs text-muted">
           {clientId
-            ? "المسودة خاصة بك. المتدرب يرى آخر نسخة منشورة فقط. النشر لا يغيّر أي عميل آخر."
-            : "التعديلات هنا لا تغيّر أي برنامج سبق نسخه لعميل."}
+            ? "جاهز؟ انشر التحديث على رابط العميل."
+            : "احفظه في مكتبتك للبرامج القادمة."}
         </p>
         <div className="flex gap-2">
           <button
@@ -529,6 +745,25 @@ export function ProgramEditor({
         </div>
       </div>
       <Notice result={result} />
+      {catalogOpen ? (
+        <div className="modal-backdrop">
+          <div
+            className="modal-sheet max-w-6xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label="مكتبة الحركات"
+          >
+            <ExerciseCatalog
+              onSelect={addCatalog}
+              onClose={() => setCatalogOpen(false)}
+            />
+            <p className="sticky bottom-0 mt-4 bg-white p-3 text-center text-sm">
+              الحصة الحالية: {active.exercises.length} حركة · تقدر تضيف أكثر من
+              حركة قبل الإغلاق
+            </p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

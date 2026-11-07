@@ -1,7 +1,7 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
-/** Restricted account-administration tooling only. Never used for tenant data queries. */
+/** Server-only account tooling and scoped private Storage signing. Tenant SQL always uses RLS RPCs. */
 export function adminClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) throw new Error("Admin credentials are not configured");

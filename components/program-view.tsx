@@ -1,7 +1,14 @@
+import Image from "next/image";
 import type { Program } from "@/lib/model";
 import { formatDate } from "@/lib/dates";
 import { Play, Timer, Utensils } from "lucide-react";
-export function ProgramView({ program }: { program: Program | undefined }) {
+export function ProgramView({
+  program,
+  portalHash,
+}: {
+  program: Program | undefined;
+  portalHash?: string;
+}) {
   if (!program)
     return (
       <div className="empty card">
@@ -29,6 +36,19 @@ export function ProgramView({ program }: { program: Program | undefined }) {
           <div className="divide-y divide-line">
             {day.exercises.map((e, i) => (
               <article key={i} className="p-6">
+                {e.catalogId ? (
+                  <div className="mb-4 max-w-sm overflow-hidden rounded border bg-white">
+                    <Image
+                      unoptimized
+                      src={"/exercises/" + e.catalogId + ".webp"}
+                      alt={e.name}
+                      width={360}
+                      height={180}
+                      loading="lazy"
+                      className="w-full"
+                    />
+                  </div>
+                ) : null}
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h3 className="font-semibold">{e.name}</h3>
@@ -50,6 +70,19 @@ export function ProgramView({ program }: { program: Program | undefined }) {
                     </a>
                   ) : null}
                 </div>
+                {e.mediaId ? (
+                  <video
+                    controls
+                    playsInline
+                    preload="none"
+                    className="mt-4 max-h-80 w-full rounded bg-black"
+                    src={
+                      "/api/media/" +
+                      e.mediaId +
+                      (portalHash ? "?portal=" + portalHash : "")
+                    }
+                  />
+                ) : null}
                 <div className="mt-4 flex flex-wrap gap-3">
                   <span className="badge">{e.sets} مجموعات</span>
                   <span className="badge">{e.reps} عدات</span>
@@ -88,6 +121,27 @@ export function ProgramView({ program }: { program: Program | undefined }) {
           {program.content.nutrition.text ||
             "لم يضف المدرب خطة تغذية نصية بعد."}
         </p>
+        {program.content.nutrition.meals?.length ? (
+          <div className="mt-6 space-y-3">
+            {program.content.nutrition.meals.map((m, i) => (
+              <article key={i} className="meal-card">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="font-bold">{m.name}</h3>
+                  <span className="text-xs text-muted">{m.time}</span>
+                </div>
+                <p className="whitespace-pre-wrap text-sm leading-8">
+                  {m.foods}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="badge">{m.calories} kcal</span>
+                  <span className="badge">P {m.protein}g</span>
+                  <span className="badge">C {m.carbs}g</span>
+                  <span className="badge">F {m.fat}g</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : null}
       </section>
     </div>
   );

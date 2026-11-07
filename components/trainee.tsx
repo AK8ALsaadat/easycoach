@@ -2,7 +2,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Download, LogOut, Shield, Wallet } from "lucide-react";
-import { logoutAction } from "@/app/actions";
+import { logoutAction,mutate } from "@/app/actions";
+import {useRouter} from 'next/navigation';
+import {WeightPanel} from './weight-panel';
 import type { Snapshot } from "@/lib/model";
 import { formatDate, money, riyadhToday } from "@/lib/dates";
 import { Brand } from "./brand";
@@ -15,6 +17,7 @@ export function Trainee({
   data: Snapshot;
   selectedId?: string;
 }) {
+  const router=useRouter();
   const clients = data.clients.filter(
     (c) => c.trainee_user_id === data.profile?.id && !c.archived,
   );
@@ -60,7 +63,7 @@ export function Trainee({
             <p className="mb-2 text-xs text-teal">مساحتك مع مدربك</p>
             <h1>برنامجك، بوضوح.</h1>
             <p className="mt-2 text-sm text-muted">
-              آخر برنامج منشور، وخطة تغذيتك واشتراكك. بدون تسجيل يومي.
+              جدولك، وجباتك، وتقدمك مع مدربك.
             </p>
           </div>
           <a download href="/api/export" className="btn-secondary">
@@ -108,6 +111,7 @@ export function Trainee({
                 )}
               />
               <aside className="space-y-6">
+                <WeightPanel entries={(data.weights??[]).filter(w=>w.client_id===clientId)} target={data.client_goals?.find(g=>g.client_id===clientId)?.target_weight} onSave={async(day,weight)=>{const r=await mutate('weight_save',{client_id:clientId,entry_date:day,weight});if(r.ok)router.refresh();else return r.message}} onDelete={async day=>{const r=await mutate('weight_delete',{client_id:clientId,entry_date:day});if(r.ok)router.refresh();else return r.message}}/>
                 <section className="card p-6">
                   <h2 className="flex items-center gap-2">
                     <Wallet size={18} className="text-teal" />
