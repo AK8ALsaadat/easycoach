@@ -1142,5 +1142,14 @@
   "أهلًا {0}، هذه آخر مستجدات متدربيك وأعمالك.": "Hello, {0}. Here is the latest on your clients and coaching.",
   "{0} متدرب بانتظار برنامج": "{0} clients awaiting a program",
   "عاجل": "Urgent",
-  "قالب التغذية يحافظ على اسم البرنامج وأيام التدريب؛ يحتاج العميل برنامجًا قائمًا. للأهداف المستقلة استخدم ملف العميل.": "Nutrition templates preserve the program name and training days and require an existing program. Use the client profile for standalone targets."
+  "قالب التغذية يحافظ على اسم البرنامج وأيام التدريب؛ يحتاج العميل برنامجًا قائمًا. للأهداف المستقلة استخدم ملف العميل.": "Nutrition templates preserve the program name and training days and require an existing program. Use the client profile for standalone targets.",
+  "اسم المستخدم": "Username",
+  "تجربة المنصة": "Explore EasyCoach",
+  "حساب تجريبي للـAI والاختبار": "Demo account for AI and testing",
+  "حساب عام ببيانات وهمية معزولة. يمكنك اختبار وظائف المنصة؛ لا تضع فيه بيانات عملاء حقيقية.": "A shared demo with isolated fictional data. Explore the platform without entering real client information.",
+  "دخول الحساب التجريبي": "Sign in to demo",
+  "الدخول بحسابك الخاص": "Sign in to your own account",
+  "بيانات الحساب التجريبي: test / test": "Demo credentials: test / test",
+  "الحساب التجريبي غير مفعّل في هذه البيئة": "The demo account is not enabled in this environment.",
+  "حساب تجريبي عام — جميع البيانات هنا وهمية ومشتركة للاختبار. لا تدخل بيانات عملاء حقيقية.": "Shared demo account — all data here is fictional and shared for testing. Do not enter real client information."
 }

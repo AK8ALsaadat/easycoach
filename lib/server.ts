@@ -11,6 +11,7 @@ import {
 import { getLocalDatabase, rpcLocal } from "./local-db";
 import type { Snapshot } from "./model";
 import type { Database } from "@/types/supabase";
+import { DEMO_EMAIL, isDemoIdentity } from "./demo-config";
 
 export const localMode = () => process.env.APP_MODE === "local";
 export const hash = (v: string) => createHash("sha256").update(v).digest("hex");
@@ -63,13 +64,21 @@ export async function actor() {
       `select u.id,u.email from auth.users u join private.local_sessions s on s.user_id=u.id where s.token_hash=$1 and s.expires_at>now() and u.email_confirmed_at is not null`,
       [hash(token)],
     );
-    return r.rows[0] ? { ...r.rows[0], name: "", role: "trainee" } : null;
+    return r.rows[0]
+      ? {
+          ...r.rows[0],
+          name: "",
+          role: "trainee",
+          demo: r.rows[0].email === DEMO_EMAIL,
+        }
+      : null;
   }
   const client = await supabase();
   const { data, error } = await client.auth.getUser();
   if (error || !data.user?.email_confirmed_at) return null;
   return {
     id: data.user.id,
+    demo: isDemoIdentity(data.user.email, data.user.app_metadata),
     email: data.user.email!,
     name: String(data.user.user_metadata.display_name ?? "مستخدم جديد"),
     role: data.user.user_metadata.role === "coach" ? "coach" : "trainee",
@@ -103,7 +112,7 @@ export async function snapshot(): Promise<Snapshot> {
     });
     data = await rpc<Snapshot>("management_snapshot");
   }
-  return data;
+  return { ...data, demo: user.demo };
 }
 export async function requireCoach() {
   const data = await snapshot();

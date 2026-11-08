@@ -362,6 +362,16 @@ export function Workspace({
           </div>
         ) : null}
         <main id="portal-content" className="portal-content">
+          {data.demo && (
+            <p
+              role="status"
+              className="rounded-xl border border-amber-200 bg-amber-50 text-amber-900 px-4 py-3 mb-5"
+            >
+              {tr(
+                "حساب تجريبي عام — جميع البيانات هنا وهمية ومشتركة للاختبار. لا تدخل بيانات عملاء حقيقية.",
+              )}
+            </p>
+          )}
           {section === "today" ? (
             <CoachToday data={data} />
           ) : section === "clients" ? (

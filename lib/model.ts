@@ -251,6 +251,7 @@ export type PrivacyRequest = {
   resolution: string;
 };
 export type Snapshot = {
+  demo?: boolean;
   management?: ManagementData;
   weights: WeightEntry[];
   client_goals: ClientGoal[];
