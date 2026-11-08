@@ -54,6 +54,9 @@ Screenshots and machine-readable results are under ignored `artifacts/management
 | --- | --- | --- |
 | ESLint | Zero errors in final feature build | Passed |
 | TypeScript / production build | Next.js compile, type validation and route generation completed | Passed |
+| Hosted deployment | Functional commit `4d166d10ec31713b8c34a1d8ca8fd23654622390` built successfully on Vercel; deployment `easycoach-egv49cp0e-ak8alsaadats-projects.vercel.app` reached READY and aliases include `easycoach-livid.vercel.app` | Passed |
+| Runtime dependency audit | `npm audit --omit=dev --json`: zero findings | Passed |
+| Development dependency audit | Eight moderate findings in the ESLint/typescript-eslint/minimatch development chain; no high/critical findings. The offered force fix changes the Next.js ESLint configuration major version; not applied automatically | Existing development-tool findings |
 | Supabase migrations | Four additive migrations applied to `trlgsugychocgwtnmzej`; generated public database types refreshed | Passed |
 | Existing hosted business rows | 9 clients, 9 programs, 2 ledger entries before/after; zero new coaching records | Passed |
 | Photo bucket | `progress-photos.public = false` | Passed |

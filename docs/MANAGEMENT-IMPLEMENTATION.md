@@ -44,6 +44,7 @@ See [executed test report](MANAGEMENT-TESTING.md). Assertions are based on execu
 - Reminders are computed inside the app when opened. No background email, WhatsApp, SMS provider, scheduler or push delivery was added. These require separate infrastructure and a defined delivery policy.
 - Hosted browser auditing is blocked by the deployment's Vercel SSO protection. This protection was kept enabled. Real registration email delivery and hosted signed-photo upload were not claimed as verified end-to-end.
 - Supabase security advisors reported the existing disabled leaked-password protection setting. No plan, billing or external service settings were changed as part of this task.
+- Dependency audit found no runtime findings and eight moderate development-tool findings in the ESLint chain. The suggested force fix changes the Next.js ESLint configuration major version and was left for a separately validated toolchain update.
 - Workout history records session-level exercise performance, not a separate timestamped row for every individual set. Imported dates use calendar-day precision. Calculated historical BMI uses saved profile height unless the original BMI was supplied.
 - Native interface translation is bundled locally; user-entered program names, notes and instructions are not automatically translated. Long-tail provider error wording may require further editorial review.
 
