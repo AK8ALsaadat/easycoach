@@ -1,4 +1,5 @@
 "use client";
+import { useLocale } from "./locale-provider";
 import { ExerciseVisual } from "./exercise-visual";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -57,6 +58,8 @@ export function ProgramEditor({
   clientId?: string;
   library?: Exercise[];
 }) {
+  const { t: tr, language: locale } = useLocale();
+
   const router = useRouter();
   const [name, setName] = useState(initialName);
   const [plan, setPlan] = useState<Content>(() =>
@@ -140,7 +143,7 @@ export function ProgramEditor({
   function updateExercise(
     index: number,
     field: string,
-    value: string | number,
+    value: string | number | undefined,
   ) {
     edit((current) => ({
       ...current,
@@ -177,7 +180,7 @@ export function ProgramEditor({
                     ),
                 ),
                 {
-                  name: exerciseName(ex),
+                  name: exerciseName(ex, locale),
                   description: "",
                   video: "",
                   catalogId: ex.id,
@@ -210,7 +213,7 @@ export function ProgramEditor({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-60 flex-1">
           <label htmlFor="plan-name">
-            اسم {clientId ? "البرنامج" : "القالب"}
+            {tr("اسم")} {clientId ? tr("البرنامج") : tr("القالب")}
           </label>
           <input
             id="plan-name"
@@ -225,12 +228,12 @@ export function ProgramEditor({
         </div>
         <span role="status" className="badge">
           {busy
-            ? "نحفظ المسودة…"
+            ? tr("نحفظ المسودة…")
             : dirty
-              ? "تعديلات لم تُحفظ بعد"
+              ? tr("تعديلات لم تُحفظ بعد")
               : hasSaved
-                ? "المسودة محفوظة"
-                : "مسودة جديدة"}
+                ? tr("المسودة محفوظة")
+                : tr("مسودة جديدة")}
         </span>
       </div>
       <div className="flex flex-wrap gap-2 border-b pb-4">
@@ -239,25 +242,25 @@ export function ProgramEditor({
           className={tab === "training" ? "btn" : "btn-secondary"}
           onClick={() => setTab("training")}
         >
-          البرنامج التدريبي
+          {tr("البرنامج التدريبي")}
         </button>
         <button
           type="button"
           className={tab === "nutrition" ? "btn" : "btn-secondary"}
           onClick={() => setTab("nutrition")}
         >
-          التغذية والأهداف
+          {tr("التغذية والأهداف")}
         </button>
       </div>
       {tab === "nutrition" ? (
         <div className="space-y-5">
           <div className="nutrition-heading">
             <div>
-              <p className="eyebrow">التغذية · الأهداف اليومية</p>
-              <h2>هدف اليوم، قبل تفاصيل الوجبات.</h2>
+              <p className="eyebrow">{tr("التغذية · الأهداف اليومية")}</p>
+              <h2>{tr("هدف اليوم، قبل تفاصيل الوجبات.")}</h2>
             </div>
             <span className="badge">
-              طاقة الماكروز{" "}
+              {tr("طاقة الماكروز")}{" "}
               {plan.nutrition.protein * 4 +
                 plan.nutrition.carbs * 4 +
                 plan.nutrition.fat * 9}{" "}
@@ -267,14 +270,14 @@ export function ProgramEditor({
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {(
               [
-                ["calories", "السعرات (kcal)"],
-                ["protein", "البروتين (غ)"],
-                ["carbs", "الكاربوهيدرات (غ)"],
-                ["fat", "الدهون (غ)"],
+                ["calories", tr("السعرات (kcal)")],
+                ["protein", tr("البروتين (غ)")],
+                ["carbs", tr("الكاربوهيدرات (غ)")],
+                ["fat", tr("الدهون (غ)")],
               ] as const
             ).map(([field, label]) => (
               <div key={field}>
-                <label htmlFor={`nutrition-${field}`}>{label}</label>
+                <label htmlFor={`nutrition-${field}`}>{tr(label)}</label>
                 <input
                   id={`nutrition-${field}`}
                   type="number"
@@ -295,7 +298,9 @@ export function ProgramEditor({
               </div>
             ))}
           </div>
-          <label htmlFor="nutrition-text">الخطة والملاحظات الغذائية</label>
+          <label htmlFor="nutrition-text">
+            {tr("الخطة والملاحظات الغذائية")}
+          </label>
           <textarea
             id="nutrition-text"
             className="field min-h-56"
@@ -317,11 +322,11 @@ export function ProgramEditor({
         <>
           <div className="session-toolbar">
             <div>
-              <p className="eyebrow">بناء الحصة التدريبية</p>
+              <p className="eyebrow">{tr("بناء الحصة التدريبية")}</p>
               <h2>
-                {active.exercises.length} حركات{" "}
+                {active.exercises.length} {tr("حركات")}{" "}
                 <span className="text-muted">/</span>{" "}
-                {active.exercises.reduce((n, e) => n + e.sets, 0)} جولة
+                {active.exercises.reduce((n, e) => n + e.sets, 0)} {tr("جولة")}
               </h2>
             </div>
             <button
@@ -330,7 +335,7 @@ export function ProgramEditor({
               onClick={() => setCatalogOpen(true)}
             >
               <Search size={16} />
-              مكتبة الحركات · 876
+              {tr("مكتبة الحركات · 876")}
             </button>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -373,12 +378,122 @@ export function ProgramEditor({
               }}
             >
               <Plus size={16} />
-              يوم
+              {tr("يوم")}
             </button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label>
+              {tr("تقسيمة جاهزة")}
+              <select
+                aria-label={tr("بناء تقسيمة أسبوعية")}
+                className="field"
+                value=""
+                onChange={(event) => {
+                  const splits: Record<string, string[]> = {
+                    ppl3: ["دفع", "سحب", "أرجل"],
+                    ppl6: [
+                      "دفع 1",
+                      "سحب 1",
+                      "أرجل 1",
+                      "دفع 2",
+                      "سحب 2",
+                      "أرجل 2",
+                    ],
+                    upper4: ["علوي 1", "سفلي 1", "علوي 2", "سفلي 2"],
+                    full3: ["جسم كامل 1", "جسم كامل 2", "جسم كامل 3"],
+                    custom5: [
+                      "اليوم 1",
+                      "اليوم 2",
+                      "اليوم 3",
+                      "اليوم 4",
+                      "اليوم 5",
+                    ],
+                  };
+                  const names = splits[event.target.value];
+                  if (!names) return;
+                  if (
+                    !window.confirm(
+                      "ستستبدل أيام المسودة بالتقسيمة المحددة. البرنامج المنشور لا يتغير حتى تنشر. تتابع؟",
+                    )
+                  )
+                    return;
+                  edit((current) => ({
+                    ...current,
+                    days: names.map((name, index) => ({
+                      name,
+                      weekday: names.length === 3 ? index * 2 : index,
+                      exercises: [
+                        {
+                          name: "تمرين جديد",
+                          description: "",
+                          video: "",
+                          sets: 3,
+                          reps: "10–12",
+                          rest: 60,
+                        },
+                      ],
+                    })),
+                  }));
+                  setDay(0);
+                }}
+              >
+                <option value="">
+                  {tr("اختر تقسيمة أو احتفظ بالأيام الحالية")}
+                </option>
+                <option value="ppl3">
+                  {tr("Push / Pull / Legs · 3 أيام")}
+                </option>
+                <option value="ppl6">
+                  {tr("Push / Pull / Legs · 6 أيام")}
+                </option>
+                <option value="upper4">{tr("Upper / Lower · 4 أيام")}</option>
+                <option value="full3">{tr("Full Body · 3 أيام")}</option>
+                <option value="custom5">{tr("تقسيمة مخصصة · 5 أيام")}</option>
+              </select>
+            </label>
+            <label>
+              {tr("يوم الأسبوع")}
+              <select
+                aria-label={tr("يوم الأسبوع التدريبي")}
+                className="field"
+                value={active.weekday ?? ""}
+                onChange={(event) =>
+                  edit((current) => ({
+                    ...current,
+                    days: current.days.map((d, index) =>
+                      index === day
+                        ? {
+                            ...d,
+                            weekday:
+                              event.target.value === ""
+                                ? undefined
+                                : Number(event.target.value),
+                          }
+                        : d,
+                    ),
+                  }))
+                }
+              >
+                <option value="">{tr("بدون يوم محدد")}</option>
+                {[
+                  tr("الأحد"),
+                  tr("الاثنين"),
+                  tr("الثلاثاء"),
+                  tr("الأربعاء"),
+                  tr("الخميس"),
+                  tr("الجمعة"),
+                  tr("السبت"),
+                ].map((label, index) => (
+                  <option key={index} value={index}>
+                    {tr(label)}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
           <div className="flex flex-wrap gap-3">
             <input
-              aria-label="اسم اليوم"
+              aria-label={tr("اسم اليوم")}
               className="field max-w-sm"
               value={active.name}
               maxLength={100}
@@ -413,7 +528,7 @@ export function ProgramEditor({
               }}
             >
               <Copy size={16} />
-              نسخ اليوم
+              {tr("نسخ اليوم")}
             </button>
             <button
               type="button"
@@ -428,7 +543,7 @@ export function ProgramEditor({
               }}
             >
               <Trash2 size={16} />
-              حذف اليوم
+              {tr("حذف اليوم")}
             </button>
           </div>
           <div className="space-y-4">
@@ -445,26 +560,27 @@ export function ProgramEditor({
                     />
                     <div>
                       <span className="eyebrow">
-                        الحركة {String(i + 1).padStart(2, "0")}
+                        {tr("الحركة")} {String(i + 1).padStart(2, "0")}
                       </span>
                       <p className="text-xs text-muted">
-                        {exerciseName(catalogById.get(e.catalogId)!)}
+                        {exerciseName(catalogById.get(e.catalogId)!, locale)}
                       </p>
                     </div>
                   </div>
                 ) : null}
                 {e.catalogId && catalogById.has(e.catalogId) && (
                   <details className="program-instructions mb-4">
-                    <summary>شرح أداء التمرين بالعربية</summary>
+                    <summary>{tr("شرح أداء التمرين بالعربية")}</summary>
                     <ol
-                      dir="rtl"
+                      dir={locale === "ar" ? "rtl" : "ltr"}
                       className="exercise-instructions list-inside list-decimal text-sm leading-8 text-muted"
                     >
-                      {exerciseInstructions(catalogById.get(e.catalogId)!).map(
-                        (line, step) => (
-                          <li key={step}>{line}</li>
-                        ),
-                      )}
+                      {exerciseInstructions(
+                        catalogById.get(e.catalogId)!,
+                        locale,
+                      ).map((line, step) => (
+                        <li key={step}>{line}</li>
+                      ))}
                     </ol>
                   </details>
                 )}
@@ -473,7 +589,7 @@ export function ProgramEditor({
                     {i + 1}
                   </span>
                   <input
-                    aria-label={`اسم التمرين ${i + 1}`}
+                    aria-label={tr("اسم التمرين {0}", String(i + 1))}
                     className="field"
                     value={e.name}
                     maxLength={140}
@@ -483,7 +599,7 @@ export function ProgramEditor({
                   />
                   <button
                     type="button"
-                    aria-label={`رفع التمرين ${i + 1}`}
+                    aria-label={tr("رفع التمرين {0}", String(i + 1))}
                     className="btn-secondary !px-2"
                     disabled={i === 0}
                     onClick={() => moveExercise(i, -1)}
@@ -492,7 +608,7 @@ export function ProgramEditor({
                   </button>
                   <button
                     type="button"
-                    aria-label={`تنزيل التمرين ${i + 1}`}
+                    aria-label={tr("تنزيل التمرين {0}", String(i + 1))}
                     className="btn-secondary !px-2"
                     disabled={i === active.exercises.length - 1}
                     onClick={() => moveExercise(i, 1)}
@@ -501,7 +617,7 @@ export function ProgramEditor({
                   </button>
                   <button
                     type="button"
-                    aria-label={`حذف التمرين ${i + 1}`}
+                    aria-label={tr("حذف التمرين {0}", String(i + 1))}
                     className="text-muted hover:text-red-600"
                     disabled={active.exercises.length === 1}
                     onClick={() =>
@@ -572,7 +688,7 @@ export function ProgramEditor({
                         }
                       >
                         <X size={13} />
-                        إزالة الفيديو من الحركة
+                        {tr("إزالة الفيديو من الحركة")}
                       </button>
                     </div>
                   ) : null}
@@ -580,13 +696,13 @@ export function ProgramEditor({
                 <div className="grid grid-cols-3 gap-3">
                   {(
                     [
-                      ["sets", "المجموعات"],
-                      ["reps", "العدات"],
-                      ["rest", "الراحة (ثانية)"],
+                      ["sets", tr("المجموعات")],
+                      ["reps", tr("العدات")],
+                      ["rest", tr("الراحة (ثانية)")],
                     ] as const
                   ).map(([f, label]) => (
                     <div key={f}>
-                      <label htmlFor={`ex-${i}-${f}`}>{label}</label>
+                      <label htmlFor={`ex-${i}-${f}`}>{tr(label)}</label>
                       <input
                         id={`ex-${i}-${f}`}
                         className="field"
@@ -607,12 +723,57 @@ export function ProgramEditor({
                     </div>
                   ))}
                 </div>
+                <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                  {(
+                    [
+                      ["weight", tr("الوزن (كجم)"), 1500],
+                      ["rpe", "RPE", 10],
+                      ["rir", "RIR", 20],
+                    ] as const
+                  ).map(([field, label, max]) => (
+                    <label key={field} className="text-sm">
+                      {tr(label)}
+                      <input
+                        aria-label={label + tr(" للتمرين ") + (i + 1)}
+                        className="field mt-1"
+                        type="number"
+                        min={0}
+                        max={max}
+                        step={field === "rir" ? 1 : 0.5}
+                        value={e[field] ?? ""}
+                        onChange={(event) =>
+                          updateExercise(
+                            i,
+                            field,
+                            event.target.value === ""
+                              ? undefined
+                              : Number(event.target.value),
+                          )
+                        }
+                      />
+                    </label>
+                  ))}
+                  <label className="text-sm">
+                    {tr("الإيقاع Tempo")}
+                    <input
+                      aria-label={tr("الإيقاع للتمرين ") + (i + 1)}
+                      dir="ltr"
+                      className="field mt-1"
+                      maxLength={40}
+                      placeholder="3-1-1-0"
+                      value={e.tempo ?? ""}
+                      onChange={(event) =>
+                        updateExercise(i, "tempo", event.target.value)
+                      }
+                    />
+                  </label>
+                </div>
                 <details className="mt-4">
                   <summary className="text-xs text-muted">
-                    شرح الحركة ورابط الفيديو
+                    {tr("شرح الحركة ورابط الفيديو")}
                   </summary>
                   <label className="mt-3" htmlFor={`ex-description-${i}`}>
-                    الشرح
+                    {tr("الشرح")}
                   </label>
                   <textarea
                     id={`ex-description-${i}`}
@@ -624,7 +785,7 @@ export function ProgramEditor({
                     }
                   />
                   <label className="mt-3" htmlFor={`ex-video-${i}`}>
-                    رابط فيديو اختياري (https)
+                    {tr("رابط فيديو اختياري (https)")}
                   </label>
                   <input
                     id={`ex-video-${i}`}
@@ -669,11 +830,11 @@ export function ProgramEditor({
               }
             >
               <Plus size={16} />
-              تمرين جديد
+              {tr("تمرين جديد")}
             </button>
             {library.length ? (
               <select
-                aria-label="إضافة من مكتبة التمارين"
+                aria-label={tr("إضافة من مكتبة التمارين")}
                 className="field max-w-xs"
                 value=""
                 onChange={(event) => {
@@ -702,7 +863,7 @@ export function ProgramEditor({
                     }));
                 }}
               >
-                <option value="">إضافة نسخة من المكتبة…</option>
+                <option value="">{tr("إضافة نسخة من المكتبة…")}</option>
                 {library.map((e) => (
                   <option value={e.id} key={e.id}>
                     {e.name}
@@ -716,8 +877,8 @@ export function ProgramEditor({
       <div className="sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white/95 p-4 shadow-lg backdrop-blur">
         <p className="max-w-md text-xs text-muted">
           {clientId
-            ? "جاهز؟ انشر التحديث على رابط العميل."
-            : "احفظه في مكتبتك للبرامج القادمة."}
+            ? tr("جاهز؟ انشر التحديث على رابط العميل.")
+            : tr("احفظه في مكتبتك للبرامج القادمة.")}
         </p>
         <div className="flex gap-2">
           <button
@@ -727,7 +888,7 @@ export function ProgramEditor({
             onClick={() => void save()}
           >
             <Save size={16} />
-            حفظ المسودة
+            {tr("حفظ المسودة")}
           </button>
           {clientId ? (
             <button
@@ -752,12 +913,12 @@ export function ProgramEditor({
               }}
             >
               <Send size={16} />
-              نشر للمتدرب
+              {tr("نشر للمتدرب")}
             </button>
           ) : (
             <span className="hidden items-center gap-1 text-xs text-teal sm:flex">
               <Check size={14} />
-              نسخة مستقلة
+              {tr("نسخة مستقلة")}
             </span>
           )}
         </div>
@@ -771,15 +932,15 @@ export function ProgramEditor({
             className="modal-sheet max-w-6xl"
             role="dialog"
             aria-modal="true"
-            aria-label="مكتبة الحركات"
+            aria-label={tr("مكتبة الحركات")}
           >
             <ExerciseCatalog
               onSelect={addCatalog}
               onClose={() => setCatalogOpen(false)}
             />
             <p className="sticky bottom-0 mt-4 bg-white p-3 text-center text-sm">
-              الحصة الحالية: {active.exercises.length} حركة · تقدر تضيف أكثر من
-              حركة قبل الإغلاق
+              {tr("الحصة الحالية:")} {active.exercises.length}{" "}
+              {tr("حركة · تقدر تضيف أكثر من حركة قبل الإغلاق")}
             </p>
           </div>
         </div>

@@ -1,4 +1,5 @@
 "use client";
+import { useLocale } from "./locale-provider";
 import { useState } from "react";
 import { Scale, TrendingDown, Plus, Trash2 } from "lucide-react";
 import type { WeightEntry } from "@/lib/model";
@@ -16,6 +17,8 @@ export function WeightPanel({
   onDelete?: (day: string) => Promise<string | undefined>;
   compact?: boolean;
 }) {
+  const { t: tr, language: locale } = useLocale();
+
   const ordered = [...entries].sort((a, b) =>
     a.entry_date.localeCompare(b.entry_date),
   );
@@ -42,13 +45,17 @@ export function WeightPanel({
     <section className={"weight-panel " + (compact ? "" : "card p-5")}>
       <div className="section-title">
         <div>
-          <p className="eyebrow">متابعة الوزن · كجم</p>
+          <p className="eyebrow">{tr("متابعة الوزن · كجم")}</p>
           <h2 className="flex items-center gap-2">
             <Scale size={20} />
-            متابعة الوزن
+            {tr("متابعة الوزن")}
           </h2>
         </div>
-        {target ? <span className="badge">الهدف {target} كجم</span> : null}
+        {target ? (
+          <span className="badge">
+            {tr("الهدف")} {target} {tr("كجم")}
+          </span>
+        ) : null}
       </div>
       <div className="grid grid-cols-3 gap-3">
         <div>
@@ -56,7 +63,8 @@ export function WeightPanel({
             {last ? Number(last.weight).toFixed(1) : "—"}
           </p>
           <p className="text-xs text-muted">
-            آخر وزن · {last ? formatDate(last.entry_date) : "لم يُسجل"}
+            {tr("آخر وزن ·")}{" "}
+            {last ? formatDate(last.entry_date, locale) : tr("لم يُسجل")}
           </p>
         </div>
         <div>
@@ -66,14 +74,14 @@ export function WeightPanel({
                 (Number(last.weight) - Number(first.weight)).toFixed(1)
               : "—"}
           </p>
-          <p className="text-xs text-muted">التغير منذ أول تسجيل</p>
+          <p className="text-xs text-muted">{tr("التغير منذ أول تسجيل")}</p>
         </div>
         <div>
           <p className="metric-number">
             {ordered.length ? average.toFixed(1) : "—"}
           </p>
           <p className="text-xs text-muted">
-            متوسط آخر {Math.min(7, ordered.length)} تسجيلات
+            {tr("متوسط آخر")} {Math.min(7, ordered.length)} {tr("تسجيلات")}
           </p>
         </div>
       </div>
@@ -82,7 +90,7 @@ export function WeightPanel({
           <svg
             viewBox="0 0 500 155"
             role="img"
-            aria-label="تغير الوزن خلال آخر 30 تسجيلًا"
+            aria-label={tr("تغير الوزن خلال آخر 30 تسجيلًا")}
           >
             <defs>
               <linearGradient id="weight-fill" x1="0" x2="0" y1="0" y2="1">
@@ -123,16 +131,16 @@ export function WeightPanel({
             ))}
           </svg>
           <div className="flex justify-between text-xs text-muted">
-            <span>{formatDate(recent[0].entry_date)}</span>
-            <span>{formatDate(recent.at(-1)!.entry_date)}</span>
+            <span>{formatDate(recent[0].entry_date, locale)}</span>
+            <span>{formatDate(recent.at(-1)!.entry_date, locale)}</span>
           </div>
         </div>
       ) : (
         <div className="my-5 flex items-center gap-3 border border-dashed p-4 text-xs text-muted">
           <TrendingDown size={24} />
           {recent.length
-            ? "سجّل مرة ثانية لعرض منحنى التغير."
-            : "أول تسجيل يبدأ خط المتابعة."}
+            ? tr("سجّل مرة ثانية لعرض منحنى التغير.")
+            : tr("أول تسجيل يبدأ خط المتابعة.")}
         </div>
       )}
       {onSave ? (
@@ -158,9 +166,9 @@ export function WeightPanel({
           }}
         >
           <label className="text-xs">
-            اليوم
+            {tr("اليوم")}
             <input
-              aria-label="تاريخ الوزن"
+              aria-label={tr("تاريخ الوزن")}
               className="field mt-1"
               type="date"
               max={riyadhToday()}
@@ -170,15 +178,15 @@ export function WeightPanel({
             />
           </label>
           <label className="text-xs">
-            الوزن (كجم)
+            {tr("الوزن (كجم)")}
             <input
-              aria-label="الوزن بالكيلوجرام"
+              aria-label={tr("الوزن بالكيلوجرام")}
               className="field mt-1"
               type="number"
               min={20}
               max={400}
               step="0.1"
-              placeholder="مثال: 82.4"
+              placeholder={tr("مثال: 82.4")}
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               required
@@ -187,16 +195,16 @@ export function WeightPanel({
           <button className="btn self-end" disabled={busy}>
             <Plus size={15} />
             {busy
-              ? "نحفظ…"
+              ? tr("نحفظ…")
               : ordered.some((w) => w.entry_date === day)
-                ? "تصحيح الوزن"
-                : "تسجيل"}
+                ? tr("تصحيح الوزن")
+                : tr("تسجيل")}
           </button>
         </form>
       ) : null}
       {error ? (
         <p role="alert" className="mt-3 text-sm text-red-700">
-          {error}
+          {tr(error)}
         </p>
       ) : null}
       {message ? (
@@ -206,7 +214,9 @@ export function WeightPanel({
       ) : null}
       {ordered.length ? (
         <details className="mt-4 border-t pt-3">
-          <summary className="text-xs">سجل الأوزان · {ordered.length}</summary>
+          <summary className="text-xs">
+            {tr("سجل الأوزان ·")} {ordered.length}
+          </summary>
           <div className="mt-3 max-h-56 overflow-auto">
             {ordered
               .slice()
@@ -216,11 +226,11 @@ export function WeightPanel({
                   className="flex items-center justify-between border-b py-2 text-sm"
                   key={w.id}
                 >
-                  <span>{formatDate(w.entry_date)}</span>
+                  <span>{formatDate(w.entry_date, locale)}</span>
                   <strong dir="ltr">{Number(w.weight).toFixed(1)} kg</strong>
                   {onDelete ? (
                     <button
-                      aria-label={"حذف وزن " + w.entry_date}
+                      aria-label={tr("حذف وزن ") + w.entry_date}
                       className="p-2 text-muted"
                       disabled={busy}
                       onClick={async () => {

@@ -1,4 +1,6 @@
 "use client";
+import { useLocale } from "./locale-provider";
+import { LanguageSwitch } from "./language-switch";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,6 +41,12 @@ import { ProgramEditor } from "./program-editor";
 import { ImportClients } from "./import-clients";
 import { ClientProgress, PortalControl } from "./client-progress";
 import { ExerciseCatalog } from "./exercise-catalog";
+import { TemplateTools } from "./template-tools";
+import { ClientHub } from "./client-hub";
+import { coachingAlerts } from "@/lib/coaching-alerts";
+import { NotificationSettings } from "./notification-settings";
+import { AccountSettings } from "./account-settings";
+import { ManagementButton } from "./management-button";
 import { exerciseName } from "@/lib/catalog";
 import { CoachToday } from "./coach-today";
 import { useDialog } from "./use-dialog";
@@ -105,6 +113,8 @@ export function LinkBox({
   kind: "invite" | "join";
   clientId?: string;
 }) {
+  const { t: tr } = useLocale();
+
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   return (
@@ -125,14 +135,16 @@ export function LinkBox({
       >
         <Link2 size={16} />
         {busy
-          ? "نجهّز الرابط…"
+          ? tr("نجهّز الرابط…")
           : kind === "invite"
-            ? "إنشاء دعوة آمنة"
-            : "إنشاء رابط طلب انضمام"}
+            ? tr("إنشاء دعوة آمنة")
+            : tr("إنشاء رابط طلب انضمام")}
       </button>
       {result?.url ? (
         <div className="mt-4 rounded-xl border bg-canvas p-4">
-          <label htmlFor={`generated-${kind}`}>رابط خاص — شاركه بنفسك</label>
+          <label htmlFor={`generated-${kind}`}>
+            {tr("رابط خاص — شاركه بنفسك")}
+          </label>
           <input
             id={`generated-${kind}`}
             className="field"
@@ -153,12 +165,16 @@ export function LinkBox({
             }}
           >
             <Copy size={14} />
-            نسخ الرابط
+            {tr("نسخ الرابط")}
           </button>
           <p className="mt-2 text-xs text-muted">
             {kind === "invite"
-              ? "ينتهي خلال 7 أيام، لمرة واحدة، ولن يقبله إلا الحساب الموثّق بنفس إيميل العميل. إنشاء دعوة جديدة يلغي الدعوات السابقة."
-              : "ينتهي خلال 30 يومًا. الطلب يحتاج موافقتك ولا يمنح وصولًا للبيانات. إنشاء رابط جديد يلغي السابق."}
+              ? tr(
+                  "ينتهي خلال 7 أيام، لمرة واحدة، ولن يقبله إلا الحساب الموثّق بنفس إيميل العميل. إنشاء دعوة جديدة يلغي الدعوات السابقة.",
+                )
+              : tr(
+                  "ينتهي خلال 30 يومًا. الطلب يحتاج موافقتك ولا يمنح وصولًا للبيانات. إنشاء رابط جديد يلغي السابق.",
+                )}
           </p>
         </div>
       ) : null}
@@ -195,6 +211,7 @@ export function Workspace({
   clientId,
   initialFilter = "",
   initialQuery = "",
+  initialTab = "program",
   appUrl,
   local,
 }: {
@@ -203,16 +220,19 @@ export function Workspace({
   clientId?: string;
   initialFilter?: string;
   initialQuery?: string;
+  initialTab?: string;
   appUrl: string;
   local: boolean;
 }) {
+  const { t: tr, language: locale } = useLocale();
+
   const [mobile, setMobile] = useState(false);
   const sidebarRef = useDialog<HTMLElement>(mobile, () => setMobile(false));
   const client = data.clients.find((c) => c.id === clientId && !c.archived);
   return (
     <div className="portal-shell">
       <a className="skip-link" href="#portal-content">
-        انتقل إلى المحتوى
+        {tr("انتقل إلى المحتوى")}
       </a>
       {mobile && (
         <div className="sidebar-backdrop" onClick={() => setMobile(false)} />
@@ -222,19 +242,19 @@ export function Workspace({
         tabIndex={-1}
         id="portal-sidebar"
         className={`portal-sidebar ${mobile ? "sidebar-open" : ""}`}
-        aria-label="التنقل في البورتال"
+        aria-label={tr("التنقل في البورتال")}
       >
         <div className="sidebar-brand">
           <Brand />
           <button
             className="sidebar-close"
-            aria-label="إغلاق القائمة"
+            aria-label={tr("إغلاق القائمة")}
             onClick={() => setMobile(false)}
           >
             <X size={20} />
           </button>
         </div>
-        <nav aria-label="القائمة الرئيسية">
+        <nav aria-label={tr("القائمة الرئيسية")}>
           {nav.map((item) => (
             <Link
               key={item.key}
@@ -244,7 +264,7 @@ export function Workspace({
               className={`nav-item ${section === item.key ? "nav-active" : ""}`}
             >
               <item.icon size={19} />
-              <span>{item.label}</span>
+              <span>{tr(item.label)}</span>
               {item.key === "clients" && (
                 <span className="nav-count">
                   {data.clients.filter((c) => !c.archived).length}
@@ -262,13 +282,13 @@ export function Workspace({
             <p className="truncate text-sm font-semibold">
               {data.profile!.name}
             </p>
-            <p className="text-xs text-muted">حساب المدرب</p>
+            <p className="text-xs text-muted">{tr("حساب المدرب")}</p>
           </div>
           <form action={logoutAction}>
             <button
               className="logout-button"
-              aria-label="تسجيل الخروج"
-              title="تسجيل الخروج"
+              aria-label={tr("تسجيل الخروج")}
+              title={tr("تسجيل الخروج")}
             >
               <LogOut size={18} />
             </button>
@@ -280,7 +300,7 @@ export function Workspace({
           <div className="flex items-center gap-3">
             <button
               className="mobile-menu"
-              aria-label="فتح القائمة"
+              aria-label={tr("فتح القائمة")}
               aria-controls="portal-sidebar"
               aria-expanded={mobile}
               onClick={() => setMobile(true)}
@@ -288,9 +308,9 @@ export function Workspace({
               <Menu size={21} />
             </button>
             <div className="portal-breadcrumb">
-              <span>إيزي كوتش</span>
+              <span>{tr("إيزي كوتش")}</span>
               <ChevronLeft size={13} />
-              <strong>{nav.find((n) => n.key === section)?.label}</strong>
+              <strong>{tr(nav.find((n) => n.key === section)?.label)}</strong>
               {client && (
                 <>
                   <ChevronLeft size={13} />
@@ -303,26 +323,28 @@ export function Workspace({
             <Search size={17} />
             <input
               name="q"
-              aria-label="البحث في المتدربين"
-              placeholder="ابحث عن متدرب…"
+              aria-label={tr("البحث في المتدربين")}
+              placeholder={tr("ابحث عن متدرب…")}
               defaultValue={initialQuery}
             />
-            <button type="submit" aria-label="بحث">
+            <button type="submit" aria-label={tr("بحث")}>
               <ArrowLeft size={15} />
             </button>
           </form>
           <div className="header-tools">
+            <LanguageSwitch />
             <span className="header-date">
               <CalendarDays size={16} />
-              {formatDate(riyadhToday())}
+              {formatDate(riyadhToday(), locale)}
             </span>
             <Link
-              href="/coach/settings"
-              aria-label="طلبات تحتاج مراجعتك"
+              href="/coach"
+              aria-label={tr("طلبات تحتاج مراجعتك")}
               className="header-notifications"
             >
               <Bell size={19} />
-              {data.join_requests.some((r) => r.status === "pending") ||
+              {coachingAlerts(data).some((alert) => alert.urgent) ||
+              data.join_requests.some((r) => r.status === "pending") ||
               data.privacy_requests.some((r) => r.status === "pending") ? (
                 <span />
               ) : null}
@@ -334,8 +356,9 @@ export function Workspace({
         </header>
         {local ? (
           <div className="border-b border-teal/10 bg-accent/20 px-5 py-2 text-xs text-teal lg:px-9">
-            معاينة محلية · بيانات اصطناعية محفوظة في قاعدة بيانات على جهازك · لا
-            رسائل حقيقية
+            {tr(
+              "معاينة محلية · بيانات اصطناعية محفوظة في قاعدة بيانات على جهازك · لا رسائل حقيقية",
+            )}
           </div>
         ) : null}
         <main id="portal-content" className="portal-content">
@@ -344,11 +367,17 @@ export function Workspace({
           ) : section === "clients" ? (
             clientId ? (
               client ? (
-                <ClientDetail data={data} client={client} appUrl={appUrl} />
+                <ClientDetail
+                  key={`${client.id}:${initialTab}`}
+                  initialTab={initialTab}
+                  data={data}
+                  client={client}
+                  appUrl={appUrl}
+                />
               ) : (
                 <Empty
-                  title="العميل غير متاح"
-                  text="لا يوجد هذا العميل في حسابك."
+                  title={tr("العميل غير متاح")}
+                  text={tr("لا يوجد هذا العميل في حسابك.")}
                 />
               )
             ) : (
@@ -368,9 +397,9 @@ export function Workspace({
           )}
         </main>
         <footer className="flex flex-wrap justify-between gap-3 border-t px-5 py-5 text-xs text-muted lg:px-9">
-          <span>إيزي كوتش · بوابتك لإدارة التدريب</span>
+          <span>{tr("إيزي كوتش · بوابتك لإدارة التدريب")}</span>
           <Link href="/privacy" className="underline">
-            الخصوصية · مسودة للمراجعة
+            {tr("الخصوصية · مسودة للمراجعة")}
           </Link>
         </footer>
       </div>
@@ -413,11 +442,13 @@ function Heading({
   );
 }
 function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
+  const { t: tr, language: locale } = useLocale();
+
   if (!clients.length)
     return (
       <div className="empty">
         <Users size={28} />
-        <p>ما فيه عملاء في هذا العرض.</p>
+        <p>{tr("ما فيه عملاء في هذا العرض.")}</p>
       </div>
     );
   return (
@@ -425,11 +456,11 @@ function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
       <table>
         <thead>
           <tr>
-            <th>العميل</th>
-            <th>البرنامج</th>
-            <th>الاشتراك</th>
-            <th>المتبقي</th>
-            <th aria-label="فتح ملف العميل" />
+            <th>{tr("العميل")}</th>
+            <th>{tr("البرنامج")}</th>
+            <th>{tr("الاشتراك")}</th>
+            <th>{tr("المتبقي")}</th>
+            <th aria-label={tr("فتح ملف العميل")} />
           </tr>
         </thead>
         <tbody>
@@ -452,7 +483,7 @@ function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
                     <div>
                       <p className="whitespace-nowrap font-medium">{c.name}</p>
                       <p className="text-xs text-muted">
-                        {c.trainee_user_id ? "حساب مرتبط" : c.email}
+                        {c.trainee_user_id ? tr("حساب مرتبط") : c.email}
                       </p>
                     </div>
                   </Link>
@@ -461,7 +492,7 @@ function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
                   <span
                     className={`badge ${program ? "bg-accent/30 text-teal" : "bg-amber-50 text-amber-800"}`}
                   >
-                    {program ? "منشور" : "يحتاج برنامجًا"}
+                    {program ? tr("منشور") : tr("يحتاج برنامجًا")}
                   </span>
                 </td>
                 <td>
@@ -469,11 +500,13 @@ function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
                     <div>
                       <p className="text-xs">{subscriptionState(data, sub)}</p>
                       <p className="text-xs text-muted">
-                        حتى {formatDate(sub.end_date)}
+                        {tr("حتى")} {formatDate(sub.end_date, locale)}
                       </p>
                     </div>
                   ) : (
-                    <span className="text-xs text-muted">بدون باقة</span>
+                    <span className="text-xs text-muted">
+                      {tr("بدون باقة")}
+                    </span>
                   )}
                 </td>
                 <td
@@ -481,16 +514,25 @@ function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
                     balance ? "font-medium text-amber-800" : "text-muted"
                   }
                 >
-                  {money(balance)}
+                  {money(balance, locale)}
                 </td>
                 <td>
-                  <Link
-                    aria-label={`فتح ملف ${c.name}`}
-                    href={`/coach/clients/${c.id}`}
-                    className="inline-flex size-8 items-center justify-center rounded-lg border"
-                  >
-                    <ChevronLeft size={15} />
-                  </Link>
+                  {c.archived ? (
+                    <ManagementButton
+                      command="client_archive"
+                      payload={{ client_id: c.id, archived: false }}
+                    >
+                      {tr("إعادة التفعيل")}
+                    </ManagementButton>
+                  ) : (
+                    <Link
+                      aria-label={tr("فتح ملف {0}", String(c.name))}
+                      href={`/coach/clients/${c.id}`}
+                      className="inline-flex size-8 items-center justify-center rounded-lg border"
+                    >
+                      <ChevronLeft size={15} />
+                    </Link>
+                  )}
                 </td>
               </tr>
             );
@@ -509,6 +551,8 @@ function Clients({
   initialFilter: string;
   initialQuery: string;
 }) {
+  const { t: tr } = useLocale();
+
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [filter, setFilter] = useState(
@@ -517,10 +561,12 @@ function Clients({
   const [add, setAdd] = useState(initialFilter === "add");
   const [importing, setImporting] = useState(false);
   const today = riyadhToday();
+  const [sort, setSort] = useState("newest");
+  const alerts = coachingAlerts(data);
   const clients = data.clients
     .filter(
       (c) =>
-        !c.archived &&
+        (filter === "archived" ? c.archived : !c.archived) &&
         `${c.name} ${c.email} ${c.phone}`
           .toLowerCase()
           .includes(query.toLowerCase()),
@@ -537,11 +583,29 @@ function Clients({
             ? data.subscriptions.some(
                 (s) => s.client_id === c.id && remaining(data, s) > 0,
               )
-            : true,
+            : filter === "active" || filter === "inactive" || filter === "new"
+              ? (data.management?.details.find(
+                  (detail) => detail.client_id === c.id,
+                )?.status ?? "active") === filter
+              : ["checkin", "adherence", "stalled"].includes(filter)
+                ? alerts.some(
+                    (alert) => alert.clientId === c.id && alert.kind === filter,
+                  )
+                : true,
+    )
+    .sort((a, b) =>
+      sort === "name"
+        ? a.name.localeCompare(b.name, "ar")
+        : sort === "oldest"
+          ? a.created_at.localeCompare(b.created_at)
+          : b.created_at.localeCompare(a.created_at),
     );
   return (
     <>
-      <Heading title="العملاء" text="كل عميل ببرنامجه واشتراكه وتفاصيله.">
+      <Heading
+        title={tr("العملاء")}
+        text={tr("كل عميل ببرنامجه واشتراكه وتفاصيله.")}
+      >
         <div className="flex gap-2">
           <button
             className="btn-secondary"
@@ -550,7 +614,7 @@ function Clients({
               setAdd(false);
             }}
           >
-            استيراد ملف
+            {tr("استيراد ملف")}
           </button>
           <button
             className="btn"
@@ -560,17 +624,17 @@ function Clients({
             }}
           >
             <Plus size={16} />
-            عميل جديد
+            {tr("عميل جديد")}
           </button>
         </div>
       </Heading>
       {add ? (
         <section className="card mb-6 p-6">
-          <h2 className="mb-5">إضافة عميل</h2>
+          <h2 className="mb-5">{tr("إضافة عميل")}</h2>
           <DataForm
             command="client_save"
             fields={clientFields()}
-            label="إضافة وفتح الملف"
+            label={tr("إضافة وفتح الملف")}
             onDone={(r) =>
               router.push(`/coach/clients/${(r.data as { id: string }).id}`)
             }
@@ -579,13 +643,16 @@ function Clients({
       ) : null}
       {importing ? (
         <section className="card mb-6 p-6">
-          <ImportClients emails={data.clients.map((c) => c.email)} />
+          <ImportClients
+            emails={data.clients.map((c) => c.email)}
+            batches={data.management?.import_batches}
+          />
           <a
             className="mt-4 inline-flex text-xs text-teal underline"
             href="/examples/clients.csv"
             download
           >
-            تحميل CSV اصطناعي للتجربة
+            {tr("تحميل CSV اصطناعي للتجربة")}
           </a>
         </section>
       ) : null}
@@ -595,28 +662,70 @@ function Clients({
             <Search size={16} className="absolute start-3 top-3.5 text-muted" />
             <input
               className="field ps-10"
-              placeholder="ابحث بالاسم أو الإيميل أو الجوال…"
-              aria-label="البحث عن عميل"
+              placeholder={tr("ابحث بالاسم أو الإيميل أو الجوال…")}
+              aria-label={tr("البحث عن عميل")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
           <div className="flex flex-wrap gap-1">
             {[
-              ["", "الكل"],
-              ["program", "بدون برنامج"],
-              ["renew", "تجديد قريب"],
-              ["balance", "دفعات متبقية"],
+              ["", tr("الكل")],
+              ["program", tr("بدون برنامج")],
+              ["renew", tr("تجديد قريب")],
+              ["balance", tr("دفعات متبقية")],
             ].map(([value, label]) => (
               <button
                 key={value}
                 className={filter === value ? "btn-soft" : "btn-secondary"}
                 onClick={() => setFilter(value)}
               >
-                {label}
+                {tr(label)}
               </button>
             ))}
           </div>
+        </div>
+        <div className="grid gap-3 px-5 pb-4 sm:grid-cols-2">
+          <label>
+            {tr("حالة ومتابعة")}
+            <select
+              aria-label={tr("تصفية حالة العملاء")}
+              className="field"
+              value={filter}
+              onChange={(event) => setFilter(event.target.value)}
+            >
+              {[
+                ["", tr("كل العملاء")],
+                ["active", tr("نشط")],
+                ["inactive", tr("غير نشط")],
+                ["new", tr("جديد")],
+                ["checkin", tr("مراجعات متأخرة أو معلقة")],
+                ["adherence", tr("التزام منخفض")],
+                ["stalled", tr("تقدم مستقر يحتاج مراجعة")],
+                ["archived", tr("المؤرشفون")],
+                ["program", tr("بدون برنامج")],
+                ["renew", tr("تجديد قريب")],
+                ["balance", tr("دفعات متبقية")],
+              ].map(([key, label]) => (
+                <option key={key} value={key}>
+                  {tr(label)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {tr("ترتيب العملاء")}
+            <select
+              aria-label={tr("ترتيب العملاء")}
+              className="field"
+              value={sort}
+              onChange={(event) => setSort(event.target.value)}
+            >
+              <option value="newest">{tr("الأحدث أولًا")}</option>
+              <option value="oldest">{tr("الأقدم أولًا")}</option>
+              <option value="name">{tr("الاسم")}</option>
+            </select>
+          </label>
         </div>
         <ClientTable clients={clients} data={data} />
       </div>
@@ -628,12 +737,22 @@ function ClientDetail({
   data,
   client,
   appUrl,
+  initialTab,
 }: {
   data: Snapshot;
   client: Client;
   appUrl: string;
+  initialTab: string;
 }) {
-  const [tab, setTab] = useState("program");
+  const { t: tr, language: locale } = useLocale();
+
+  const [tab, setTab] = useState(
+    ["program", "finance", "profile", "progress", "tracking"].includes(
+      initialTab,
+    )
+      ? initialTab
+      : "program",
+  );
   const [templateId, setTemplateId] = useState("");
   const [loaded, setLoaded] = useState<Template | null>(null);
   const draft = data.programs.find(
@@ -652,9 +771,9 @@ function ClientDetail({
         className="mb-5 inline-flex items-center gap-1 text-xs text-muted"
         href="/coach/clients"
       >
-        العملاء
+        {tr("العملاء")}
         <ChevronLeft size={12} />
-        ملف العميل
+        {tr("ملف العميل")}
       </Link>
       <Heading
         title={client.name}
@@ -664,7 +783,9 @@ function ClientDetail({
           <span
             className={`badge ${client.trainee_user_id ? "bg-accent/40 text-teal" : ""}`}
           >
-            {client.trainee_user_id ? "حسابه مرتبط" : "بانتظار ربط الحساب"}
+            {client.trainee_user_id
+              ? tr("حسابه مرتبط")
+              : tr("بانتظار ربط الحساب")}
           </span>
           <button
             className="btn-secondary"
@@ -675,7 +796,7 @@ function ClientDetail({
             }
           >
             <Copy size={14} />
-            رابط البرنامج
+            {tr("رابط البرنامج")}
           </button>
           {client.phone ? (
             <a
@@ -684,7 +805,7 @@ function ClientDetail({
               rel="noopener noreferrer"
               href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(`مرحبًا ${client.name}، برنامجك من مدربك متاح عبر الرابط الآمن: ${programUrl} — ادخل بنفس إيميل الدعوة.`)}`}
             >
-              مشاركة عبر واتساب
+              {tr("مشاركة عبر واتساب")}
               <ArrowUpLeft size={14} />
             </a>
           ) : null}
@@ -698,41 +819,57 @@ function ClientDetail({
       />
       <div className="mb-6 flex flex-wrap gap-2">
         {[
-          ["program", "البرنامج والتغذية"],
-          ["finance", "الباقات والدفعات"],
-          ["profile", "البيانات والدعوة"],
-          ["progress", "الهدف والوزن"],
+          ["program", tr("البرنامج والتغذية")],
+          ["finance", tr("الباقات والدفعات")],
+          ["profile", tr("البيانات والدعوة")],
+          ["progress", tr("الهدف والوزن")],
+          ["tracking", tr("السجلات والمراجعات")],
         ].map(([key, label]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
             className={tab === key ? "btn" : "btn-secondary"}
           >
-            {label}
+            {tr(label)}
           </button>
         ))}
       </div>
-      {tab === "progress" ? (
+      {tab === "tracking" ? (
+        <ClientHub
+          clientId={client.id}
+          management={data.management}
+          weights={data.weights ?? []}
+          program={published}
+          targetWeight={
+            data.client_goals?.find((goal) => goal.client_id === client.id)
+              ?.target_weight
+          }
+          coach
+        />
+      ) : tab === "progress" ? (
         <ClientProgress data={data} clientId={client.id} />
       ) : tab === "program" ? (
         <section className="card p-5 sm:p-7">
           <div className="section-title">
             <div>
-              <h2>مسودة البرنامج</h2>
+              <h2>{tr("مسودة البرنامج")}</h2>
               <p className="mt-1 text-xs text-muted">
                 {published
-                  ? `آخر نشر: ${formatDate(published.published_at!)}`
-                  : "ما فيه نسخة منشورة للعميل بعد."}
+                  ? tr(
+                      "آخر نشر: {0}",
+                      String(formatDate(published.published_at!, locale)),
+                    )
+                  : tr("ما فيه نسخة منشورة للعميل بعد.")}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <select
-                aria-label="قالب البداية"
+                aria-label={tr("قالب البداية")}
                 className="field max-w-60"
                 value={templateId}
                 onChange={(e) => setTemplateId(e.target.value)}
               >
-                <option value="">ابدأ من قالب…</option>
+                <option value="">{tr("ابدأ من قالب…")}</option>
                 {data.templates.map((t) => (
                   <option value={t.id} key={t.id}>
                     {t.name}
@@ -757,7 +894,7 @@ function ClientDetail({
                   );
                 }}
               >
-                استخدام نسخة مستقلة
+                {tr("استخدام نسخة مستقلة")}
               </button>
             </div>
           </div>
@@ -777,7 +914,7 @@ function ClientDetail({
       ) : tab === "finance" ? (
         <div className="space-y-6">
           <details className="card p-6">
-            <summary>إضافة باقة أو تجديد</summary>
+            <summary>{tr("إضافة باقة أو تجديد")}</summary>
             <div className="mt-5">
               <SubscriptionForm data={data} client={client} />
             </div>
@@ -794,30 +931,34 @@ function ClientDetail({
             ))
           ) : (
             <Empty
-              title="ما فيه اشتراك بعد"
-              text="أضف الباقة وحدد بدايتها ونهايتها؛ تاريخ الدفع مستقل عنها."
+              title={tr("ما فيه اشتراك بعد")}
+              text={tr(
+                "أضف الباقة وحدد بدايتها ونهايتها؛ تاريخ الدفع مستقل عنها.",
+              )}
             />
           )}
         </div>
       ) : (
         <div className="grid items-start gap-6 lg:grid-cols-2">
           <section className="card p-6">
-            <h2 className="mb-5">بيانات العميل</h2>
+            <h2 className="mb-5">{tr("بيانات العميل")}</h2>
             <DataForm
               command="client_save"
               base={{ id: client.id }}
               fields={clientFields(client)}
             />
             <p className="mt-4 text-xs text-muted">
-              تغيير الإيميل يلغي ارتباط الحساب والدعوات السابقة؛ أنشئ دعوة جديدة
-              للإيميل الصحيح.
+              {tr(
+                "تغيير الإيميل يلغي ارتباط الحساب والدعوات السابقة؛ أنشئ دعوة جديدة للإيميل الصحيح.",
+              )}
             </p>
           </section>
           <section className="card space-y-5 p-6">
-            <h2>الوصول الآمن للمتدرب</h2>
+            <h2>{tr("الوصول الآمن للمتدرب")}</h2>
             <p className="text-sm text-muted">
-              لا يكفي امتلاك الرابط. لقبول الدعوة، يلزم الدخول بإيميل العميل
-              وتأكيد هويته.
+              {tr(
+                "لا يكفي امتلاك الرابط. لقبول الدعوة، يلزم الدخول بإيميل العميل وتأكيد هويته.",
+              )}
             </p>
             <LinkBox kind="invite" clientId={client.id} />
             {data.invitations
@@ -831,10 +972,10 @@ function ClientDetail({
                   key={i.id}
                 >
                   <p className="text-xs text-muted">
-                    تنتهي {formatDate(i.expires_at)}
+                    {tr("تنتهي")} {formatDate(i.expires_at, locale)}
                   </p>
                   <ActionButton command="invite_revoke" payload={{ id: i.id }}>
-                    إلغاء الدعوة
+                    {tr("إلغاء الدعوة")}
                   </ActionButton>
                 </div>
               ))}
@@ -852,6 +993,8 @@ function SubscriptionForm({
   data: Snapshot;
   client: Client;
 }) {
+  const { t: tr } = useLocale();
+
   const all = data.subscriptions.filter((s) => s.client_id === client.id);
   const latest = [...all].sort((a, b) =>
     b.end_date.localeCompare(a.end_date),
@@ -866,7 +1009,7 @@ function SubscriptionForm({
           checked={renew}
           onChange={(e) => setRenew(e.target.checked)}
         />
-        تجديد الباقة السابقة (يبدأ بعد انتهائها)
+        {tr("تجديد الباقة السابقة (يبدأ بعد انتهائها)")}
       </label>
       <DataForm
         key={String(renew)}
@@ -880,7 +1023,7 @@ function SubscriptionForm({
             name: "name",
             label: "اسم الباقة",
             required: true,
-            value: renew ? latest?.name : "تدريب شامل",
+            value: renew ? latest?.name : tr("تدريب شامل"),
           },
           {
             name: "price",
@@ -908,10 +1051,10 @@ function SubscriptionForm({
             ),
           },
         ]}
-        label={renew ? "تأكيد التجديد" : "إضافة الباقة"}
+        label={renew ? tr("تأكيد التجديد") : tr("إضافة الباقة")}
       />
       <p className="mt-3 text-xs text-muted">
-        إنشاء باقة لا يسجّل دفعة. سجّل الدفع بتاريخه الفعلي بشكل مستقل.
+        {tr("إنشاء باقة لا يسجّل دفعة. سجّل الدفع بتاريخه الفعلي بشكل مستقل.")}
       </p>
     </div>
   );
@@ -927,6 +1070,8 @@ function SubscriptionCard({
   client: Client;
   appUrl: string;
 }) {
+  const { t: tr, language: locale } = useLocale();
+
   const due = remaining(data, sub);
   const frozen = data.freezes.filter((f) => f.subscription_id === sub.id);
   const payments = data.payments.filter((p) => p.subscription_id === sub.id);
@@ -937,7 +1082,8 @@ function SubscriptionCard({
         <div>
           <h2>{sub.name}</h2>
           <p className="mt-1 text-xs text-muted">
-            {formatDate(sub.start_date)} ← {formatDate(sub.end_date)}
+            {formatDate(sub.start_date, locale)} ←{" "}
+            {formatDate(sub.end_date, locale)}
           </p>
         </div>
         <span className="badge bg-accent/30 text-teal">
@@ -946,13 +1092,13 @@ function SubscriptionCard({
       </div>
       <div className="grid grid-cols-3 gap-3 p-6">
         {[
-          ["قيمة الباقة", sub.price],
-          ["المدفوع", paid(data, sub.id)],
-          ["المتبقي", due],
+          [tr("قيمة الباقة"), sub.price],
+          [tr("المدفوع"), paid(data, sub.id)],
+          [tr("المتبقي"), due],
         ].map(([label, value]) => (
           <div key={String(label)}>
-            <p className="text-xs text-muted">{label}</p>
-            <p className="mt-1 text-lg font-semibold">{money(value)}</p>
+            <p className="text-xs text-muted">{tr(label)}</p>
+            <p className="mt-1 text-lg font-semibold">{money(value, locale)}</p>
           </div>
         ))}
       </div>
@@ -960,7 +1106,7 @@ function SubscriptionCard({
         {due > 0 ? (
           <details>
             <summary className="text-sm text-teal">
-              تسجيل دفعة جزئية أو كاملة
+              {tr("تسجيل دفعة جزئية أو كاملة")}
             </summary>
             <div className="mt-4">
               <DataForm
@@ -994,16 +1140,17 @@ function SubscriptionCard({
                     hint: "مرجع فريد يساعد في منع تكرار التحويل.",
                   },
                 ]}
-                label="إثبات الدفعة في السجل"
+                label={tr("إثبات الدفعة في السجل")}
               />
             </div>
           </details>
         ) : null}
         <details>
-          <summary className="text-sm">تجميد الباقة</summary>
+          <summary className="text-sm">{tr("تجميد الباقة")}</summary>
           <p className="mt-3 mb-4 text-xs text-muted">
-            النهاية تتمدد بعدد أيام التجميد شاملًا أول وآخر يوم، لمرة واحدة. لا
-            نقبل فترات متداخلة.
+            {tr(
+              "النهاية تتمدد بعدد أيام التجميد شاملًا أول وآخر يوم، لمرة واحدة. لا نقبل فترات متداخلة.",
+            )}
           </p>
           <DataForm
             command="freeze_apply"
@@ -1025,12 +1172,13 @@ function SubscriptionCard({
                 required: true,
               },
             ]}
-            label="تطبيق التجميد والتمديد"
+            label={tr("تطبيق التجميد والتمديد")}
           />
           {frozen.map((f) => (
             <p key={f.id} className="mt-3 rounded-xl bg-canvas p-3 text-xs">
-              {formatDate(f.start_date)} — {formatDate(f.end_date)} · طُبّق
-              تمديد {f.days} يومًا
+              {formatDate(f.start_date, locale)} —{" "}
+              {formatDate(f.end_date, locale)} {tr("· طُبّق تمديد")}
+              {f.days} {tr("يومًا")}
             </p>
           ))}
         </details>
@@ -1041,7 +1189,7 @@ function SubscriptionCard({
             className="btn-secondary"
             href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(`مرحبًا ${client.name}، تنتهي باقة ${sub.name} بتاريخ ${formatDate(sub.end_date)}. للتجديد تواصل معي. تفاصيل اشتراكك: ${appUrl}/me`)}`}
           >
-            فتح مسودة تذكير تجديد
+            {tr("فتح مسودة تذكير تجديد")}
             <ArrowUpLeft size={14} />
           </a>
         ) : null}
@@ -1057,15 +1205,17 @@ function PaymentList({
   data: Snapshot;
   payments: Snapshot["payments"];
 }) {
+  const { t: tr, language: locale } = useLocale();
+
   return (
     <div className="overflow-x-auto border-t">
       <table>
         <thead>
           <tr>
-            <th>التاريخ</th>
-            <th>المبلغ</th>
-            <th>الطريقة / المرجع</th>
-            <th>التوثيق</th>
+            <th>{tr("التاريخ")}</th>
+            <th>{tr("المبلغ")}</th>
+            <th>{tr("الطريقة / المرجع")}</th>
+            <th>{tr("التوثيق")}</th>
           </tr>
         </thead>
         <tbody>
@@ -1073,33 +1223,35 @@ function PaymentList({
             const reversed = data.payments.some((r) => r.reverses === p.id);
             return (
               <tr key={p.id}>
-                <td className="whitespace-nowrap">{formatDate(p.paid_date)}</td>
+                <td className="whitespace-nowrap">
+                  {formatDate(p.paid_date, locale)}
+                </td>
                 <td
                   className={
                     p.kind === "reversal" ? "text-red-700" : "font-medium"
                   }
                 >
-                  {money(p.amount)}
+                  {money(p.amount, locale)}
                 </td>
                 <td>
                   <p className="text-xs">
-                    {methods.find((m) => m.value === p.method)?.label}
+                    {tr(methods.find((m) => m.value === p.method)?.label)}
                   </p>
                   <p className="mt-1 text-xs text-muted">
-                    {p.reference || "بدون مرجع"}
+                    {p.reference || tr("بدون مرجع")}
                   </p>
                 </td>
                 <td>
                   {p.kind === "reversal" ? (
                     <p className="max-w-xs text-xs text-muted">
-                      عكس موثّق: {p.reason}
+                      {tr("عكس موثّق:")} {p.reason}
                     </p>
                   ) : reversed ? (
-                    <span className="badge">عُكست بتصحيح</span>
+                    <span className="badge">{tr("عُكست بتصحيح")}</span>
                   ) : (
                     <details className="min-w-44">
                       <summary className="text-xs text-muted">
-                        تصحيح الدفعة
+                        {tr("تصحيح الدفعة")}
                       </summary>
                       <div className="mt-3 min-w-60">
                         <DataForm
@@ -1114,11 +1266,12 @@ function PaymentList({
                               required: true,
                             },
                           ]}
-                          label="عكس الدفعة مع حفظ الأصل"
+                          label={tr("عكس الدفعة مع حفظ الأصل")}
                         />
                         <p className="mt-3 text-xs text-muted">
-                          بعد العكس، سجّل المبلغ الصحيح كدفعة جديدة بمرجع مختلف.
-                          الأصل يبقى في السجل.
+                          {tr(
+                            "بعد العكس، سجّل المبلغ الصحيح كدفعة جديدة بمرجع مختلف. الأصل يبقى في السجل.",
+                          )}
                         </p>
                       </div>
                     </details>
@@ -1134,6 +1287,8 @@ function PaymentList({
 }
 
 function Library({ data }: { data: Snapshot }) {
+  const { t: tr, language: locale } = useLocale();
+
   const [tab, setTab] = useState("catalog");
   const [template, setTemplate] = useState<Template | null>(null);
   const [editor, setEditor] = useState(false);
@@ -1144,7 +1299,7 @@ function Library({ data }: { data: Snapshot }) {
   const ex = data.exercises.find((e) => e.id === exerciseId);
   return (
     <>
-      <Heading title="مكتبة التدريب" text="">
+      <Heading title={tr("مكتبة التدريب")} text="">
         <button
           className="btn"
           onClick={() => {
@@ -1157,13 +1312,13 @@ function Library({ data }: { data: Snapshot }) {
           }}
         >
           <Plus size={16} />
-          قالب جديد
+          {tr("قالب جديد")}
         </button>
       </Heading>
       <div
         className="library-tabs"
         role="tablist"
-        aria-label="أقسام مكتبة التدريب"
+        aria-label={tr("أقسام مكتبة التدريب")}
         onKeyDown={(event) => {
           if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
             return;
@@ -1198,7 +1353,7 @@ function Library({ data }: { data: Snapshot }) {
             setTab("catalog");
           }}
         >
-          دليل التمارين · 876
+          {tr("دليل التمارين · 876")}
         </button>
         <button
           id="library-tab-templates"
@@ -1211,7 +1366,7 @@ function Library({ data }: { data: Snapshot }) {
             setTab("templates");
           }}
         >
-          قوالب البرامج
+          {tr("قوالب البرامج")}
         </button>
         <button
           id="library-tab-exercises"
@@ -1222,7 +1377,7 @@ function Library({ data }: { data: Snapshot }) {
           className={tab === "exercises" ? "library-tab-active" : ""}
           onClick={() => setTab("exercises")}
         >
-          تماريني الخاصة
+          {tr("تماريني الخاصة")}
         </button>
       </div>
       <div
@@ -1233,7 +1388,7 @@ function Library({ data }: { data: Snapshot }) {
       >
         <ExerciseCatalog
           embedded
-          selectionLabel="برنامج جديد"
+          selectionLabel={tr("برنامج جديد")}
           onSelect={(exercise) => {
             const seed = structuredClone(blankContent);
             seed.days[0].exercises = [
@@ -1264,13 +1419,14 @@ function Library({ data }: { data: Snapshot }) {
         aria-labelledby="library-tab-templates"
         hidden={tab !== "templates"}
       >
+        <TemplateTools data={data} />
         {editor ? (
           <section className="card p-6">
             <button
               className="mb-5 text-xs text-muted"
               onClick={() => setEditor(false)}
             >
-              رجوع للقوالب
+              {tr("رجوع للقوالب")}
             </button>
             <ProgramEditor
               key={(template?.id ?? "new") + ":" + templateRevision}
@@ -1282,55 +1438,64 @@ function Library({ data }: { data: Snapshot }) {
           </section>
         ) : data.templates.length ? (
           <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
-            {data.templates.map((t) => (
-              <article key={t.id} className="card p-6">
-                <span className="mb-5 flex size-12 items-center justify-center rounded-xl bg-accent/30 text-teal">
-                  <ClipboardList size={23} />
-                </span>
-                <h2>{t.name}</h2>
-                <p className="mt-2 text-sm text-muted">
-                  {t.content.days.length} أيام ·{" "}
-                  {t.content.days.reduce(
-                    (sum, d) => sum + d.exercises.length,
-                    0,
-                  )}{" "}
-                  تمارين
-                </p>
-                <p className="mt-2 text-xs text-muted">
-                  آخر تعديل {formatDate(t.updated_at)}
-                </p>
-                <div className="mt-6 flex gap-2">
-                  <button
-                    className="btn-secondary"
-                    onClick={() => {
-                      setTemplate(t);
-                      setEditor(true);
-                    }}
-                  >
-                    فتح وتعديل
-                  </button>
-                  <button
-                    className="btn-soft"
-                    onClick={() => {
-                      setTemplate({
-                        ...structuredClone(t),
-                        id: "copy:" + t.id,
-                        name: t.name + " · نسخة",
-                      });
-                      setEditor(true);
-                    }}
-                  >
-                    <Copy size={14} />
-                    نسخ
-                  </button>
-                </div>
-              </article>
-            ))}
+            {data.templates
+              .filter(
+                (t) =>
+                  !data.management?.template_metadata.some(
+                    (m) => m.template_id === t.id && m.archived,
+                  ),
+              )
+              .map((t) => (
+                <article key={t.id} className="card p-6">
+                  <span className="mb-5 flex size-12 items-center justify-center rounded-xl bg-accent/30 text-teal">
+                    <ClipboardList size={23} />
+                  </span>
+                  <h2>{t.name}</h2>
+                  <p className="mt-2 text-sm text-muted">
+                    {t.content.days.length} {tr("أيام ·")}{" "}
+                    {t.content.days.reduce(
+                      (sum, d) => sum + d.exercises.length,
+                      0,
+                    )}{" "}
+                    {tr("تمارين")}
+                  </p>
+                  <p className="mt-2 text-xs text-muted">
+                    {tr("آخر تعديل")} {formatDate(t.updated_at, locale)}
+                  </p>
+                  <div className="mt-6 flex gap-2">
+                    <button
+                      className="btn-secondary"
+                      onClick={() => {
+                        setTemplate(t);
+                        setEditor(true);
+                      }}
+                    >
+                      {tr("فتح وتعديل")}
+                    </button>
+                    <button
+                      className="btn-soft"
+                      onClick={() => {
+                        setTemplate({
+                          ...structuredClone(t),
+                          id: "copy:" + t.id,
+                          name: t.name + " · نسخة",
+                        });
+                        setEditor(true);
+                      }}
+                    >
+                      <Copy size={14} />
+                      {tr("نسخ")}
+                    </button>
+                  </div>
+                </article>
+              ))}
           </div>
         ) : (
           <Empty
-            title="مكتبتك تبدأ من أول قالب"
-            text="أنشئ قالبًا ثم انسخ محتواه لكل عميل. التعديل على النسخة لا يغيّر القالب."
+            title={tr("مكتبتك تبدأ من أول قالب")}
+            text={tr(
+              "أنشئ قالبًا ثم انسخ محتواه لكل عميل. التعديل على النسخة لا يغيّر القالب.",
+            )}
           />
         )}
       </div>
@@ -1351,7 +1516,7 @@ function Library({ data }: { data: Snapshot }) {
                   <div className="min-w-0 flex-1">
                     <h3 className="font-medium">{e.name}</h3>
                     <p className="mt-1 text-xs leading-7 text-muted">
-                      {e.description || "بدون شرح إضافي"}
+                      {e.description || tr("بدون شرح إضافي")}
                     </p>
                     {e.video ? (
                       <a
@@ -1360,7 +1525,7 @@ function Library({ data }: { data: Snapshot }) {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        رابط الفيديو
+                        {tr("رابط الفيديو")}
                       </a>
                     ) : null}
                   </div>
@@ -1368,23 +1533,23 @@ function Library({ data }: { data: Snapshot }) {
                     className="text-xs text-teal"
                     onClick={() => setExerciseId(e.id)}
                   >
-                    تعديل
+                    {tr("تعديل")}
                   </button>
                 </article>
               ))
             ) : (
-              <div className="empty">أضف أول تمرين لمكتبتك.</div>
+              <div className="empty">{tr("أضف أول تمرين لمكتبتك.")}</div>
             )}
           </section>
           <section className="card p-6">
             <div className="section-title">
-              <h2>{ex ? "تعديل التمرين" : "تمرين جديد"}</h2>
+              <h2>{ex ? tr("تعديل التمرين") : tr("تمرين جديد")}</h2>
               {ex ? (
                 <button
                   className="text-xs text-teal"
                   onClick={() => setExerciseId("")}
                 >
-                  إضافة جديد
+                  {tr("إضافة جديد")}
                 </button>
               ) : null}
             </div>
@@ -1421,40 +1586,45 @@ function Library({ data }: { data: Snapshot }) {
   );
 }
 function Finance({ data }: { data: Snapshot }) {
+  const { t: tr, language: locale } = useLocale();
+
   const total = data.subscriptions.reduce((n, s) => n + Number(s.price), 0);
   const received = data.payments.reduce((n, p) => n + Number(p.amount), 0);
   return (
     <>
       <Heading
-        title="الباقات والدفعات"
-        text="تاريخ الاشتراك مستقل عن الدفع. كل حركة لها أثر واضح."
+        title={tr("الباقات والدفعات")}
+        text={tr("تاريخ الاشتراك مستقل عن الدفع. كل حركة لها أثر واضح.")}
       >
         <a download href="/api/export" className="btn-secondary">
           <Download size={16} />
-          تصدير السجل
+          {tr("تصدير السجل")}
         </a>
       </Heading>
       <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
-        هذا سجل متابعة دفعات داخلي يديره المدرب، وليس فاتورة ضريبية أو إيصالًا
-        من بوابة دفع.
+        {tr(
+          "هذا سجل متابعة دفعات داخلي يديره المدرب، وليس فاتورة ضريبية أو إيصالًا من بوابة دفع.",
+        )}
       </p>
       <div className="mb-7 grid gap-4 sm:grid-cols-3">
         {[
-          ["قيمة الباقات", total],
-          ["صافي الدفعات", received],
-          ["المتبقي", total - received],
+          [tr("قيمة الباقات"), total],
+          [tr("صافي الدفعات"), received],
+          [tr("المتبقي"), total - received],
         ].map(([label, value]) => (
           <div key={String(label)} className="card p-6">
-            <p className="text-xs text-muted">{label}</p>
-            <p className="mt-3 text-2xl font-semibold">{money(value)}</p>
+            <p className="text-xs text-muted">{tr(label)}</p>
+            <p className="mt-3 text-2xl font-semibold">
+              {money(value, locale)}
+            </p>
           </div>
         ))}
       </div>
       <section className="card overflow-hidden">
         <div className="section-title px-6 pt-6">
-          <h2>الاشتراكات</h2>
+          <h2>{tr("الاشتراكات")}</h2>
           <Link className="btn-soft" href="/coach/clients">
-            إضافة باقة من ملف العميل
+            {tr("إضافة باقة من ملف العميل")}
             <Plus size={14} />
           </Link>
         </div>
@@ -1462,11 +1632,11 @@ function Finance({ data }: { data: Snapshot }) {
           <table>
             <thead>
               <tr>
-                <th>العميل</th>
-                <th>الباقة</th>
-                <th>البداية</th>
-                <th>النهاية</th>
-                <th>المتبقي</th>
+                <th>{tr("العميل")}</th>
+                <th>{tr("الباقة")}</th>
+                <th>{tr("البداية")}</th>
+                <th>{tr("النهاية")}</th>
+                <th>{tr("المتبقي")}</th>
               </tr>
             </thead>
             <tbody>
@@ -1478,28 +1648,30 @@ function Finance({ data }: { data: Snapshot }) {
                       href={`/coach/clients/${s.client_id}`}
                     >
                       {data.clients.find((c) => c.id === s.client_id)?.name ??
-                        "عميل محذوف"}
+                        tr("عميل محذوف")}
                     </Link>
                   </td>
                   <td>{s.name}</td>
-                  <td>{formatDate(s.start_date)}</td>
-                  <td>{formatDate(s.end_date)}</td>
-                  <td>{money(remaining(data, s))}</td>
+                  <td>{formatDate(s.start_date, locale)}</td>
+                  <td>{formatDate(s.end_date, locale)}</td>
+                  <td>{money(remaining(data, s), locale)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {!data.subscriptions.length ? (
-            <div className="empty">ما فيه باقات بعد.</div>
+            <div className="empty">{tr("ما فيه باقات بعد.")}</div>
           ) : null}
         </div>
       </section>
       <section className="card mt-7 overflow-hidden">
-        <h2 className="p-6">سجل الدفعات والتصحيحات</h2>
+        <h2 className="p-6">{tr("سجل الدفعات والتصحيحات")}</h2>
         {data.payments.length ? (
           <PaymentList data={data} payments={data.payments} />
         ) : (
-          <div className="empty">أضف دفعة من ملف العميل بعد إنشاء الباقة.</div>
+          <div className="empty">
+            {tr("أضف دفعة من ملف العميل بعد إنشاء الباقة.")}
+          </div>
         )}
       </section>
     </>
@@ -1512,16 +1684,20 @@ function JoinRequests({
   data: Snapshot;
   compact?: boolean;
 }) {
+  const { t: tr } = useLocale();
+
   const pending = data.join_requests.filter((r) => r.status === "pending");
   return (
     <section className="card p-6">
       <div className="section-title">
-        <h2>طلبات الانضمام</h2>
+        <h2>{tr("طلبات الانضمام")}</h2>
         <span className="badge">{pending.length}</span>
       </div>
       {!pending.length ? (
         <p className="text-sm leading-7 text-muted">
-          ما فيه طلبات تنتظر موافقتك. شارك رابط طلب الانضمام من الإعدادات.
+          {tr(
+            "ما فيه طلبات تنتظر موافقتك. شارك رابط طلب الانضمام من الإعدادات.",
+          )}
         </p>
       ) : (
         pending.slice(0, compact ? 3 : 100).map((r) => (
@@ -1534,13 +1710,13 @@ function JoinRequests({
                 payload={{ id: r.id, approve: true }}
                 className="btn-soft"
               >
-                موافقة وإضافة
+                {tr("موافقة وإضافة")}
               </ActionButton>
               <ActionButton
                 command="join_review"
                 payload={{ id: r.id, approve: false }}
               >
-                رفض
+                {tr("رفض")}
               </ActionButton>
             </div>
           </div>
@@ -1551,45 +1727,52 @@ function JoinRequests({
           className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-teal"
           href="/coach/settings"
         >
-          إدارة الطلبات
+          {tr("إدارة الطلبات")}
           <ArrowLeft size={13} />
         </Link>
       ) : (
         <p className="mt-4 text-xs text-muted">
-          الموافقة تضيف العميل فقط. أنشئ دعوته من ملفه لربط الحساب بعد التحقق.
+          {tr(
+            "الموافقة تضيف العميل فقط. أنشئ دعوته من ملفه لربط الحساب بعد التحقق.",
+          )}
         </p>
       )}
     </section>
   );
 }
 function SettingsPage({ data }: { data: Snapshot }) {
+  const { t: tr, language: locale } = useLocale();
+
   return (
     <>
       <Heading
-        title="إعدادات مساحتك"
-        text="روابط الدعوة، طلبات البيانات، وسجل التغييرات."
+        title={tr("إعدادات مساحتك")}
+        text={tr("روابط الدعوة، طلبات البيانات، وسجل التغييرات.")}
       />
+      <NotificationSettings data={data} />
+      <AccountSettings name={data.profile!.name} />
       <div className="grid items-start gap-6 xl:grid-cols-2">
         <section className="card p-6">
-          <h2 className="mb-3">رابط طلب الانضمام</h2>
+          <h2 className="mb-3">{tr("رابط طلب الانضمام")}</h2>
           <p className="mb-5 text-sm leading-7 text-muted">
-            يقدم العميل طلبًا، وتراجعه أنت. لا يُنشأ ارتباط حساب قبل الدعوة
-            والتحقق من الإيميل.
+            {tr(
+              "يقدم العميل طلبًا، وتراجعه أنت. لا يُنشأ ارتباط حساب قبل الدعوة والتحقق من الإيميل.",
+            )}
           </p>
           <LinkBox kind="join" />
         </section>
         <section className="card p-6">
-          <h2>تصدير البيانات</h2>
+          <h2>{tr("تصدير البيانات")}</h2>
           <p className="mt-3 mb-5 text-sm text-muted">
-            تصدير خاص بعملائك فقط. احتفظ بالملفات في مكان آمن.
+            {tr("تصدير خاص بعملائك فقط. احتفظ بالملفات في مكان آمن.")}
           </p>
           <div className="flex flex-wrap gap-2">
             <a download href="/api/export" className="btn-secondary">
               <Download size={16} />
-              كل بياناتك (JSON)
+              {tr("كل بياناتك (JSON)")}
             </a>
             <a download href="/api/export?type=clients" className="btn-soft">
-              العملاء (CSV)
+              {tr("العملاء (CSV)")}
             </a>
           </div>
           <Link
@@ -1597,12 +1780,12 @@ function SettingsPage({ data }: { data: Snapshot }) {
             className="mt-5 inline-flex items-center gap-2 text-xs text-teal"
           >
             <FileText size={14} />
-            إشعار الخصوصية للمراجعة
+            {tr("إشعار الخصوصية للمراجعة")}
           </Link>
         </section>
         <JoinRequests data={data} />
         <section className="card p-6">
-          <h2 className="mb-5">طلبات التصحيح والحذف</h2>
+          <h2 className="mb-5">{tr("طلبات التصحيح والحذف")}</h2>
           {data.privacy_requests.filter((r) => r.status === "pending")
             .length ? (
             data.privacy_requests
@@ -1611,23 +1794,25 @@ function SettingsPage({ data }: { data: Snapshot }) {
                 <details className="border-t py-4" key={r.id}>
                   <summary>
                     {data.clients.find((c) => c.id === r.client_id)?.name} ·{" "}
-                    {r.kind === "deletion" ? "حذف البيانات" : "تصحيح البيانات"}
+                    {r.kind === "deletion"
+                      ? tr("حذف البيانات")
+                      : tr("تصحيح البيانات")}
                   </summary>
                   <p className="my-4 whitespace-pre-wrap text-sm text-muted">
                     {r.details}
                   </p>
                   {r.kind === "deletion" ? (
                     <p className="mb-4 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
-                      سيُحذف البرنامج والاسم والإيميل والجوال والدعوات ويُلغى
-                      الوصول. تبقى أرقام الدفعات مجهّلة في السجل؛ هذه سياسة
-                      أولية تحتاج مراجعة قبل الإطلاق.
+                      {tr(
+                        "سيُحذف البرنامج والاسم والإيميل والجوال والدعوات ويُلغى الوصول. تبقى أرقام الدفعات مجهّلة في السجل؛ هذه سياسة أولية تحتاج مراجعة قبل الإطلاق.",
+                      )}
                     </p>
                   ) : (
                     <Link
                       href={`/coach/clients/${r.client_id}`}
                       className="mb-4 inline-block text-xs text-teal underline"
                     >
-                      عدّل البيانات في ملف العميل أولًا
+                      {tr("عدّل البيانات في ملف العميل أولًا")}
                     </Link>
                   )}
                   <DataForm
@@ -1643,32 +1828,34 @@ function SettingsPage({ data }: { data: Snapshot }) {
                     ]}
                     label={
                       r.kind === "deletion"
-                        ? "تنفيذ الحذف وإلغاء الوصول"
-                        : "توثيق إتمام التصحيح"
+                        ? tr("تنفيذ الحذف وإلغاء الوصول")
+                        : tr("توثيق إتمام التصحيح")
                     }
                   />
                 </details>
               ))
           ) : (
-            <p className="text-sm text-muted">لا توجد طلبات معلّقة.</p>
+            <p className="text-sm text-muted">{tr("لا توجد طلبات معلّقة.")}</p>
           )}
         </section>
       </div>
       <section className="card mt-7 overflow-hidden">
-        <h2 className="p-6">آخر التغييرات الموثّقة</h2>
+        <h2 className="p-6">{tr("آخر التغييرات الموثّقة")}</h2>
         <div className="max-h-80 overflow-auto">
           <table>
             <thead>
               <tr>
-                <th>الوقت</th>
-                <th>العملية</th>
-                <th>مرجع السجل</th>
+                <th>{tr("الوقت")}</th>
+                <th>{tr("العملية")}</th>
+                <th>{tr("مرجع السجل")}</th>
               </tr>
             </thead>
             <tbody>
               {data.audit.map((a) => (
                 <tr key={a.id}>
-                  <td className="text-xs">{formatDate(a.created_at)}</td>
+                  <td className="text-xs">
+                    {formatDate(a.created_at, locale)}
+                  </td>
                   <td className="text-xs" dir="ltr">
                     {a.action}
                   </td>

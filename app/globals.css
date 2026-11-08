@@ -1710,3 +1710,19 @@
     transition: none !important;
   }
 }
+
+/* Keep content direction native; exercise demonstrations are never mirrored. */
+html[dir="ltr"] th, html[dir="ltr"] td { text-align: start; }
+.language-switch { flex-shrink: 0; min-height: 40px; }
+.client-hub .library-tabs { overflow-x: auto; flex-wrap: nowrap; }
+.client-hub .library-tabs button { flex-shrink: 0; }
+.client-hub label { min-width: 0; }
+.client-hub input, .client-hub select { max-width: 100%; }
+@media(max-width:767px) {
+ html[dir="ltr"] .portal-sidebar { transform: translateX(-105%); }
+ html[dir="ltr"] .portal-sidebar.sidebar-open { transform: translateX(0); }
+ .header-tools { gap: 7px; }
+ .language-switch { padding-inline: 9px; }
+}
+html[dir="ltr"] .lucide-chevron-left,
+html[dir="ltr"] .lucide-arrow-left { transform: scaleX(-1); }

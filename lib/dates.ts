@@ -16,16 +16,19 @@ export function daysBetween(a: string, b: string) {
     (Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 86400000,
   );
 }
-export function formatDate(v: string) {
-  return new Intl.DateTimeFormat("ar-SA-u-ca-gregory", {
-    timeZone: "Asia/Riyadh",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(v.length === 10 ? v + "T12:00:00Z" : v));
+export function formatDate(v: string, language: "ar" | "en" = "ar") {
+  return new Intl.DateTimeFormat(
+    language === "en" ? "en-GB" : "ar-SA-u-ca-gregory",
+    {
+      timeZone: "Asia/Riyadh",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    },
+  ).format(new Date(v.length === 10 ? v + "T12:00:00Z" : v));
 }
-export function money(v: number | string) {
-  return new Intl.NumberFormat("ar-SA", {
+export function money(v: number | string, language: "ar" | "en" = "ar") {
+  return new Intl.NumberFormat(language === "en" ? "en-SA" : "ar-SA", {
     style: "currency",
     currency: "SAR",
     maximumFractionDigits: 2,

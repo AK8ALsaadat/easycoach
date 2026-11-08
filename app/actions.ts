@@ -17,6 +17,7 @@ import {
   supabase,
 } from "@/lib/server";
 import { getLocalDatabase } from "@/lib/local-db";
+import { cleanPendingPhotos } from "@/lib/photo-cleanup";
 
 export type Result = {
   ok: boolean;
@@ -47,6 +48,25 @@ export async function mutate(
     }
     const data = await rpc("app_command", { command, payload: parsed.data });
     revalidatePath("/", "layout");
+    if (command === "privacy_fulfill") {
+      try {
+        const cleanup = await cleanPendingPhotos();
+        if (cleanup.pending)
+          return {
+            ok: true,
+            message:
+              "تم حفظ طلب الحذف. بعض ملفات الصور بانتظار إعادة محاولة الحذف من الإعدادات.",
+            data,
+          };
+      } catch {
+        return {
+          ok: true,
+          message:
+            "تم تنفيذ الطلب. تحقق من حذف ملفات الصور المعلّقة عبر الإعدادات.",
+          data,
+        };
+      }
+    }
     return { ok: true, message: "تم الحفظ", data };
   } catch (e) {
     return { ok: false, message: readableError(e) };

@@ -1,4 +1,5 @@
 "use client";
+import { useLocale } from "./locale-provider";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import QRCode from "qrcode";
@@ -16,6 +17,8 @@ export function VideoUpload({
   onComplete: (id: string) => void;
   phoneToken?: string;
 }) {
+  const { t: tr } = useLocale();
+
   const [progress, setProgress] = useState<number | null>(null),
     [error, setError] = useState(""),
     [done, setDone] = useState(false),
@@ -122,10 +125,10 @@ export function VideoUpload({
             <Upload size={16} />
           )}{" "}
           {progress !== null
-            ? "جاري الرفع " + progress + "%"
+            ? tr("جاري الرفع ") + progress + "%"
             : phoneToken
-              ? "اختر فيديو من الجوال"
-              : "ارفع فيديو"}
+              ? tr("اختر فيديو من الجوال")
+              : tr("ارفع فيديو")}
         </button>
         {!phoneToken ? (
           <button
@@ -155,13 +158,13 @@ export function VideoUpload({
             }}
           >
             <QrCode size={16} />
-            {loading ? "نجهز QR…" : "من الجوال · QR"}
+            {loading ? tr("نجهز QR…") : tr("من الجوال · QR")}
           </button>
         ) : null}
         {done ? (
           <span className="inline-flex items-center gap-1 text-xs text-teal">
             <Check size={15} />
-            تم إرفاق الفيديو
+            {tr("تم إرفاق الفيديو")}
           </span>
         ) : null}
       </div>
@@ -174,11 +177,11 @@ export function VideoUpload({
         </div>
       ) : null}
       <p className="mt-2 text-xs text-muted">
-        MP4 / MOV / WebM · حتى 50 MB · فيديو شرح الحركة
+        {tr("MP4 / MOV / WebM · حتى 50 MB · فيديو شرح الحركة")}
       </p>
       {error ? (
         <p role="alert" className="mt-2 text-sm text-red-700">
-          {error}
+          {tr(error)}
         </p>
       ) : null}
       {phone ? (
@@ -186,24 +189,24 @@ export function VideoUpload({
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="رفع من الجوال"
+            aria-label={tr("رفع من الجوال")}
             className="modal-sheet max-w-sm text-center"
           >
             <button
               className="btn-secondary float-left"
-              aria-label="إغلاق QR"
+              aria-label={tr("إغلاق QR")}
               onClick={() => setPhone(null)}
             >
               <X size={16} />
             </button>
-            <h2 className="pt-2">كمّل من جوالك</h2>
+            <h2 className="pt-2">{tr("كمّل من جوالك")}</h2>
             <p className="mt-3 text-sm text-muted">
-              امسح الرمز، اختر الفيديو، وبيظهر هنا تلقائيًا.
+              {tr("امسح الرمز، اختر الفيديو، وبيظهر هنا تلقائيًا.")}
             </p>
             <Image
               unoptimized
               src={phone.qr}
-              alt="QR لرفع فيديو من الجوال"
+              alt={tr("QR لرفع فيديو من الجوال")}
               width={240}
               height={240}
               className="mx-auto my-5"
@@ -214,10 +217,10 @@ export function VideoUpload({
               rel="noopener noreferrer"
               className="text-xs text-teal underline"
             >
-              افتح رابط الرفع
+              {tr("افتح رابط الرفع")}
             </a>
             <p className="mt-4 text-xs text-muted">
-              صالح 15 دقيقة لفيديو واحد. لا تشارك الرمز خارج أجهزتك.
+              {tr("صالح 15 دقيقة لفيديو واحد. لا تشارك الرمز خارج أجهزتك.")}
             </p>
           </div>
         </div>

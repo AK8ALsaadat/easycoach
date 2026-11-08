@@ -1,4 +1,5 @@
 "use client";
+import { useLocale } from "./locale-provider";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Target, Link2, Copy, RefreshCw } from "lucide-react";
@@ -13,6 +14,8 @@ export function ClientProgress({
   data: Snapshot;
   clientId: string;
 }) {
+  const { t: tr } = useLocale();
+
   const router = useRouter();
   const goal = data.client_goals?.find((g) => g.client_id === clientId);
   const [error, setError] = useState(""),
@@ -62,21 +65,21 @@ export function ClientProgress({
       >
         <h2 className="flex items-center gap-2">
           <Target size={20} />
-          هدف المرحلة
+          {tr("هدف المرحلة")}
         </h2>
         <label>
-          الهدف
+          {tr("الهدف")}
           <select name="goal" className="field" defaultValue={goal?.goal ?? ""}>
-            <option value="">حدد الهدف</option>
-            <option>بناء عضل</option>
-            <option>خفض دهون</option>
-            <option>رفع القوة</option>
-            <option>تحسين اللياقة</option>
-            <option>المحافظة</option>
+            <option value="">{tr("حدد الهدف")}</option>
+            <option value="بناء عضل">{tr("بناء عضل")}</option>
+            <option value="خفض دهون">{tr("خفض دهون")}</option>
+            <option value="رفع القوة">{tr("رفع القوة")}</option>
+            <option value="تحسين اللياقة">{tr("تحسين اللياقة")}</option>
+            <option value="المحافظة">{tr("المحافظة")}</option>
           </select>
         </label>
         <label>
-          الوزن المستهدف (اختياري)
+          {tr("الوزن المستهدف (اختياري)")}
           <input
             className="field"
             name="target_weight"
@@ -88,30 +91,30 @@ export function ClientProgress({
           />
         </label>
         <label>
-          تركيز البرنامج
+          {tr("تركيز البرنامج")}
           <input
             className="field"
             name="focus"
             maxLength={200}
-            placeholder="مثال: تقوية الجزء السفلي · 4 أيام"
+            placeholder={tr("مثال: تقوية الجزء السفلي · 4 أيام")}
             defaultValue={goal?.focus ?? ""}
           />
         </label>
         <label>
-          ملاحظاتك الخاصة
+          {tr("ملاحظاتك الخاصة")}
           <textarea
             className="field"
             name="notes"
             maxLength={2000}
             defaultValue={goal?.notes ?? ""}
-            placeholder="معدات النادي، وقت الحصة المتاح، تفضيلات الوجبات…"
+            placeholder={tr("معدات النادي، وقت الحصة المتاح، تفضيلات الوجبات…")}
           />
         </label>
         <button className="btn" disabled={busy}>
-          حفظ الهدف
+          {tr("حفظ الهدف")}
         </button>
         <p role="status" className="text-xs text-muted">
-          {error}
+          {tr(error)}
         </p>
       </form>
     </div>
@@ -124,6 +127,8 @@ export function PortalControl({
   clientId: string;
   link?: Snapshot["portal_links"][number];
 }) {
+  const { t: tr } = useLocale();
+
   const router = useRouter();
   const [result, setResult] = useState<{
       url?: string;
@@ -138,9 +143,9 @@ export function PortalControl({
           <Link2 size={22} />
         </div>
         <div>
-          <h3 className="font-bold">رابط العميل</h3>
+          <h3 className="font-bold">{tr("رابط العميل")}</h3>
           <p className="text-xs text-muted">
-            الجدول، الوجبات، والوزن · نفس الرابط لكل تحديث منشور
+            {tr("الجدول، الوجبات، والوزن · نفس الرابط لكل تحديث منشور")}
           </p>
         </div>
       </div>
@@ -167,10 +172,10 @@ export function PortalControl({
             <Link2 size={15} />
           )}{" "}
           {busy
-            ? "نجهز الرابط…"
+            ? tr("نجهز الرابط…")
             : link && !link.revoked_at
-              ? "تغيير الرابط والرمز"
-              : "تفعيل رابط العميل"}
+              ? tr("تغيير الرابط والرمز")
+              : tr("تفعيل رابط العميل")}
         </button>
         {link && !link.revoked_at ? (
           <button
@@ -187,14 +192,14 @@ export function PortalControl({
               }
             }}
           >
-            إيقاف الرابط
+            {tr("إيقاف الرابط")}
           </button>
         ) : null}
       </div>
       {result?.url ? (
         <div className="portal-share">
           <input
-            aria-label="رابط العميل الخاص"
+            aria-label={tr("رابط العميل الخاص")}
             readOnly
             value={result.url}
             className="field"
@@ -202,7 +207,7 @@ export function PortalControl({
             onFocus={(e) => e.currentTarget.select()}
           />
           <div className="flex flex-wrap items-center gap-4">
-            <span className="text-xs">رمز دخول العميل</span>
+            <span className="text-xs">{tr("رمز دخول العميل")}</span>
             <strong className="font-mono text-2xl tracking-[.2em]">
               {result.pin}
             </strong>
@@ -217,18 +222,19 @@ export function PortalControl({
               }}
             >
               <Copy size={14} />
-              نسخ الرابط
+              {tr("نسخ الرابط")}
             </button>
           </div>
           <p className="text-xs text-muted">
-            شارك الرمز مع العميل بشكل منفصل. احفظ الرابط والرمز الآن؛ لن نعرضهما
-            مرة ثانية. صالح 180 يومًا، ويمكن إيقافه بأي وقت.
+            {tr(
+              "شارك الرمز مع العميل بشكل منفصل. احفظ الرابط والرمز الآن؛ لن نعرضهما مرة ثانية. صالح 180 يومًا، ويمكن إيقافه بأي وقت.",
+            )}
           </p>
         </div>
       ) : null}
       {link?.last_opened_at ? (
         <p className="text-xs text-muted">
-          آخر نشاط:{" "}
+          {tr("آخر نشاط:")}{" "}
           {new Intl.DateTimeFormat("ar-SA", {
             dateStyle: "medium",
             timeStyle: "short",

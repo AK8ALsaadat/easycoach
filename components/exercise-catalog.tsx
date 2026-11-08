@@ -1,4 +1,5 @@
 "use client";
+import { useLocale } from "./locale-provider";
 import { useMemo, useState } from "react";
 import {
   Search,
@@ -34,6 +35,8 @@ export function ExerciseCatalog({
   embedded?: boolean;
   selectionLabel?: string;
 }) {
+  const { t: tr, language: locale } = useLocale();
+
   const [query, setQuery] = useState("");
   const [muscle, setMuscle] = useState("");
   const [tool, setTool] = useState("");
@@ -78,17 +81,17 @@ export function ExerciseCatalog({
     setPage(0);
   }
   return (
-    <section className="catalog-panel" aria-label="دليل التمارين">
+    <section className="catalog-panel" aria-label={tr("دليل التمارين")}>
       {!embedded && (
         <div className="catalog-heading">
           <div>
-            <h2>مكتبة التمارين</h2>
-            <p>اختر الحركة وراجع تفاصيلها قبل إضافتها للبرنامج.</p>
+            <h2>{tr("مكتبة التمارين")}</h2>
+            <p>{tr("اختر الحركة وراجع تفاصيلها قبل إضافتها للبرنامج.")}</p>
           </div>
           {onClose && (
             <button type="button" className="btn-secondary" onClick={onClose}>
               <X size={18} />
-              إغلاق
+              {tr("إغلاق")}
             </button>
           )}
         </div>
@@ -97,8 +100,8 @@ export function ExerciseCatalog({
         <div className="catalog-search">
           <Search size={20} />
           <input
-            aria-label="ابحث في التمارين"
-            placeholder="ابحث باسم التمرين بالعربية أو الإنجليزية…"
+            aria-label={tr("ابحث في التمارين")}
+            placeholder={tr("ابحث باسم التمرين بالعربية أو الإنجليزية…")}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -108,7 +111,7 @@ export function ExerciseCatalog({
           {query && (
             <button
               type="button"
-              aria-label="مسح البحث"
+              aria-label={tr("مسح البحث")}
               onClick={() => {
                 setQuery("");
                 setPage(0);
@@ -119,7 +122,7 @@ export function ExerciseCatalog({
           )}
         </div>
         <select
-          aria-label="العضلة"
+          aria-label={tr("العضلة")}
           className="field"
           value={muscle}
           onChange={(e) => {
@@ -127,15 +130,15 @@ export function ExerciseCatalog({
             setPage(0);
           }}
         >
-          <option value="">كل العضلات</option>
+          <option value="">{tr("كل العضلات")}</option>
           {Object.entries(muscles).map(([key, value]) => (
             <option key={key} value={key}>
-              {value}
+              {tr(value)}
             </option>
           ))}
         </select>
         <select
-          aria-label="المعدات"
+          aria-label={tr("المعدات")}
           className="field"
           value={tool}
           onChange={(e) => {
@@ -143,15 +146,15 @@ export function ExerciseCatalog({
             setPage(0);
           }}
         >
-          <option value="">كل المعدات</option>
+          <option value="">{tr("كل المعدات")}</option>
           {Object.entries(equipment).map(([key, value]) => (
             <option key={key} value={key}>
-              {value}
+              {tr(value)}
             </option>
           ))}
         </select>
         <select
-          aria-label="المستوى"
+          aria-label={tr("المستوى")}
           className="field"
           value={level}
           onChange={(e) => {
@@ -159,16 +162,16 @@ export function ExerciseCatalog({
             setPage(0);
           }}
         >
-          <option value="">كل المستويات</option>
-          <option value="beginner">مبتدئ</option>
-          <option value="intermediate">متوسط</option>
-          <option value="expert">متقدم</option>
+          <option value="">{tr("كل المستويات")}</option>
+          <option value="beginner">{tr("مبتدئ")}</option>
+          <option value="intermediate">{tr("متوسط")}</option>
+          <option value="expert">{tr("متقدم")}</option>
         </select>
       </div>
       <div className="catalog-results-bar">
         <p role="status" aria-live="polite">
-          <strong>{found.length}</strong> تمرين
-          {activeFilters ? " يطابق البحث" : " في المكتبة"}
+          <strong>{found.length}</strong> {tr("تمرين")}
+          {activeFilters ? tr(" يطابق البحث") : tr(" في المكتبة")}
         </p>
         <div>
           <label className="visuals-filter">
@@ -180,11 +183,11 @@ export function ExerciseCatalog({
                 setPage(0);
               }}
             />
-            بصور توضيحية فقط
+            {tr("بصور توضيحية فقط")}
           </label>
           {activeFilters && (
             <button type="button" className="reset-filters" onClick={reset}>
-              مسح الفلاتر
+              {tr("مسح الفلاتر")}
               <X size={14} />
             </button>
           )}
@@ -193,10 +196,10 @@ export function ExerciseCatalog({
       {!found.length ? (
         <div className="empty catalog-empty">
           <SlidersHorizontal size={32} />
-          <h3>لا توجد تمارين مطابقة</h3>
-          <p>غيّر اسم البحث أو وسّع عوامل التصفية.</p>
+          <h3>{tr("لا توجد تمارين مطابقة")}</h3>
+          <p>{tr("غيّر اسم البحث أو وسّع عوامل التصفية.")}</p>
           <button className="btn-secondary" onClick={reset}>
-            عرض جميع التمارين
+            {tr("عرض جميع التمارين")}
           </button>
         </div>
       ) : (
@@ -207,19 +210,23 @@ export function ExerciseCatalog({
                 type="button"
                 className="movement-open"
                 onClick={() => setSelected(e)}
-                aria-label={"تفاصيل " + exerciseName(e)}
+                aria-label={tr("تفاصيل ") + exerciseName(e, locale)}
               >
                 <ExerciseVisual key={e.id} exercise={e} />
                 <div className="movement-copy">
-                  <h3>{exerciseName(e)}</h3>
+                  <h3>{exerciseName(e, locale)}</h3>
                   <p className="movement-english" dir="ltr">
                     {e.name}
                   </p>
                 </div>
               </button>
               <div className="movement-meta">
-                <span>{muscles[e.primaryMuscles[0]] ?? "عضلات متعددة"}</span>
-                <span>{equipment[e.equipment ?? ""] ?? "معدات متنوعة"}</span>
+                <span>
+                  {tr(muscles[e.primaryMuscles[0]]) ?? tr("عضلات متعددة")}
+                </span>
+                <span>
+                  {tr(equipment[e.equipment ?? ""]) ?? tr("معدات متنوعة")}
+                </span>
               </div>
               <div className="movement-footer">
                 <button
@@ -227,7 +234,7 @@ export function ExerciseCatalog({
                   className="movement-details-link"
                   onClick={() => setSelected(e)}
                 >
-                  شرح الحركة
+                  {tr("شرح الحركة")}
                   <ArrowLeft size={16} />
                 </button>
                 {onSelect ? (
@@ -237,17 +244,17 @@ export function ExerciseCatalog({
                     onClick={() => onSelect(e)}
                   >
                     <Plus size={17} />
-                    {selectionLabel}
+                    {tr(selectionLabel)}
                   </button>
                 ) : (
                   <span className="movement-level">
-                    {
+                    {tr(
                       {
                         beginner: "مبتدئ",
                         intermediate: "متوسط",
                         expert: "متقدم",
-                      }[e.level]
-                    }
+                      }[e.level],
+                    )}
                   </span>
                 )}
               </div>
@@ -258,7 +265,7 @@ export function ExerciseCatalog({
       <div className="catalog-pagination">
         <span>
           {found.length ? currentPage * pageSize + 1 : 0}–
-          {Math.min((currentPage + 1) * pageSize, found.length)} من{" "}
+          {Math.min((currentPage + 1) * pageSize, found.length)} {tr("من")}{" "}
           {found.length}
         </span>
         <div>
@@ -269,7 +276,7 @@ export function ExerciseCatalog({
             onClick={() => setPage(currentPage - 1)}
           >
             <ChevronRight size={18} />
-            السابق
+            {tr("السابق")}
           </button>
           <span className="page-position">
             {currentPage + 1} / {pageCount}
@@ -280,7 +287,7 @@ export function ExerciseCatalog({
             disabled={currentPage + 1 >= pageCount}
             onClick={() => setPage(currentPage + 1)}
           >
-            التالي
+            {tr("التالي")}
             <ChevronLeft size={18} />
           </button>
         </div>
@@ -292,18 +299,18 @@ export function ExerciseCatalog({
             tabIndex={-1}
             role="dialog"
             aria-modal="true"
-            aria-label={exerciseName(selected)}
+            aria-label={exerciseName(selected, locale)}
             className="modal-sheet exercise-detail"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="exercise-detail-heading">
               <div>
-                <h2>{exerciseName(selected)}</h2>
+                <h2>{exerciseName(selected, locale)}</h2>
                 <p dir="ltr">{selected.name}</p>
               </div>
               <button
                 type="button"
-                aria-label="إغلاق تفاصيل الحركة"
+                aria-label={tr("إغلاق تفاصيل الحركة")}
                 className="icon-button"
                 onClick={() => setSelected(null)}
               >
@@ -319,36 +326,44 @@ export function ExerciseCatalog({
             <div className="exercise-detail-body">
               <section className="exercise-anatomy">
                 <div>
-                  <h3>العضلات الرئيسية</h3>
+                  <h3>{tr("العضلات الرئيسية")}</h3>
                   <div className="muscle-tags">
                     {selected.primaryMuscles.map((m) => (
                       <span className="badge primary-muscle" key={m}>
-                        {muscles[m] ?? m}
+                        {tr(muscles[m]) ?? m}
                       </span>
                     ))}
                   </div>
                 </div>
                 {selected.secondaryMuscles.length > 0 && (
                   <div>
-                    <h3>العضلات المساعدة</h3>
+                    <h3>{tr("العضلات المساعدة")}</h3>
                     <div className="muscle-tags">
                       {selected.secondaryMuscles.map((m) => (
                         <span className="badge" key={m}>
-                          {muscles[m] ?? m}
+                          {tr(muscles[m]) ?? m}
                         </span>
                       ))}
                     </div>
                   </div>
                 )}
                 <div>
-                  <h3>المعدات</h3>
-                  <p>{equipment[selected.equipment ?? ""] ?? "معدات متنوعة"}</p>
+                  <h3>{tr("المعدات")}</h3>
+                  <p>
+                    {tr(equipment[selected.equipment ?? ""]) ??
+                      tr("معدات متنوعة")}
+                  </p>
                 </div>
               </section>
               <section>
-                <h3 className="instructions-heading">طريقة أداء التمرين</h3>
-                <ol dir="rtl" className="exercise-instructions">
-                  {exerciseInstructions(selected).map((line, index) => (
+                <h3 className="instructions-heading">
+                  {tr("طريقة أداء التمرين")}
+                </h3>
+                <ol
+                  dir={locale === "ar" ? "rtl" : "ltr"}
+                  className="exercise-instructions"
+                >
+                  {exerciseInstructions(selected, locale).map((line, index) => (
                     <li key={index}>
                       <span>{index + 1}</span>
                       <p>{line}</p>
@@ -369,8 +384,8 @@ export function ExerciseCatalog({
                 >
                   <Plus size={18} />
                   {embedded
-                    ? "استخدم الحركة في برنامج جديد"
-                    : "أضف الحركة للجدول"}
+                    ? tr("استخدم الحركة في برنامج جديد")
+                    : tr("أضف الحركة للجدول")}
                 </button>
               </div>
             )}

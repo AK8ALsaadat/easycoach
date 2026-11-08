@@ -298,7 +298,7 @@ it("revocation invalidates both portal reads and media access immediately", asyn
     }),
   ).toBeNull();
 });
-it("changing a client email revokes links and archiving removes their weights and goals", async () => {
+it("changing a client email revokes links while archiving preserves weights and goals", async () => {
   const t = hash("second");
   await command(coach, "portal_create", {
     client_id: cid,
@@ -316,6 +316,6 @@ it("changing a client email revokes links and archiving removes their weights an
   ).toBeTruthy();
   await db.query("update public.clients set archived=true where id=$1", [cid]);
   const s = await call<Snapshot>(coach, "studio_snapshot");
-  expect(s.weights.filter((w) => w.client_id === cid)).toHaveLength(0);
-  expect(s.client_goals.filter((g) => g.client_id === cid)).toHaveLength(0);
+  expect(s.weights.filter((w) => w.client_id === cid)).toHaveLength(1);
+  expect(s.client_goals.filter((g) => g.client_id === cid)).toHaveLength(1);
 });

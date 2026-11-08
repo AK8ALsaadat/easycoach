@@ -51,24 +51,50 @@ export async function readImportFile(
     await workbook.xlsx.load(
       Buffer.from(bytes) as unknown as Parameters<typeof workbook.xlsx.load>[0],
     );
-    const sheet = workbook.worksheets[0];
-    if (!sheet) throw new Error("الملف لا يحتوي ورقة بيانات");
-    if (sheet.rowCount > 2001 || sheet.columnCount > 50)
-      throw new Error("الحد 2000 صف و50 عمودًا");
-    rows = [];
-    sheet.eachRow((row) => {
-      const values: string[] = [];
-      for (let i = 1; i <= sheet.columnCount; i++) {
-        const cell = row.getCell(i);
-        if (cell.type === ExcelJS.ValueType.Formula)
-          throw new Error("لا نقبل صيغ Excel. استخدم القيم فقط");
-        values.push(cell.text);
-      }
-      rows.push(values);
-    });
+    const sheets = workbook.worksheets
+      .map((sheet) => {
+        if (sheet.rowCount > 10001 || sheet.columnCount > 100)
+          throw new Error("الحد 10000 صف و100 عمود لكل ملف");
+        const sheetRows: string[][] = [];
+        const rowNumbers: number[] = [];
+        sheet.eachRow((row, rowNumber) => {
+          const values: string[] = [];
+          for (let i = 1; i <= sheet.columnCount; i++) {
+            const cell = row.getCell(i);
+            if (cell.type === ExcelJS.ValueType.Formula)
+              throw new Error("لا نقبل صيغ Excel. استخدم القيم فقط");
+            values.push(
+              cell.value instanceof Date
+                ? cell.value.toISOString().slice(0, 10)
+                : cell.text,
+            );
+          }
+          sheetRows.push(values);
+          rowNumbers.push(rowNumber);
+        });
+        return {
+          name: sheet.name,
+          headers: (sheetRows[0] ?? []).map(
+            (v, i) => v.trim() || "Column " + (i + 1),
+          ),
+          rows: sheetRows.slice(1),
+          rowNumbers: rowNumbers.slice(1),
+        };
+      })
+      .filter((sheet) => sheet.rows.length);
+    if (
+      !sheets.length ||
+      sheets.reduce((n, sheet) => n + sheet.rows.length, 0) > 10000
+    )
+      throw new Error("الملف يحتاج 1–10000 صف بيانات");
+    return { ...sheets[0], sheets };
   } else throw new Error("استخدم CSV بترميز UTF-8 أو Excel بصيغة xlsx");
-  if (rows.length < 2 || rows.length > 2001 || rows.some((r) => r.length > 50))
-    throw new Error("الملف يحتاج صف عناوين و1–2000 صف بيانات، حتى 50 عمودًا");
+  if (
+    rows.length < 2 ||
+    rows.length > 10001 ||
+    rows.some((r) => r.length > 100)
+  )
+    throw new Error("الملف يحتاج صف عناوين و1–10000 صف بيانات، حتى 100 عمودًا");
   return {
     headers: rows[0].map((v, i) => v.trim() || `عمود ${i + 1}`),
     rows: rows.slice(1).filter((row) => row.some((v) => v.trim())),

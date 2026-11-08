@@ -1,5 +1,15 @@
 import { clientInput } from "./model";
-export type ImportFile = { headers: string[]; rows: string[][] };
+export type ImportSheet = {
+  name: string;
+  headers: string[];
+  rows: string[][];
+  rowNumbers?: number[];
+};
+export type ImportFile = {
+  headers: string[];
+  rows: string[][];
+  sheets?: ImportSheet[];
+};
 export type Mapping = { name: number; email: number; phone: number };
 export type PreviewRow = {
   row: number;

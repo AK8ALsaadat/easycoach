@@ -1,4 +1,6 @@
 "use client";
+import { useLocale } from "./locale-provider";
+import { LanguageSwitch } from "./language-switch";
 import { useState, useEffect, useCallback } from "react";
 import { LockKeyhole, RefreshCw, Check } from "lucide-react";
 import Link from "next/link";
@@ -7,7 +9,11 @@ import type { PortalData } from "@/lib/model";
 import { ProgramView } from "./program-view";
 import { WeightPanel } from "./weight-panel";
 import { Brand } from "./brand";
+import { ClientHub } from "./client-hub";
+import { effectiveNutrition } from "@/lib/management";
 export function ClientPortal({ token }: { token: string }) {
+  const { t: tr } = useLocale();
+
   const [data, setData] = useState<PortalData | null>(null),
     [pin, setPin] = useState(""),
     [error, setError] = useState(""),
@@ -49,6 +55,7 @@ export function ClientPortal({ token }: { token: string }) {
     return (
       <main className="portal-gate">
         <Brand />
+        <LanguageSwitch />
         <form
           className="card mx-auto my-auto w-full max-w-sm p-7"
           onSubmit={async (e) => {
@@ -66,13 +73,13 @@ export function ClientPortal({ token }: { token: string }) {
           <span className="portal-icon mb-5">
             <LockKeyhole size={24} />
           </span>
-          <p className="eyebrow">بوابة المتدرب</p>
-          <h1 className="mt-3">جاهز لحصتك؟</h1>
+          <p className="eyebrow">{tr("بوابة المتدرب")}</p>
+          <h1 className="mt-3">{tr("جاهز لحصتك؟")}</h1>
           <p className="my-4 text-sm text-muted">
-            أدخل رمز الدخول اللي أرسله لك مدربك.
+            {tr("أدخل رمز الدخول اللي أرسله لك مدربك.")}
           </p>
           <input
-            aria-label="رمز دخول العميل"
+            aria-label={tr("رمز دخول العميل")}
             className="field text-center font-mono text-2xl tracking-[.4em]"
             inputMode="numeric"
             autoComplete="one-time-code"
@@ -83,11 +90,11 @@ export function ClientPortal({ token }: { token: string }) {
             required
           />
           <button className="btn mt-4 w-full" disabled={busy}>
-            {busy ? "نفتح جدولك…" : "افتح جدولي"}
+            {busy ? tr("نفتح جدولك…") : tr("افتح جدولي")}
           </button>
           {error ? (
             <p role="alert" className="mt-4 text-sm text-red-700">
-              {error}
+              {tr(error)}
             </p>
           ) : null}
         </form>
@@ -97,18 +104,22 @@ export function ClientPortal({ token }: { token: string }) {
     <div className="client-portal">
       <header className="portal-topbar">
         <Brand />
-        <span className="text-xs text-white/60">مع المدرب {data.coach}</span>
+        <span className="text-xs text-white/60">
+          {tr("مع المدرب")} {data.coach}
+        </span>
       </header>
       <main className="mx-auto max-w-6xl px-5 py-8">
         <div className="portal-welcome">
           <div>
-            <p className="eyebrow">خطوة جديدة نحو هدفك</p>
+            <p className="eyebrow">{tr("خطوة جديدة نحو هدفك")}</p>
             <h1>
-              أهلًا {data.name.split(" ")[0]}،<br />
-              كل جولة تفرق.
+              {tr("أهلًا")} {data.name.split(" ")[0]}
+              {tr("،")}
+              <br />
+              {tr("كل جولة تفرق.")}
             </h1>
             <p className="mt-3 text-sm text-white/60">
-              {data.goal?.goal ?? "برنامجك التدريبي"}
+              {data.goal?.goal ?? tr("برنامجك التدريبي")}
               {data.goal?.focus ? " / " + data.goal.focus : ""}
             </p>
           </div>
@@ -123,21 +134,26 @@ export function ClientPortal({ token }: { token: string }) {
               }}
             >
               <RefreshCw size={15} className={busy ? "animate-spin" : ""} />
-              تحديث الجدول
+              {tr("تحديث الجدول")}
             </button>
             <span className="flex items-center gap-1 text-xs text-white/50">
               <Check size={12} />
-              يتحدث تلقائيًا {updated ? "· " + updated : ""}
+              {tr("يتحدث تلقائيًا")} {updated ? "· " + updated : ""}
             </span>
           </div>
         </div>
         {error ? (
           <p role="alert" className="my-4 text-red-700">
-            {error}
+            {tr(error)}
           </p>
         ) : null}
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
           <ProgramView
+            nutrition={effectiveNutrition(
+              data.management?.records ?? [],
+              data.client_id ?? "",
+              data.program?.published_at,
+            )}
             program={data.program ?? undefined}
             portalHash={data.portalHash}
           />
@@ -163,13 +179,28 @@ export function ClientPortal({ token }: { token: string }) {
               }}
             />
             <div className="border-t p-4 text-xs leading-7 text-muted">
-              سجّل الوزن وقت ما يناسبك. تصحيح نفس اليوم يستبدل التسجيل السابق.
-              وزن يوم واحد ما يختصر تقدمك.
+              {tr(
+                "سجّل الوزن وقت ما يناسبك. تصحيح نفس اليوم يستبدل التسجيل السابق. وزن يوم واحد ما يختصر تقدمك.",
+              )}
             </div>
           </aside>
         </div>
+        {data.client_id && (
+          <div className="mt-6">
+            <ClientHub
+              clientId={data.client_id}
+              management={data.management}
+              weights={data.weights ?? []}
+              program={data.program ?? undefined}
+              targetWeight={data.goal?.target_weight}
+              portalToken={token}
+              portalHash={data.portalHash}
+              onUpdate={refresh}
+            />
+          </div>
+        )}
         <footer className="mt-8 border-t py-5 text-xs text-muted">
-          إيزي كوتش · <Link href="/privacy">الخصوصية</Link>
+          {tr("إيزي كوتش ·")} <Link href="/privacy">{tr("الخصوصية")}</Link>
         </footer>
       </main>
     </div>

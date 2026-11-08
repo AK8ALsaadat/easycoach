@@ -161,17 +161,15 @@ try {
   await page.getByRole("button", { name: "استيراد ملف", exact: true }).click();
   const importEmail = `import-${marker}@example.test`;
   const csv = `name,email,phone\nعميل مستورد,${importEmail},0501234567\nلا تستبدل اسمي,trainee@example.test,0509999999\nخاطئ,invalid,123\n`;
-  await page
-    .locator('input[type="file"]')
-    .setInputFiles({
-      name: "synthetic.csv",
-      mimeType: "text/csv",
-      buffer: Buffer.from(csv),
-    });
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "synthetic.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(csv),
+  });
   await page
     .getByRole("button", { name: "قراءة ومعاينة", exact: true })
     .click();
-  await page.locator("#mapping-phone").selectOption("2");
+  await page.locator("#column-map-0-2").selectOption("phone");
   await page.locator('input[type="checkbox"]').nth(1).check();
   await page
     .getByRole("button", { name: "استيراد 1 عميل", exact: true })

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ManagementData } from "./management";
 export const id = z.string().uuid();
 export const date = z.iso.date();
 export const email = z
@@ -23,6 +24,10 @@ export const exercise = z
     catalogId: z.string().max(160).optional(),
     mediaId: id.optional(),
     rowId: id.optional(),
+    weight: z.number().min(0).max(1500).optional(),
+    rpe: z.number().min(0).max(10).optional(),
+    rir: z.number().int().min(0).max(20).optional(),
+    tempo: z.string().max(40).optional(),
   })
   .strict();
 export const content = z
@@ -32,6 +37,7 @@ export const content = z
         z
           .object({
             name: z.string().min(1).max(100),
+            weekday: z.number().int().min(0).max(6).optional(),
             exercises: z.array(exercise).min(1).max(40),
           })
           .strict(),
@@ -245,6 +251,7 @@ export type PrivacyRequest = {
   resolution: string;
 };
 export type Snapshot = {
+  management?: ManagementData;
   weights: WeightEntry[];
   client_goals: ClientGoal[];
   portal_links: {
@@ -294,6 +301,8 @@ export type ClientGoal = {
   notes: string;
 };
 export type PortalData = {
+  client_id?: string;
+  management?: ManagementData;
   name: string;
   coach: string;
   program: Program | null;

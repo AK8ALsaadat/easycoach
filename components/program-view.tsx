@@ -1,29 +1,39 @@
+"use client";
+import { useLocale } from "./locale-provider";
 import { ExerciseVisual } from "./exercise-visual";
 import { catalogById, exerciseName, exerciseInstructions } from "@/lib/catalog";
-import type { Program } from "@/lib/model";
+import type { Program, Content } from "@/lib/model";
 import { formatDate } from "@/lib/dates";
 import { Play, Timer, Utensils } from "lucide-react";
 export function ProgramView({
   program,
   portalHash,
+  nutrition,
 }: {
   program: Program | undefined;
   portalHash?: string;
+  nutrition?: Content["nutrition"];
 }) {
+  const { t: tr, language: locale } = useLocale();
+
   if (!program)
     return (
       <div className="empty card">
-        <h2 className="text-ink">برنامجك قيد التجهيز</h2>
-        <p>سيظهر هنا بعد أن ينشره مدربك. المسودات لا تظهر لك.</p>
+        <h2 className="text-ink">{tr("برنامجك قيد التجهيز")}</h2>
+        <p>{tr("سيظهر هنا بعد أن ينشره مدربك. المسودات لا تظهر لك.")}</p>
       </div>
     );
+  const nutritionPlan = nutrition ?? program.content.nutrition;
   return (
     <div className="space-y-6">
       <div className="card p-6">
-        <span className="badge bg-accent/40 text-teal">آخر نسخة منشورة</span>
+        <span className="badge bg-accent/40 text-teal">
+          {tr("آخر نسخة منشورة")}
+        </span>
         <h2 className="mt-3 text-xl">{program.name}</h2>
         <p className="mt-1 text-xs text-muted">
-          نُشر {formatDate(program.published_at!)} · النسخة {program.version}
+          {tr("نُشر")} {formatDate(program.published_at!, locale)}{" "}
+          {tr("· النسخة")} {program.version}
         </p>
       </div>
       {program.content.days.map((day, index) => (
@@ -46,8 +56,12 @@ export function ProgramView({
                       portalHash={portalHash}
                     />
                     <div>
-                      <p className="eyebrow">التمرين {i + 1}</p>
-                      <h3>{exerciseName(catalogById.get(e.catalogId)!)}</h3>
+                      <p className="eyebrow">
+                        {tr("التمرين")} {i + 1}
+                      </p>
+                      <h3>
+                        {exerciseName(catalogById.get(e.catalogId)!, locale)}
+                      </h3>
                     </div>
                   </div>
                 ) : null}
@@ -56,7 +70,7 @@ export function ProgramView({
                     <h3 className="font-semibold">
                       {e.catalogId &&
                       catalogById.get(e.catalogId)?.name === e.name
-                        ? exerciseName(catalogById.get(e.catalogId)!)
+                        ? exerciseName(catalogById.get(e.catalogId)!, locale)
                         : e.name}
                     </h3>
                     {e.description ? (
@@ -73,22 +87,23 @@ export function ProgramView({
                       className="btn-secondary"
                     >
                       <Play size={14} />
-                      شرح الفيديو
+                      {tr("شرح الفيديو")}
                     </a>
                   ) : null}
                 </div>
                 {e.catalogId && catalogById.has(e.catalogId) ? (
                   <details className="program-instructions">
-                    <summary>طريقة أداء التمرين</summary>
+                    <summary>{tr("طريقة أداء التمرين")}</summary>
                     <ol
-                      dir="rtl"
+                      dir={locale === "ar" ? "rtl" : "ltr"}
                       className="exercise-instructions list-inside list-decimal space-y-2 mt-3 text-sm leading-8 text-muted"
                     >
-                      {exerciseInstructions(catalogById.get(e.catalogId)!).map(
-                        (line, step) => (
-                          <li key={step}>{line}</li>
-                        ),
-                      )}
+                      {exerciseInstructions(
+                        catalogById.get(e.catalogId)!,
+                        locale,
+                      ).map((line, step) => (
+                        <li key={step}>{line}</li>
+                      ))}
                     </ol>
                   </details>
                 ) : null}
@@ -106,11 +121,31 @@ export function ProgramView({
                   />
                 ) : null}
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <span className="badge">{e.sets} مجموعات</span>
-                  <span className="badge">{e.reps} عدات</span>
+                  <span className="badge">
+                    {e.sets} {tr("مجموعات")}
+                  </span>
+                  <span className="badge">
+                    {e.reps} {tr("عدات")}
+                  </span>
+                  {e.weight !== undefined && (
+                    <span className="badge">
+                      {e.weight} {tr("كجم")}
+                    </span>
+                  )}
+                  {e.rpe !== undefined && (
+                    <span className="badge">RPE {e.rpe}</span>
+                  )}
+                  {e.rir !== undefined && (
+                    <span className="badge">RIR {e.rir}</span>
+                  )}
+                  {e.tempo && (
+                    <span className="badge">
+                      {tr("الإيقاع")} {e.tempo}
+                    </span>
+                  )}
                   <span className="badge">
                     <Timer size={12} />
-                    {e.rest} ثانية راحة
+                    {e.rest} {tr("ثانية راحة")}
                   </span>
                 </div>
               </article>
@@ -121,14 +156,14 @@ export function ProgramView({
       <section className="card p-6">
         <h2 className="flex items-center gap-2">
           <Utensils size={20} className="text-teal" />
-          خطة التغذية
+          {tr("خطة التغذية")}
         </h2>
         <div className="my-5 grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
-            ["السعرات", program.content.nutrition.calories, "سعرة"],
-            ["البروتين", program.content.nutrition.protein, "غ"],
-            ["الكاربوهيدرات", program.content.nutrition.carbs, "غ"],
-            ["الدهون", program.content.nutrition.fat, "غ"],
+            [tr("السعرات"), nutritionPlan.calories, tr("سعرة")],
+            [tr("البروتين"), nutritionPlan.protein, tr("غ")],
+            [tr("الكاربوهيدرات"), nutritionPlan.carbs, tr("غ")],
+            [tr("الدهون"), nutritionPlan.fat, tr("غ")],
           ].map(([name, value, unit]) => (
             <div key={String(name)} className="rounded-xl bg-canvas p-4">
               <p className="text-xs text-muted">{name}</p>
@@ -140,12 +175,11 @@ export function ProgramView({
           ))}
         </div>
         <p className="whitespace-pre-wrap leading-9 text-muted">
-          {program.content.nutrition.text ||
-            "لم يضف المدرب خطة تغذية نصية بعد."}
+          {nutritionPlan.text || tr("لم يضف المدرب خطة تغذية نصية بعد.")}
         </p>
-        {program.content.nutrition.meals?.length ? (
+        {nutritionPlan.meals?.length ? (
           <div className="mt-6 space-y-3">
-            {program.content.nutrition.meals.map((m, i) => (
+            {nutritionPlan.meals.map((m, i) => (
               <article key={i} className="meal-card">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="font-bold">{m.name}</h3>
@@ -155,10 +189,18 @@ export function ProgramView({
                   {m.foods}
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="badge">{m.calories} سعرة</span>
-                  <span className="badge">بروتين {m.protein} غ</span>
-                  <span className="badge">كارب {m.carbs} غ</span>
-                  <span className="badge">دهون {m.fat} غ</span>
+                  <span className="badge">
+                    {m.calories} {tr("سعرة")}
+                  </span>
+                  <span className="badge">
+                    {tr("بروتين")} {m.protein} {tr("غ")}
+                  </span>
+                  <span className="badge">
+                    {tr("كارب")} {m.carbs} {tr("غ")}
+                  </span>
+                  <span className="badge">
+                    {tr("دهون")} {m.fat} {tr("غ")}
+                  </span>
                 </div>
               </article>
             ))}

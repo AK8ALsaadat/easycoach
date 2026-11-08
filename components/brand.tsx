@@ -1,6 +1,10 @@
+"use client";
+import { useLocale } from "./locale-provider";
 import Link from "next/link";
 import { Dumbbell } from "lucide-react";
 export function Brand({ light = false }: { light?: boolean }) {
+  const { t: tr } = useLocale();
+
   return (
     <Link
       href="/"
@@ -10,11 +14,11 @@ export function Brand({ light = false }: { light?: boolean }) {
         <Dumbbell size={27} strokeWidth={2.7} />
       </span>
       <span className="text-lg">
-        إيزي كوتش
+        {tr("إيزي كوتش")}
         <span
           className={`block text-xs font-normal tracking-wide ${light ? "text-white/40" : "text-muted"}`}
         >
-          بوابتك لإدارة التدريب
+          {tr("بوابتك لإدارة التدريب")}
         </span>
       </span>
     </Link>

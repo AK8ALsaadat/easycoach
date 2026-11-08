@@ -1,9 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { snapshot } from "@/lib/server";
 import { csvCell } from "@/lib/import-preview";
+import { exportWorkbook } from "@/lib/export-workbook";
 export async function GET(request: NextRequest) {
   const data = await snapshot();
   const type = request.nextUrl.searchParams.get("type");
+  if (type === "xlsx") {
+    return new NextResponse(await exportWorkbook(data), {
+      headers: {
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": 'attachment; filename="easycoach-complete.xlsx"',
+        "Cache-Control": "private, no-store",
+      },
+    });
+  }
   if (type === "clients" && data.profile?.role === "coach") {
     const rows = [
       ["الاسم", "الإيميل", "الجوال"],

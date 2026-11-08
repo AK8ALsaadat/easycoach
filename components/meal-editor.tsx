@@ -1,4 +1,5 @@
 "use client";
+import { useLocale } from "./locale-provider";
 import { Plus, Trash2, Copy, Utensils } from "lucide-react";
 import type { Content } from "@/lib/model";
 type Nutrition = Content["nutrition"];
@@ -9,6 +10,8 @@ export function MealEditor({
   nutrition: Nutrition;
   onChange: (n: Nutrition) => void;
 }) {
+  const { t: tr } = useLocale();
+
   const meals = nutrition.meals ?? [];
   const total = meals.reduce(
     (s, m) => ({
@@ -29,8 +32,8 @@ export function MealEditor({
     <section className="space-y-4">
       <div className="section-title">
         <div>
-          <p className="eyebrow">خطة الوجبات</p>
-          <h2>وزّع اليوم على وجبات</h2>
+          <p className="eyebrow">{tr("خطة الوجبات")}</p>
+          <h2>{tr("وزّع اليوم على وجبات")}</h2>
         </div>
         <button
           type="button"
@@ -57,7 +60,7 @@ export function MealEditor({
           }
         >
           <Plus size={16} />
-          وجبة
+          {tr("وجبة")}
         </button>
       </div>
       {meals.map((m, i) => (
@@ -67,22 +70,22 @@ export function MealEditor({
               {String(i + 1).padStart(2, "0")}
             </span>
             <input
-              aria-label={`اسم الوجبة ${i + 1}`}
+              aria-label={tr("اسم الوجبة {0}", String(i + 1))}
               className="field"
               value={m.name}
               maxLength={100}
               onChange={(e) => update(i, "name", e.target.value)}
             />
             <input
-              aria-label={`وقت الوجبة ${i + 1}`}
+              aria-label={tr("وقت الوجبة {0}", String(i + 1))}
               className="field max-w-36"
               value={m.time}
-              placeholder="مثال: 8 صباحًا"
+              placeholder={tr("مثال: 8 صباحًا")}
               maxLength={40}
               onChange={(e) => update(i, "time", e.target.value)}
             />
             <button
-              aria-label={`نسخ الوجبة ${i + 1}`}
+              aria-label={tr("نسخ الوجبة {0}", String(i + 1))}
               type="button"
               className="btn-secondary"
               disabled={meals.length >= 12}
@@ -96,7 +99,7 @@ export function MealEditor({
               <Copy size={15} />
             </button>
             <button
-              aria-label={`حذف الوجبة ${i + 1}`}
+              aria-label={tr("حذف الوجبة {0}", String(i + 1))}
               type="button"
               className="btn-secondary"
               onClick={() =>
@@ -110,26 +113,32 @@ export function MealEditor({
             </button>
           </div>
           <textarea
-            aria-label={`مكونات الوجبة ${i + 1}`}
+            aria-label={tr("مكونات الوجبة {0}", String(i + 1))}
             className="field min-h-24"
             value={m.foods}
-            placeholder="150غ دجاج مشوي، 180غ أرز مطبوخ، سلطة… وحدد البدائل والكميات بالطريقة اللي تناسب عميلك."
+            placeholder={tr(
+              "150غ دجاج مشوي، 180غ أرز مطبوخ، سلطة… وحدد البدائل والكميات بالطريقة اللي تناسب عميلك.",
+            )}
             maxLength={2000}
             onChange={(e) => update(i, "foods", e.target.value)}
           />
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {(
               [
-                ["calories", "سعرات"],
-                ["protein", "بروتين (غ)"],
-                ["carbs", "كارب (غ)"],
-                ["fat", "دهون (غ)"],
+                ["calories", tr("سعرات")],
+                ["protein", tr("بروتين (غ)")],
+                ["carbs", tr("كارب (غ)")],
+                ["fat", tr("دهون (غ)")],
               ] as const
             ).map(([k, label]) => (
               <label key={k} className="text-xs text-muted">
-                {label}
+                {tr(label)}
                 <input
-                  aria-label={`${label} الوجبة ${i + 1}`}
+                  aria-label={tr(
+                    "{0} الوجبة {1}",
+                    String(tr(label)),
+                    String(i + 1),
+                  )}
                   className="field mt-1"
                   type="number"
                   min={0}
@@ -147,7 +156,9 @@ export function MealEditor({
           <div className="flex items-center gap-3">
             <Utensils size={20} />
             <div>
-              <strong>مجموع الوجبات: {total.calories} kcal</strong>
+              <strong>
+                {tr("مجموع الوجبات:")} {total.calories} kcal
+              </strong>
               <p className="text-xs">
                 P {total.protein}g · C {total.carbs}g · F {total.fat}g
               </p>
@@ -155,20 +166,23 @@ export function MealEditor({
           </div>
           <div className="text-sm">
             {total.calories === nutrition.calories
-              ? "يطابق هدف السعرات"
-              : `فرق ${total.calories - nutrition.calories} kcal عن الهدف`}
+              ? tr("يطابق هدف السعرات")
+              : tr(
+                  "فرق {0} kcal عن الهدف",
+                  String(total.calories - nutrition.calories),
+                )}
           </div>
           <button
             type="button"
             className="btn-secondary"
             onClick={() => onChange({ ...nutrition, ...total })}
           >
-            اعتمد المجموع كأهداف
+            {tr("اعتمد المجموع كأهداف")}
           </button>
         </div>
       ) : (
         <p className="py-5 text-sm text-muted">
-          إضافة الوجبات اختيارية. تقدر تكتفي بالأهداف والملاحظات.
+          {tr("إضافة الوجبات اختيارية. تقدر تكتفي بالأهداف والملاحظات.")}
         </p>
       )}
     </section>

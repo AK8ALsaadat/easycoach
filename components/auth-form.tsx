@@ -1,4 +1,5 @@
 "use client";
+import { useLocale } from "./locale-provider";
 import { useRef, useState } from "react";
 import {
   loginAction,
@@ -8,6 +9,8 @@ import {
 } from "@/app/actions";
 import { Notice } from "./forms";
 export function AuthForm({ next, local }: { next: string; local: boolean }) {
+  const { t: tr } = useLocale();
+
   const [register, setRegister] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -35,7 +38,7 @@ export function AuthForm({ next, local }: { next: string; local: boolean }) {
         {register ? (
           <>
             <div>
-              <label htmlFor="auth-name">اسمك</label>
+              <label htmlFor="auth-name">{tr("اسمك")}</label>
               <input
                 className="field"
                 id="auth-name"
@@ -46,16 +49,16 @@ export function AuthForm({ next, local }: { next: string; local: boolean }) {
               />
             </div>
             <div>
-              <label htmlFor="auth-role">نوع الحساب</label>
+              <label htmlFor="auth-role">{tr("نوع الحساب")}</label>
               <select className="field" id="auth-role" name="role">
-                <option value="coach">مدرب</option>
-                <option value="trainee">متدرب — بدعوة من مدربي</option>
+                <option value="coach">{tr("مدرب")}</option>
+                <option value="trainee">{tr("متدرب — بدعوة من مدربي")}</option>
               </select>
             </div>
           </>
         ) : null}
         <div>
-          <label htmlFor="auth-email">الإيميل</label>
+          <label htmlFor="auth-email">{tr("الإيميل")}</label>
           <input
             id="auth-email"
             name="email"
@@ -67,7 +70,7 @@ export function AuthForm({ next, local }: { next: string; local: boolean }) {
           />
         </div>
         <div>
-          <label htmlFor="auth-password">كلمة المرور</label>
+          <label htmlFor="auth-password">{tr("كلمة المرور")}</label>
           <input
             id="auth-password"
             name="password"
@@ -81,10 +84,10 @@ export function AuthForm({ next, local }: { next: string; local: boolean }) {
         </div>
         <button disabled={busy} className="btn w-full" type="submit">
           {busy
-            ? "نتحقق من بياناتك…"
+            ? tr("نتحقق من بياناتك…")
             : register
-              ? "إنشاء حساب"
-              : "الدخول إلى مساحتك"}
+              ? tr("إنشاء حساب")
+              : tr("الدخول إلى مساحتك")}
         </button>
         {!local && !register ? (
           <button
@@ -101,7 +104,7 @@ export function AuthForm({ next, local }: { next: string; local: boolean }) {
               }
             }}
           >
-            الدخول برابط على الإيميل
+            {tr("الدخول برابط على الإيميل")}
           </button>
         ) : null}
         <Notice result={result} />
@@ -114,11 +117,13 @@ export function AuthForm({ next, local }: { next: string; local: boolean }) {
             setResult(null);
           }}
         >
-          {register ? "عندك حساب؟ ادخل" : "جديد هنا؟ أنشئ حسابك"}
+          {register ? tr("عندك حساب؟ ادخل") : tr("جديد هنا؟ أنشئ حسابك")}
         </button>
       ) : (
         <div className="mt-6 rounded-xl border border-dashed bg-canvas p-4 text-xs leading-7 text-muted">
-          <p className="font-bold text-ink">حسابات اصطناعية للمعاينة فقط</p>
+          <p className="font-bold text-ink">
+            {tr("حسابات اصطناعية للمعاينة فقط")}
+          </p>
           <p dir="ltr" className="text-right">
             coach@example.test · coach2@example.test
           </p>
@@ -126,9 +131,9 @@ export function AuthForm({ next, local }: { next: string; local: boolean }) {
             trainee@example.test
           </p>
           <p>
-            كلمة المرور للجميع: <code dir="ltr">CoachPreview!2026</code>
+            {tr("كلمة المرور للجميع:")} <code dir="ltr">CoachPreview!2026</code>
           </p>
-          <p>المدرب الثاني معزول عن بيانات الأول.</p>
+          <p>{tr("المدرب الثاني معزول عن بيانات الأول.")}</p>
         </div>
       )}
     </div>

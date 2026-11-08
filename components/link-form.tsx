@@ -1,4 +1,5 @@
 "use client";
+import { useLocale } from "./locale-provider";
 import Link from "next/link";
 import { useState } from "react";
 import { claimAction, requestJoinAction, type Result } from "@/app/actions";
@@ -12,6 +13,8 @@ export function LinkForm({
   kind: "join" | "invite";
   loggedIn: boolean;
 }) {
+  const { t: tr } = useLocale();
+
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   return kind === "join" ? (
@@ -30,7 +33,7 @@ export function LinkForm({
       }}
     >
       <div>
-        <label htmlFor="join-name">اسمك</label>
+        <label htmlFor="join-name">{tr("اسمك")}</label>
         <input
           id="join-name"
           name="name"
@@ -41,7 +44,7 @@ export function LinkForm({
         />
       </div>
       <div>
-        <label htmlFor="join-email">إيميلك</label>
+        <label htmlFor="join-email">{tr("إيميلك")}</label>
         <input
           id="join-email"
           name="email"
@@ -52,19 +55,19 @@ export function LinkForm({
         />
       </div>
       <div>
-        <label htmlFor="join-phone">الجوال (اختياري)</label>
+        <label htmlFor="join-phone">{tr("الجوال (اختياري)")}</label>
         <input id="join-phone" name="phone" className="field" maxLength={20} />
       </div>
       <button className="btn w-full" disabled={busy || result?.ok}>
-        {busy ? "نرسل الطلب…" : "طلب الانضمام"}
+        {busy ? tr("نرسل الطلب…") : tr("طلب الانضمام")}
       </button>
       <Notice result={result} />
       <p className="text-xs text-muted">
-        بالمتابعة تطلب من المدرب مراجعة بياناتك وفق{" "}
+        {tr("بالمتابعة تطلب من المدرب مراجعة بياناتك وفق")}{" "}
         <Link className="underline" href="/privacy">
-          إشعار الخصوصية
+          {tr("إشعار الخصوصية")}
         </Link>
-        . لا تُرسل رسائل واتساب تلقائية.
+        {tr(". لا تُرسل رسائل واتساب تلقائية.")}
       </p>
     </form>
   ) : (
@@ -82,20 +85,20 @@ export function LinkForm({
             }
           }}
         >
-          {busy ? "نتحقق من هويتك…" : "قبول الدعوة وربط حسابي"}
+          {busy ? tr("نتحقق من هويتك…") : tr("قبول الدعوة وربط حسابي")}
         </button>
       ) : (
         <a
           href={`/login?next=${encodeURIComponent("/invite/" + token)}`}
           className="btn w-full"
         >
-          سجّل الدخول بنفس إيميل الدعوة
+          {tr("سجّل الدخول بنفس إيميل الدعوة")}
         </a>
       )}
       <Notice result={result} />
       {result?.ok ? (
         <Link href="/me" className="btn-soft mt-5 w-full">
-          افتح برنامجك
+          {tr("افتح برنامجك")}
         </Link>
       ) : null}
     </div>

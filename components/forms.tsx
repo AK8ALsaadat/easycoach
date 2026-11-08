@@ -1,4 +1,5 @@
 "use client";
+import { useLocale } from "./locale-provider";
 import { useId, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { mutate, type Result } from "@/app/actions";
@@ -13,12 +14,14 @@ export type Field = {
   hint?: string;
 };
 export function Notice({ result }: { result: Result | null }) {
+  const { t: tr } = useLocale();
+
   return result ? (
     <p
       role={result.ok ? "status" : "alert"}
       className={`mt-4 rounded-xl border px-4 py-3 text-sm ${result.ok ? "border-teal/15 bg-accent/25 text-teal" : "border-red-200 bg-red-50 text-red-800"}`}
     >
-      {result.message}
+      {tr(result.message)}
     </p>
   ) : null;
 }
@@ -39,6 +42,8 @@ export function DataForm({
   onDone?: (result: Result) => void;
   children?: ReactNode;
 }) {
+  const { t: tr } = useLocale();
+
   const router = useRouter();
   const prefix = useId();
   const [busy, setBusy] = useState(false);
@@ -84,7 +89,7 @@ export function DataForm({
             key={field.name}
             className={field.type === "textarea" ? "sm:col-span-2" : ""}
           >
-            <label htmlFor={`${prefix}-${field.name}`}>{field.label}</label>
+            <label htmlFor={`${prefix}-${field.name}`}>{tr(field.label)}</label>
             {field.type === "textarea" ? (
               <textarea
                 id={`${prefix}-${field.name}`}
@@ -104,7 +109,7 @@ export function DataForm({
               >
                 {field.options?.map((o) => (
                   <option key={o.value} value={o.value}>
-                    {o.label}
+                    {tr(o.label)}
                   </option>
                 ))}
               </select>
@@ -121,15 +126,15 @@ export function DataForm({
                 maxLength={field.type === "text" ? 140 : undefined}
               />
             )}{" "}
-            {field.hint ? (
-              <p className="mt-1 text-xs text-muted">{field.hint}</p>
+            {tr(field.hint) ? (
+              <p className="mt-1 text-xs text-muted">{tr(field.hint)}</p>
             ) : null}
           </div>
         ))}
       </div>
       {children}
       <button className="btn mt-5" disabled={busy} type="submit">
-        {busy ? "جارٍ الحفظ…" : label}
+        {busy ? tr("جارٍ الحفظ…") : label}
       </button>
       <Notice result={result} />
     </form>
@@ -146,6 +151,8 @@ export function ActionButton({
   children: ReactNode;
   className?: string;
 }) {
+  const { t: tr } = useLocale();
+
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -168,7 +175,7 @@ export function ActionButton({
           }
         }}
       >
-        {busy ? "لحظة…" : children}
+        {busy ? tr("لحظة…") : children}
       </button>
       <Notice result={result} />
     </div>

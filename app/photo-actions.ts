@@ -1,0 +1,108 @@
+"use server";
+import { randomUUID } from "node:crypto";
+import { cookies } from "next/headers";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { id, date } from "@/lib/model";
+import { hash, localMode, readableError, rpc } from "@/lib/server";
+import { adminClient } from "@/lib/supabase/admin";
+import { getLocalDatabase } from "@/lib/local-db";
+import {
+  accessPhoto,
+  photoPath,
+  validPhoto,
+  type PhotoAsset,
+} from "@/lib/progress-photos";
+
+const metadata = z
+  .object({
+    client_id: id,
+    entry_date: date,
+    filename: z.string().min(1).max(160),
+    size: z
+      .number()
+      .int()
+      .min(1)
+      .max(10 * 1024 * 1024),
+    mime: z.enum(["image/jpeg", "image/png", "image/webp"]),
+  })
+  .strict();
+export async function photoTicket(input: unknown, portalToken?: string) {
+  try {
+    const payload = { ...metadata.parse(input), id: randomUUID() };
+    let asset: PhotoAsset;
+    if (portalToken) {
+      if (!/^[a-f0-9]{64}$/.test(portalToken)) throw Error("رابط غير صالح");
+      const key = hash(portalToken),
+        proof = (await cookies()).get("ec_portal_" + key.slice(0, 12))?.value;
+      if (!proof) throw Error("يلزم تسجيل الدخول");
+      asset = await rpc(
+        "portal_management",
+        { token_hash: key, proof, command: "photo_reserve", payload },
+        true,
+      );
+    } else
+      asset = await rpc("management_command", {
+        command: "photo_reserve",
+        payload,
+      });
+    if (!asset.id) throw Error("تعذر تجهيز الصورة");
+    const signed = localMode()
+      ? null
+      : await adminClient()
+          .storage.from("progress-photos")
+          .createSignedUploadUrl(photoPath(asset), { upsert: false });
+    if (signed?.error) throw signed.error;
+    return {
+      ok: true,
+      id: asset.id,
+      url: signed?.data.signedUrl ?? `/api/progress-photos/${asset.id}`,
+      portalHash: portalToken ? hash(portalToken) : undefined,
+    };
+  } catch (error) {
+    return { ok: false, error: readableError(error) };
+  }
+}
+export async function finishPhoto(assetId: string, portalToken?: string) {
+  try {
+    const portalHash = portalToken
+      ? hash(
+          z
+            .string()
+            .regex(/^[a-f0-9]{64}$/)
+            .parse(portalToken),
+        )
+      : undefined;
+    const asset = await accessPhoto(assetId, portalHash);
+    let bytes: Uint8Array;
+    if (localMode())
+      bytes = await readFile(
+        path.join(process.cwd(), "data/progress-photos", asset.id),
+      );
+    else {
+      const result = await adminClient()
+        .storage.from("progress-photos")
+        .download(photoPath(asset));
+      if (result.error) throw result.error;
+      bytes = new Uint8Array(await result.data.arrayBuffer());
+    }
+    if (bytes.length !== Number(asset.size) || !validPhoto(bytes, asset.mime))
+      throw Error("الصورة أو حجمها غير صالح. استخدم JPG أو PNG أو WebP");
+    if (localMode())
+      await (
+        await getLocalDatabase()
+      ).query("select private.finalize_photo($1::uuid)", [asset.id]);
+    else {
+      const result = await adminClient().rpc("finalize_photo", {
+        asset: asset.id,
+      });
+      if (result.error) throw result.error;
+    }
+    revalidatePath("/", "layout");
+    return { ok: true, id: asset.id };
+  } catch (error) {
+    return { ok: false, error: readableError(error) };
+  }
+}

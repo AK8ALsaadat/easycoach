@@ -75,15 +75,23 @@ export async function accessPortal(
       date.parse(entry.entry_date);
       if (!entry.remove) z.number().min(20).max(400).parse(entry.weight);
     }
+    const weightResult = entry
+      ? await rpc<PortalData & { error?: string }>(
+          "portal_access",
+          {
+            token_hash: key,
+            proof,
+            day: entry?.entry_date ?? null,
+            value: entry?.weight ?? null,
+            remove: entry?.remove ?? false,
+          },
+          true,
+        )
+      : null;
+    if (weightResult?.error) return { ok: false, error: weightResult.error };
     const result = await rpc<PortalData & { error?: string }>(
-      "portal_access",
-      {
-        token_hash: key,
-        proof,
-        day: entry?.entry_date ?? null,
-        value: entry?.weight ?? null,
-        remove: entry?.remove ?? false,
-      },
+      "portal_management",
+      { token_hash: key, proof, command: "snapshot", payload: {} },
       true,
     );
     if (result.error) return { ok: false, error: result.error };

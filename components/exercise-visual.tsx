@@ -1,4 +1,5 @@
 "use client";
+import { useLocale } from "./locale-provider";
 import { useState } from "react";
 import { ImageOff, Play } from "lucide-react";
 import { exerciseMedia, exerciseMediaUrl } from "@/lib/exercise-media";
@@ -15,6 +16,8 @@ export function ExerciseVisual({
   playable?: boolean;
   portalHash?: string;
 }) {
+  const { t: tr, language: locale } = useLocale();
+
   const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(false);
   const asset = Object.hasOwn(exerciseMedia, exercise.id)
@@ -40,7 +43,10 @@ export function ExerciseVisual({
             poster={poster}
             src={exerciseMediaUrl(exercise.id, "video", portalHash)}
             onError={() => setFailed(true)}
-            aria-label={`عرض أداء ${exerciseName(exercise)}`}
+            aria-label={tr(
+              "عرض أداء {0}",
+              String(exerciseName(exercise, locale)),
+            )}
           />
         ) : (
           <>
@@ -52,7 +58,10 @@ export function ExerciseVisual({
                   setFailed(true);
               }}
               src={poster}
-              alt={`مجسم تشريحي يوضح ${exerciseName(exercise)} والعضلات المستهدفة`}
+              alt={tr(
+                "مجسم تشريحي يوضح {0} والعضلات المستهدفة",
+                String(exerciseName(exercise, locale)),
+              )}
               loading="lazy"
               width={960}
               height={536}
@@ -65,7 +74,7 @@ export function ExerciseVisual({
                 onClick={() => setPlaying(true)}
               >
                 <Play size={18} />
-                شاهد أداء الحركة
+                {tr("شاهد أداء الحركة")}
               </button>
             )}
           </>
@@ -75,10 +84,10 @@ export function ExerciseVisual({
           <ImageOff size={26} strokeWidth={1.5} aria-hidden="true" />
           <span>
             {failed
-              ? "تعذر تحميل العرض التوضيحي"
-              : "الصورة التوضيحية غير متاحة"}
+              ? tr("تعذر تحميل العرض التوضيحي")
+              : tr("الصورة التوضيحية غير متاحة")}
           </span>
-          <small>راجع شرح الحركة أو فيديو مدربك</small>
+          <small>{tr("راجع شرح الحركة أو فيديو مدربك")}</small>
         </div>
       )}
     </div>

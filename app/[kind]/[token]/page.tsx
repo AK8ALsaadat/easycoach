@@ -1,3 +1,5 @@
+import { cookies } from "next/headers";
+import { translator } from "@/lib/i18n";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { actor, hash, rpc } from "@/lib/server";
@@ -8,6 +10,9 @@ export default async function PublicLink({
 }: {
   params: Promise<{ kind: string; token: string }>;
 }) {
+  const tr = translator(
+    (await cookies()).get("ec_language")?.value === "en" ? "en" : "ar",
+  );
   const { kind, token } = await params;
   if (!["join", "invite"].includes(kind) || !/^[a-f0-9]{64}$/.test(token))
     notFound();
@@ -19,10 +24,14 @@ export default async function PublicLink({
   if (!info)
     return (
       <main className="empty min-h-screen">
-        <h1>الرابط منتهي أو غير صالح</h1>
-        <p>اطلب من المدرب دعوة جديدة. لا يمكن إعادة استخدام دعوة سبق قبولها.</p>
+        <h1>{tr("الرابط منتهي أو غير صالح")}</h1>
+        <p>
+          {tr(
+            "اطلب من المدرب دعوة جديدة. لا يمكن إعادة استخدام دعوة سبق قبولها.",
+          )}
+        </p>
         <Link className="btn" href="/login">
-          الدخول
+          {tr("الدخول")}
         </Link>
       </main>
     );
@@ -32,12 +41,17 @@ export default async function PublicLink({
       <section className="card mt-12 p-7">
         <p className="mb-3 text-sm text-teal">{info.coach}</p>
         <h1 className="text-2xl">
-          {kind === "join" ? "اطلب الانضمام لمدربك" : "دعوتك إلى مساحة التدريب"}
+          {kind === "join"
+            ? tr("اطلب الانضمام لمدربك")
+            : tr("دعوتك إلى مساحة التدريب")}
         </h1>
         <p className="mt-3 mb-7 text-sm leading-8 text-muted">
           {kind === "join"
-            ? "اكتب بيانات التواصل. يراجع المدرب طلبك قبل دعوتك."
-            : `هذه الدعوة تخص إيميل ${info.email_hint}. يلزم حساب موثّق بنفس الإيميل؛ الرابط وحده لا يمنح الوصول.`}
+            ? tr("اكتب بيانات التواصل. يراجع المدرب طلبك قبل دعوتك.")
+            : tr(
+                "هذه الدعوة تخص إيميل {0}. يلزم حساب موثّق بنفس الإيميل؛ الرابط وحده لا يمنح الوصول.",
+                String(info.email_hint),
+              )}
         </p>
         <LinkForm
           token={token}

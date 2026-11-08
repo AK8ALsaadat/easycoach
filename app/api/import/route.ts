@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "مصدر غير مسموح" }, { status: 403 });
   try {
     await requireCoach();
-    const limit = 6 * 1024 * 1024;
+    const limit = localMode() ? 6 * 1024 * 1024 : 4_200_000;
     if (Number(request.headers.get("content-length") ?? 0) > limit)
       throw new Error("الملف أكبر من الحد الآمن");
     const reader = request.body?.getReader();
@@ -36,6 +36,8 @@ export async function POST(request: NextRequest) {
     }).formData();
     const file = form.get("file");
     if (!(file instanceof File)) throw new Error("اختر ملفًا");
+    if (!localMode() && file.size > 4_000_000)
+      throw Error("حد الملف على الاستضافة 4MB؛ قسّمه إلى ملفات أصغر");
     const data = await readImportFile(
       new Uint8Array(await file.arrayBuffer()),
       file.name,
