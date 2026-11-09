@@ -1,4 +1,4 @@
-import { catalogById } from "./catalog";
+import reviewedPhotos from "./exercise-data/reviewed-photos.json";
 
 // Exact animated matches only. Never infer a visual from a muscle/name pattern.
 export type ExerciseMedia = {
@@ -36,8 +36,8 @@ export function exerciseMediaUrl(
   return `/api/exercise-media/${encodeURIComponent(id)}?${query}`;
 }
 
-/** Public-domain stills shipped with the catalog, keyed by the exact exercise ID. */
+/** Explicitly reviewed male-instructor photos only; new catalog IDs need review. */
 export function exerciseImageUrl(id: string) {
-  if (!catalogById.has(id)) return undefined;
+  if (!Object.hasOwn(reviewedPhotos.photos, id)) return undefined;
   return `/exercises/${encodeURIComponent(id)}.webp`;
 }

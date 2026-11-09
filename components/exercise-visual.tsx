@@ -27,15 +27,13 @@ export function ExerciseVisual({
   const asset = Object.hasOwn(exerciseMedia, exercise.id)
     ? exerciseMedia[exercise.id]
     : undefined;
-  const poster = asset
-    ? exerciseMediaUrl(exercise.id, "poster", portalHash)
-    : exerciseImageUrl(exercise.id);
+  const poster = exerciseImageUrl(exercise.id);
   const available = Boolean(poster) && !failed;
   return (
     <div
       className={`exercise-visual-frame ${available ? "visual-available" : "visual-unavailable"} ${className}`}
       data-exercise-id={exercise.id}
-      data-media-status={available ? "verified" : "unavailable"}
+      data-media-status={available ? "reviewed-photo" : "unavailable"}
     >
       {available ? (
         playing && asset ? (
@@ -65,7 +63,7 @@ export function ExerciseVisual({
               }}
               src={poster}
               alt={tr(
-                "مجسم تشريحي يوضح {0} والعضلات المستهدفة",
+                "صورة توضح أداء {0}",
                 String(exerciseName(exercise, locale)),
               )}
               loading="lazy"
