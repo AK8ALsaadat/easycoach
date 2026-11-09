@@ -1,4 +1,6 @@
-// Exact, manually reviewed matches only. Never infer a visual from a muscle/name pattern.
+import { catalogById } from "./catalog";
+
+// Exact animated matches only. Never infer a visual from a muscle/name pattern.
 export type ExerciseMedia = {
   provider: "MoveKit";
   slug: string;
@@ -32,4 +34,10 @@ export function exerciseMediaUrl(
   const query = new URLSearchParams({ kind });
   if (portalHash) query.set("portal", portalHash);
   return `/api/exercise-media/${encodeURIComponent(id)}?${query}`;
+}
+
+/** Public-domain stills shipped with the catalog, keyed by the exact exercise ID. */
+export function exerciseImageUrl(id: string) {
+  if (!catalogById.has(id)) return undefined;
+  return `/exercises/${encodeURIComponent(id)}.webp`;
 }

@@ -2,7 +2,11 @@
 import { useLocale } from "./locale-provider";
 import { useState } from "react";
 import { ImageOff, Play } from "lucide-react";
-import { exerciseMedia, exerciseMediaUrl } from "@/lib/exercise-media";
+import {
+  exerciseImageUrl,
+  exerciseMedia,
+  exerciseMediaUrl,
+} from "@/lib/exercise-media";
 import { exerciseName, type CatalogExercise } from "@/lib/catalog";
 
 export function ExerciseVisual({
@@ -23,8 +27,10 @@ export function ExerciseVisual({
   const asset = Object.hasOwn(exerciseMedia, exercise.id)
     ? exerciseMedia[exercise.id]
     : undefined;
-  const poster = exerciseMediaUrl(exercise.id, "poster", portalHash);
-  const available = asset && !failed;
+  const poster = asset
+    ? exerciseMediaUrl(exercise.id, "poster", portalHash)
+    : exerciseImageUrl(exercise.id);
+  const available = Boolean(poster) && !failed;
   return (
     <div
       className={`exercise-visual-frame ${available ? "visual-available" : "visual-unavailable"} ${className}`}
@@ -32,7 +38,7 @@ export function ExerciseVisual({
       data-media-status={available ? "verified" : "unavailable"}
     >
       {available ? (
-        playing ? (
+        playing && asset ? (
           <video
             controls
             autoPlay
@@ -67,7 +73,7 @@ export function ExerciseVisual({
               height={536}
               onError={() => setFailed(true)}
             />
-            {playable && (
+            {playable && asset && (
               <button
                 type="button"
                 className="exercise-play"
