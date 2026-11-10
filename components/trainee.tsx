@@ -3,12 +3,13 @@ import { useLocale } from "./locale-provider";
 import { LanguageSwitch } from "./language-switch";
 import Link from "next/link";
 import { useState } from "react";
-import { Download, LogOut, Shield, Wallet } from "lucide-react";
+import { Download, LogOut, Shield, CalendarDays } from "lucide-react";
 import { logoutAction, mutate } from "@/app/actions";
 import { useRouter } from "next/navigation";
 import { WeightPanel } from "./weight-panel";
 import type { Snapshot } from "@/lib/model";
-import { formatDate, money, riyadhToday } from "@/lib/dates";
+import { formatDate, riyadhToday } from "@/lib/dates";
+import { latestSubscription } from "@/lib/subscription-period";
 import { Brand } from "./brand";
 import { DataForm } from "./forms";
 import { ProgramView } from "./program-view";
@@ -40,11 +41,6 @@ export function Trainee({
   const current =
     subscriptions.find((s) => s.start_date <= today && s.end_date >= today) ??
     subscriptions[0];
-  const paid = current
-    ? data.payments
-        .filter((p) => p.subscription_id === current.id)
-        .reduce((n, p) => n + Number(p.amount), 0)
-    : 0;
   return (
     <div className="min-h-screen">
       <header className="border-b bg-white px-5 py-5">
@@ -156,7 +152,7 @@ export function Trainee({
                 />
                 <section className="card p-6">
                   <h2 className="flex items-center gap-2">
-                    <Wallet size={18} className="text-teal" />
+                    <CalendarDays size={18} className="text-teal" />
                     {tr("اشتراكك")}
                   </h2>
                   {current ? (
@@ -166,26 +162,8 @@ export function Trainee({
                       </h3>
                       <p className="mt-3 text-sm text-muted">
                         {formatDate(current.start_date, locale)} —{" "}
-                        {formatDate(current.end_date, locale)}
+                        {formatDate(latestSubscription(subscriptions, clientId)!.end_date, locale)}
                       </p>
-                      <div className="mt-5 space-y-3 border-t pt-4 text-sm">
-                        <p className="flex justify-between">
-                          <span className="text-muted">
-                            {tr("قيمة الباقة")}
-                          </span>
-                          <span>{money(current.price, locale)}</span>
-                        </p>
-                        <p className="flex justify-between">
-                          <span className="text-muted">{tr("المدفوع")}</span>
-                          <span>{money(paid, locale)}</span>
-                        </p>
-                        <p className="flex justify-between font-semibold">
-                          <span>{tr("المتبقي")}</span>
-                          <span>
-                            {money(Number(current.price) - paid, locale)}
-                          </span>
-                        </p>
-                      </div>
                       {data.freezes
                         .filter((f) => f.subscription_id === current.id)
                         .map((f) => (
@@ -200,7 +178,7 @@ export function Trainee({
                         ))}
                       <p className="mt-5 text-xs text-muted">
                         {tr(
-                          "لأي تعديل أو تجديد، تواصل مع مدربك. سجل الدفعات ليس فاتورة ضريبية.",
+                          "لأي تعديل أو تجديد، تواصل مع مدربك.",
                         )}
                       </p>
                     </>

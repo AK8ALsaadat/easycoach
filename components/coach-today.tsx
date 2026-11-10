@@ -14,12 +14,13 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import type { Snapshot, Client } from "@/lib/model";
+import { SubscriptionRenewal } from "./subscription-renewal";
+import { latestSubscription } from "@/lib/subscription-period";
 import { coachingAlerts } from "@/lib/coaching-alerts";
 import {
   riyadhToday,
   addDays,
   daysBetween,
-  money,
   formatDate,
 } from "@/lib/dates";
 export function CoachToday({ data }: { data: Snapshot }) {
@@ -31,21 +32,6 @@ export function CoachToday({ data }: { data: Snapshot }) {
     clients = data.clients.filter((c) => !c.archived);
   const latest = (id: string) =>
     data.programs.find((p) => p.client_id === id && p.published_at);
-  const debt = (id: string) =>
-    data.subscriptions
-      .filter((s) => s.client_id === id)
-      .reduce(
-        (sum, s) =>
-          sum +
-          Math.max(
-            0,
-            Number(s.price) -
-              data.payments
-                .filter((p) => p.subscription_id === s.id)
-                .reduce((n, p) => n + Number(p.amount), 0),
-          ),
-        0,
-      );
   const current = (id: string) => {
     const all = data.subscriptions.filter((s) => s.client_id === id);
     return (
@@ -88,15 +74,6 @@ export function CoachToday({ data }: { data: Snapshot }) {
     );
   });
   const drafts = data.programs.filter((p) => !p.published_at);
-  const totalDebt = clients.reduce((n, c) => n + debt(c.id), 0);
-  const thisMonth = today.slice(0, 7);
-  const revenue = data.payments
-    .filter((p) => p.paid_date.startsWith(thisMonth))
-    .reduce((n, p) => n + Number(p.amount), 0);
-  const prevMonth = addDays(thisMonth + "-01", -1).slice(0, 7);
-  const previousRevenue = data.payments
-    .filter((p) => p.paid_date.startsWith(prevMonth))
-    .reduce((n, p) => n + Number(p.amount), 0);
   const noWeight = clients.filter((c) => {
     const ws = (data.weights ?? [])
       .filter((w) => w.client_id === c.id)
@@ -136,7 +113,6 @@ export function CoachToday({ data }: { data: Snapshot }) {
   renew.forEach((c) => task(c, "تجديد", current(c.id)!.end_date < today));
   stale.forEach((c) => task(c, "مراجعة برنامج"));
   noWeight.forEach((c) => task(c, "متابعة وزن"));
-  clients.filter((c) => debt(c.id) > 0).forEach((c) => task(c, "دفعة متبقية"));
   const tasks = [...taskMap.values()].sort(
     (a, b) => Number(b.urgent) - Number(a.urgent),
   );
@@ -150,7 +126,6 @@ export function CoachToday({ data }: { data: Snapshot }) {
       (filter === "all" ||
         (filter === "needs" && needs.includes(c)) ||
         (filter === "renew" && renew.includes(c)) ||
-        (filter === "debt" && debt(c.id) > 0) ||
         (filter === "draft" && drafts.some((p) => p.client_id === c.id))),
   );
   const ready = clients.length
@@ -258,23 +233,8 @@ export function CoachToday({ data }: { data: Snapshot }) {
           </div>
         </section>
         <section className="revenue-card">
-          <div>
-            <span className="summary-label">{tr("المحصّل هذا الشهر")}</span>
-            <strong className="revenue-number">{money(revenue, locale)}</strong>
-            <p>
-              {tr("الشهر السابق")} {money(previousRevenue, locale)}
-            </p>
-          </div>
-          <div className="revenue-secondary">
-            <span>
-              {tr("المبالغ المتبقية")}
-              <strong>{money(totalDebt, locale)}</strong>
-            </span>
-            <Link href="/coach/finance" className="finance-link">
-              {tr("سجل الدفعات")}
-              <ArrowLeft size={16} />
-            </Link>
-          </div>
+          <div><span className="summary-label">{tr("الاشتراكات والتجديد")}</span><strong className="revenue-number">{active.length}</strong><p>{tr("اشتراك نشط")}</p></div>
+          <div className="revenue-secondary"><span>{tr("تجديد خلال 7 أيام")}<strong>{renew.length}</strong></span><Link href="/coach/finance" className="finance-link">{tr("إدارة الاشتراكات")}<ArrowLeft size={16} /></Link></div>
         </section>
       </div>
       <div className="mt-6 grid items-start gap-5 xl:grid-cols-[1.6fr_1fr]">
@@ -319,11 +279,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
                     </span>
                   ) : (
                     <span className="text-xs text-muted">
-                      {debt(c.id) > 0
-                        ? money(debt(c.id), locale)
-                        : latest(c.id)
-                          ? tr("متابعة")
-                          : tr("جهّز الجدول")}
+                      {latest(c.id) ? tr("متابعة") : tr("جهّز الجدول")}
                     </span>
                   )}
                   <ChevronLeft size={16} />
@@ -400,7 +356,6 @@ export function CoachToday({ data }: { data: Snapshot }) {
             ["all", tr("الكل")],
             ["needs", tr("بدون برنامج")],
             ["renew", tr("التجديدات")],
-            ["debt", tr("مبالغ متبقية")],
             ["draft", tr("لديهم مسودة")],
           ].map(([k, v]) => (
             <button
@@ -422,7 +377,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
                 <th>{tr("التغذية")}</th>
                 <th>{tr("آخر وزن")}</th>
                 <th>{tr("الاشتراك")}</th>
-                <th>{tr("المتبقي")}</th>
+                <th>{tr("تجديد الاشتراك")}</th>
                 <th aria-label={tr("افتح ملف المتدرب")} />
               </tr>
             </thead>
@@ -496,16 +451,10 @@ export function CoachToday({ data }: { data: Snapshot }) {
                     </td>
                     <td>
                       <span className="text-xs">
-                        {s ? formatDate(s.end_date, locale) : tr("بدون باقة")}
+                        {s ? formatDate(latestSubscription(data.subscriptions, c.id)!.end_date, locale) : tr("بدون باقة")}
                       </span>
                     </td>
-                    <td
-                      className={
-                        debt(c.id) ? "font-bold text-teal" : "text-muted"
-                      }
-                    >
-                      {money(debt(c.id), locale)}
-                    </td>
+                    <td><SubscriptionRenewal client={c} subscriptions={data.subscriptions} /></td>
                     <td>
                       <Link
                         className="btn-secondary !px-2"
@@ -559,8 +508,8 @@ export function CoachToday({ data }: { data: Snapshot }) {
                     </strong>
                   </span>
                   <span>
-                    {tr("المتبقي")}
-                    <strong>{money(debt(c.id), locale)}</strong>
+                    {tr("نهاية الاشتراك")}
+                    <strong>{latestSubscription(data.subscriptions, c.id) ? formatDate(latestSubscription(data.subscriptions, c.id)!.end_date, locale) : tr("بدون اشتراك")}</strong>
                   </span>
                 </div>
               </Link>

@@ -24,7 +24,6 @@ import {
   Search,
   Settings,
   Users,
-  Wallet,
 } from "lucide-react";
 import { createLink, logoutAction, type Result } from "@/app/actions";
 import {
@@ -34,7 +33,8 @@ import {
   type Subscription,
   type Template,
 } from "@/lib/model";
-import { addDays, formatDate, money, riyadhToday } from "@/lib/dates";
+import { formatDate, riyadhToday } from "@/lib/dates";
+import { latestSubscription } from "@/lib/subscription-period";
 import { Brand } from "./brand";
 import { ActionButton, DataForm, Notice, type Field } from "./forms";
 import { ProgramEditor } from "./program-editor";
@@ -43,6 +43,9 @@ import { ClientProgress, PortalControl } from "./client-progress";
 import { ExerciseCatalog } from "./exercise-catalog";
 import { TemplateTools } from "./template-tools";
 import { ClientHub } from "./client-hub";
+import { ClientBoard } from "./client-board";
+import { SubscriptionRenewal } from "./subscription-renewal";
+import { clientMatchesQuery, renewalDue } from "@/lib/client-workflow";
 import { coachingAlerts } from "@/lib/coaching-alerts";
 import { NotificationSettings } from "./notification-settings";
 import { AccountSettings } from "./account-settings";
@@ -50,12 +53,11 @@ import { ManagementButton } from "./management-button";
 import { exerciseName } from "@/lib/catalog";
 import { CoachToday } from "./coach-today";
 import { useDialog } from "./use-dialog";
+import {
+  availableTemplates,
+  templateLibraryState,
+} from "@/lib/template-availability";
 
-const methods = [
-  { value: "bank", label: "تحويل بنكي" },
-  { value: "cash", label: "نقدي" },
-  { value: "other", label: "أخرى" },
-];
 const clientFields = (client?: Client): Field[] => [
   { name: "name", label: "اسم العميل", value: client?.name, required: true },
   {
@@ -72,14 +74,6 @@ const clientFields = (client?: Client): Field[] => [
     hint: "05xxxxxxxx أو +9665xxxxxxxx",
   },
 ];
-function paid(data: Snapshot, id: string) {
-  return data.payments
-    .filter((p) => p.subscription_id === id)
-    .reduce((sum, p) => sum + Number(p.amount), 0);
-}
-function remaining(data: Snapshot, sub: Subscription) {
-  return Math.max(0, Number(sub.price) - paid(data, sub.id));
-}
 function currentSubscription(data: Snapshot, clientId: string) {
   const today = riyadhToday();
   const all = data.subscriptions.filter((s) => s.client_id === clientId);
@@ -194,8 +188,8 @@ const nav = [
   },
   {
     href: "/coach/finance",
-    label: "الاشتراكات والمالية",
-    icon: Wallet,
+    label: "الاشتراكات",
+    icon: CalendarDays,
     key: "finance",
   },
   {
@@ -423,12 +417,21 @@ function Avatar({ name }: { name: string }) {
     </span>
   );
 }
-function Empty({ title, text }: { title: string; text: string }) {
+function Empty({
+  title,
+  text,
+  children,
+}: {
+  title: string;
+  text: string;
+  children?: React.ReactNode;
+}) {
   return (
     <div className="card empty">
       <ClipboardList className="text-teal/40" size={30} />
       <h2 className="text-ink">{title}</h2>
       <p className="max-w-md text-sm">{text}</p>
+      {children}
     </div>
   );
 }
@@ -469,7 +472,7 @@ function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
             <th>{tr("العميل")}</th>
             <th>{tr("البرنامج")}</th>
             <th>{tr("الاشتراك")}</th>
-            <th>{tr("المتبقي")}</th>
+            <th>{tr("تجديد الاشتراك")}</th>
             <th aria-label={tr("فتح ملف العميل")} />
           </tr>
         </thead>
@@ -479,9 +482,6 @@ function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
               (p) => p.client_id === c.id && p.published_at,
             );
             const sub = currentSubscription(data, c.id);
-            const balance = data.subscriptions
-              .filter((s) => s.client_id === c.id)
-              .reduce((n, s) => n + remaining(data, s), 0);
             return (
               <tr key={c.id}>
                 <td>
@@ -510,7 +510,7 @@ function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
                     <div>
                       <p className="text-xs">{subscriptionState(data, sub)}</p>
                       <p className="text-xs text-muted">
-                        {tr("حتى")} {formatDate(sub.end_date, locale)}
+                        {tr("حتى")} {formatDate(latestSubscription(data.subscriptions, c.id)!.end_date, locale)}
                       </p>
                     </div>
                   ) : (
@@ -519,13 +519,7 @@ function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
                     </span>
                   )}
                 </td>
-                <td
-                  className={
-                    balance ? "font-medium text-amber-800" : "text-muted"
-                  }
-                >
-                  {money(balance, locale)}
-                </td>
+                <td>{!c.archived && <SubscriptionRenewal client={c} subscriptions={data.subscriptions} />}</td>
                 <td>
                   {c.archived ? (
                     <ManagementButton
@@ -561,39 +555,31 @@ function Clients({
   initialFilter: string;
   initialQuery: string;
 }) {
-  const { t: tr } = useLocale();
+  const { t: tr, language: locale } = useLocale();
 
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [filter, setFilter] = useState(
-    initialFilter === "add" ? "" : initialFilter,
+    initialFilter === "add" || initialFilter === "balance" ? "" : initialFilter,
   );
   const [add, setAdd] = useState(initialFilter === "add");
   const [importing, setImporting] = useState(false);
   const today = riyadhToday();
   const [sort, setSort] = useState("newest");
+  const [view, setView] = useState<"table" | "board">("board");
   const alerts = coachingAlerts(data);
   const clients = data.clients
     .filter(
       (c) =>
         (filter === "archived" ? c.archived : !c.archived) &&
-        `${c.name} ${c.email} ${c.phone}`
-          .toLowerCase()
-          .includes(query.toLowerCase()),
+        clientMatchesQuery(c, query),
     )
     .filter((c) =>
       filter === "program"
         ? !data.programs.some((p) => p.client_id === c.id && p.published_at)
         : filter === "renew"
-          ? Boolean(
-              currentSubscription(data, c.id) &&
-              currentSubscription(data, c.id)!.end_date <= addDays(today, 7),
-            )
-          : filter === "balance"
-            ? data.subscriptions.some(
-                (s) => s.client_id === c.id && remaining(data, s) > 0,
-              )
-            : filter === "active" || filter === "inactive" || filter === "new"
+          ? renewalDue(data.subscriptions, c.id, today)
+          : filter === "active" || filter === "inactive" || filter === "new"
               ? (data.management?.details.find(
                   (detail) => detail.client_id === c.id,
                 )?.status ?? "active") === filter
@@ -605,7 +591,7 @@ function Clients({
     )
     .sort((a, b) =>
       sort === "name"
-        ? a.name.localeCompare(b.name, "ar")
+        ? a.name.localeCompare(b.name, locale)
         : sort === "oldest"
           ? a.created_at.localeCompare(b.created_at)
           : b.created_at.localeCompare(a.created_at),
@@ -613,7 +599,7 @@ function Clients({
   return (
     <>
       <Heading
-        title={tr("العملاء")}
+        title={tr("المتدربون")}
         text={tr("كل عميل ببرنامجه واشتراكه وتفاصيله.")}
       >
         <div className="flex gap-2">
@@ -683,11 +669,11 @@ function Clients({
               ["", tr("الكل")],
               ["program", tr("بدون برنامج")],
               ["renew", tr("تجديد قريب")],
-              ["balance", tr("دفعات متبقية")],
             ].map(([value, label]) => (
               <button
                 key={value}
                 className={filter === value ? "btn-soft" : "btn-secondary"}
+                aria-pressed={filter === value}
                 onClick={() => setFilter(value)}
               >
                 {tr(label)}
@@ -715,8 +701,7 @@ function Clients({
                 ["archived", tr("المؤرشفون")],
                 ["program", tr("بدون برنامج")],
                 ["renew", tr("تجديد قريب")],
-                ["balance", tr("دفعات متبقية")],
-              ].map(([key, label]) => (
+                ].map(([key, label]) => (
                 <option key={key} value={key}>
                   {tr(label)}
                 </option>
@@ -737,7 +722,18 @@ function Clients({
             </select>
           </label>
         </div>
-        <ClientTable clients={clients} data={data} />
+        <div className="client-view-toolbar">
+          <p role="status">{tr("عدد النتائج")}: <strong>{clients.length}</strong></p>
+          <div role="group" aria-label={tr("طريقة عرض المتدربين")}>
+            <button type="button" className={view === "board" ? "btn-soft" : "btn-secondary"} aria-pressed={view === "board"} onClick={() => setView("board")}>{tr("لوحة المتابعة")}</button>
+            <button type="button" className={view === "table" ? "btn-soft" : "btn-secondary"} aria-pressed={view === "table"} onClick={() => setView("table")}>{tr("الجدول")}</button>
+          </div>
+        </div>
+        {!clients.length ? <div className="empty">
+          <Users size={28} aria-hidden="true" />
+          <p>{tr(query || filter ? "لا توجد نتائج مطابقة للبحث والتصفية." : "أضف أول متدرب لبدء المتابعة.")}</p>
+          {(query || filter) && <button type="button" className="btn-soft" onClick={() => { setQuery(""); setFilter(""); }}>{tr("مسح البحث والتصفية")}</button>}
+        </div> : view === "board" ? <ClientBoard clients={clients} data={data} /> : <ClientTable clients={clients} data={data} />}
       </div>
     </>
   );
@@ -771,6 +767,11 @@ function ClientDetail({
   const published = data.programs.find(
     (p) => p.client_id === client.id && p.published_at,
   );
+  const templates = availableTemplates(
+    data.templates,
+    data.management?.template_metadata,
+  );
+  const selectedTemplate = templates.find((t) => t.id === templateId);
   const selected = loaded ?? draft ?? published;
   const subs = data.subscriptions.filter((s) => s.client_id === client.id);
   const whatsapp = client.phone.replace(/^0/, "966").replace(/\D/g, "");
@@ -830,7 +831,7 @@ function ClientDetail({
       <div className="mb-6 flex flex-wrap gap-2">
         {[
           ["program", tr("البرنامج والتغذية")],
-          ["finance", tr("الباقات والدفعات")],
+          ["finance", tr("الاشتراك والتجديد")],
           ["profile", tr("البيانات والدعوة")],
           ["progress", tr("الهدف والوزن")],
           ["tracking", tr("السجلات والمراجعات")],
@@ -880,7 +881,7 @@ function ClientDetail({
                 onChange={(e) => setTemplateId(e.target.value)}
               >
                 <option value="">{tr("ابدأ من قالب…")}</option>
-                {data.templates.map((t) => (
+                {templates.map((t) => (
                   <option value={t.id} key={t.id}>
                     {t.name}
                   </option>
@@ -888,8 +889,9 @@ function ClientDetail({
               </select>
               <button
                 className="btn-secondary"
-                disabled={!templateId}
+                disabled={!selectedTemplate}
                 onClick={() => {
+                  if (!selectedTemplate) return;
                   if (
                     draft &&
                     !window.confirm(
@@ -898,9 +900,7 @@ function ClientDetail({
                   )
                     return;
                   setLoaded(
-                    structuredClone(
-                      data.templates.find((t) => t.id === templateId)!,
-                    ),
+                    structuredClone(selectedTemplate),
                   );
                 }}
               >
@@ -923,12 +923,7 @@ function ClientDetail({
         </section>
       ) : tab === "finance" ? (
         <div className="space-y-6">
-          <details className="card p-6">
-            <summary>{tr("إضافة باقة أو تجديد")}</summary>
-            <div className="mt-5">
-              <SubscriptionForm data={data} client={client} />
-            </div>
-          </details>
+          <div className="card p-6"><SubscriptionRenewal client={client} subscriptions={data.subscriptions} /></div>
           {subs.length ? (
             subs.map((s) => (
               <SubscriptionCard
@@ -943,7 +938,7 @@ function ClientDetail({
             <Empty
               title={tr("ما فيه اشتراك بعد")}
               text={tr(
-                "أضف الباقة وحدد بدايتها ونهايتها؛ تاريخ الدفع مستقل عنها.",
+                "حدد مدة الاشتراك أو اختر تاريخ نهايته.",
               )}
             />
           )}
@@ -996,79 +991,6 @@ function ClientDetail({
   );
 }
 
-function SubscriptionForm({
-  data,
-  client,
-}: {
-  data: Snapshot;
-  client: Client;
-}) {
-  const { t: tr } = useLocale();
-
-  const all = data.subscriptions.filter((s) => s.client_id === client.id);
-  const latest = [...all].sort((a, b) =>
-    b.end_date.localeCompare(a.end_date),
-  )[0];
-  const [renew, setRenew] = useState(false);
-  return (
-    <div>
-      <label className="mb-4 flex items-center gap-2 font-normal">
-        <input
-          type="checkbox"
-          disabled={!latest}
-          checked={renew}
-          onChange={(e) => setRenew(e.target.checked)}
-        />
-        {tr("تجديد الباقة السابقة (يبدأ بعد انتهائها)")}
-      </label>
-      <DataForm
-        key={String(renew)}
-        command="subscription_create"
-        base={{
-          client_id: client.id,
-          ...(renew && latest ? { previous_id: latest.id } : {}),
-        }}
-        fields={[
-          {
-            name: "name",
-            label: "اسم الباقة",
-            required: true,
-            value: renew ? latest?.name : tr("تدريب شامل"),
-          },
-          {
-            name: "price",
-            label: "قيمة الباقة (ريال)",
-            type: "number",
-            required: true,
-            value: renew ? latest?.price : 650,
-          },
-          {
-            name: "start_date",
-            label: "بداية الاشتراك",
-            type: "date",
-            required: true,
-            value:
-              renew && latest ? addDays(latest.end_date, 1) : riyadhToday(),
-          },
-          {
-            name: "end_date",
-            label: "نهاية الاشتراك",
-            type: "date",
-            required: true,
-            value: addDays(
-              renew && latest ? latest.end_date : riyadhToday(),
-              30,
-            ),
-          },
-        ]}
-        label={renew ? tr("تأكيد التجديد") : tr("إضافة الباقة")}
-      />
-      <p className="mt-3 text-xs text-muted">
-        {tr("إنشاء باقة لا يسجّل دفعة. سجّل الدفع بتاريخه الفعلي بشكل مستقل.")}
-      </p>
-    </div>
-  );
-}
 function SubscriptionCard({
   data,
   sub,
@@ -1082,9 +1004,7 @@ function SubscriptionCard({
 }) {
   const { t: tr, language: locale } = useLocale();
 
-  const due = remaining(data, sub);
   const frozen = data.freezes.filter((f) => f.subscription_id === sub.id);
-  const payments = data.payments.filter((p) => p.subscription_id === sub.id);
   const whatsapp = client.phone.replace(/^0/, "966").replace(/\D/g, "");
   return (
     <section className="card overflow-hidden">
@@ -1100,61 +1020,7 @@ function SubscriptionCard({
           {subscriptionState(data, sub)}
         </span>
       </div>
-      <div className="grid grid-cols-3 gap-3 p-6">
-        {[
-          [tr("قيمة الباقة"), sub.price],
-          [tr("المدفوع"), paid(data, sub.id)],
-          [tr("المتبقي"), due],
-        ].map(([label, value]) => (
-          <div key={String(label)}>
-            <p className="text-xs text-muted">{tr(label)}</p>
-            <p className="mt-1 text-lg font-semibold">{money(value, locale)}</p>
-          </div>
-        ))}
-      </div>
       <div className="space-y-5 border-t p-6">
-        {due > 0 ? (
-          <details>
-            <summary className="text-sm text-teal">
-              {tr("تسجيل دفعة جزئية أو كاملة")}
-            </summary>
-            <div className="mt-4">
-              <DataForm
-                command="payment_add"
-                idempotent
-                base={{ subscription_id: sub.id }}
-                fields={[
-                  {
-                    name: "amount",
-                    label: "المبلغ (ريال)",
-                    type: "number",
-                    value: due,
-                    required: true,
-                  },
-                  {
-                    name: "method",
-                    label: "طريقة الدفع",
-                    type: "select",
-                    options: methods,
-                  },
-                  {
-                    name: "paid_date",
-                    label: "تاريخ الدفع الفعلي",
-                    type: "date",
-                    value: riyadhToday(),
-                    required: true,
-                  },
-                  {
-                    name: "reference",
-                    label: "مرجع العملية",
-                    hint: "مرجع فريد يساعد في منع تكرار التحويل.",
-                  },
-                ]}
-                label={tr("إثبات الدفعة في السجل")}
-              />
-            </div>
-          </details>
-        ) : null}
         <details>
           <summary className="text-sm">{tr("تجميد الباقة")}</summary>
           <p className="mt-3 mb-4 text-xs text-muted">
@@ -1204,98 +1070,9 @@ function SubscriptionCard({
           </a>
         ) : null}
       </div>
-      {payments.length ? <PaymentList data={data} payments={payments} /> : null}
     </section>
   );
 }
-function PaymentList({
-  data,
-  payments,
-}: {
-  data: Snapshot;
-  payments: Snapshot["payments"];
-}) {
-  const { t: tr, language: locale } = useLocale();
-
-  return (
-    <div className="overflow-x-auto border-t">
-      <table>
-        <thead>
-          <tr>
-            <th>{tr("التاريخ")}</th>
-            <th>{tr("المبلغ")}</th>
-            <th>{tr("الطريقة / المرجع")}</th>
-            <th>{tr("التوثيق")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {payments.map((p) => {
-            const reversed = data.payments.some((r) => r.reverses === p.id);
-            return (
-              <tr key={p.id}>
-                <td className="whitespace-nowrap">
-                  {formatDate(p.paid_date, locale)}
-                </td>
-                <td
-                  className={
-                    p.kind === "reversal" ? "text-red-700" : "font-medium"
-                  }
-                >
-                  {money(p.amount, locale)}
-                </td>
-                <td>
-                  <p className="text-xs">
-                    {tr(methods.find((m) => m.value === p.method)?.label)}
-                  </p>
-                  <p className="mt-1 text-xs text-muted">
-                    {p.reference || tr("بدون مرجع")}
-                  </p>
-                </td>
-                <td>
-                  {p.kind === "reversal" ? (
-                    <p className="max-w-xs text-xs text-muted">
-                      {tr("عكس موثّق:")} {p.reason}
-                    </p>
-                  ) : reversed ? (
-                    <span className="badge">{tr("عُكست بتصحيح")}</span>
-                  ) : (
-                    <details className="min-w-44">
-                      <summary className="text-xs text-muted">
-                        {tr("تصحيح الدفعة")}
-                      </summary>
-                      <div className="mt-3 min-w-60">
-                        <DataForm
-                          command="payment_reverse"
-                          idempotent
-                          base={{ payment_id: p.id }}
-                          fields={[
-                            {
-                              name: "reason",
-                              label: "سبب التصحيح (موثق)",
-                              type: "textarea",
-                              required: true,
-                            },
-                          ]}
-                          label={tr("عكس الدفعة مع حفظ الأصل")}
-                        />
-                        <p className="mt-3 text-xs text-muted">
-                          {tr(
-                            "بعد العكس، سجّل المبلغ الصحيح كدفعة جديدة بمرجع مختلف. الأصل يبقى في السجل.",
-                          )}
-                        </p>
-                      </div>
-                    </details>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 function Library({ data }: { data: Snapshot }) {
   const { t: tr, language: locale } = useLocale();
 
@@ -1307,19 +1084,25 @@ function Library({ data }: { data: Snapshot }) {
   const [templateSeedName, setTemplateSeedName] = useState("قالب جديد");
   const [templateRevision, setTemplateRevision] = useState(0);
   const ex = data.exercises.find((e) => e.id === exerciseId);
+  const templates = availableTemplates(
+    data.templates,
+    data.management?.template_metadata,
+  );
+  const templateState = templateLibraryState(data.templates, templates);
+  const createTemplate = () => {
+    setTemplate(null);
+    setTemplateSeed(structuredClone(blankContent));
+    setTemplateSeedName("قالب جديد");
+    setTemplateRevision((value) => value + 1);
+    setEditor(true);
+    setTab("templates");
+  };
   return (
     <>
       <Heading title={tr("مكتبة التدريب")} text="">
         <button
           className="btn"
-          onClick={() => {
-            setTemplate(null);
-            setTemplateSeed(structuredClone(blankContent));
-            setTemplateSeedName("قالب جديد");
-            setTemplateRevision((value) => value + 1);
-            setEditor(true);
-            setTab("templates");
-          }}
+          onClick={createTemplate}
         >
           <Plus size={16} />
           {tr("قالب جديد")}
@@ -1446,16 +1229,12 @@ function Library({ data }: { data: Snapshot }) {
               library={data.exercises}
             />
           </section>
-        ) : data.templates.length ? (
-          <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
-            {data.templates
-              .filter(
-                (t) =>
-                  !data.management?.template_metadata.some(
-                    (m) => m.template_id === t.id && m.archived,
-                  ),
-              )
-              .map((t) => (
+        ) : templateState.kind === "active" ? (
+          <div
+            className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3"
+            data-testid="active-template-grid"
+          >
+            {templateState.activeTemplates.map((t) => (
                 <article key={t.id} className="card p-6">
                   <span className="mb-5 flex size-12 items-center justify-center rounded-xl bg-accent/30 text-teal">
                     <ClipboardList size={23} />
@@ -1500,6 +1279,30 @@ function Library({ data }: { data: Snapshot }) {
                 </article>
               ))}
           </div>
+        ) : templateState.kind === "all-archived" ? (
+          <Empty
+            title={tr("جميع قوالبك مؤرشفة")}
+            text={tr(
+              "استعد قالبًا من إدارة القوالب أو أنشئ قالبًا جديدًا لبدء برنامج جديد.",
+            )}
+          >
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <button
+                className="btn-secondary"
+                onClick={() =>
+                  document
+                    .getElementById("template-management")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+              >
+                {tr("إدارة القوالب واستعادة قالب")}
+              </button>
+              <button className="btn" onClick={createTemplate}>
+                <Plus size={16} />
+                {tr("إنشاء قالب جديد")}
+              </button>
+            </div>
+          </Empty>
         ) : (
           <Empty
             title={tr("مكتبتك تبدأ من أول قالب")}
@@ -1597,95 +1400,17 @@ function Library({ data }: { data: Snapshot }) {
 }
 function Finance({ data }: { data: Snapshot }) {
   const { t: tr, language: locale } = useLocale();
-
-  const total = data.subscriptions.reduce((n, s) => n + Number(s.price), 0);
-  const received = data.payments.reduce((n, p) => n + Number(p.amount), 0);
-  return (
-    <>
-      <Heading
-        title={tr("الباقات والدفعات")}
-        text={tr("تاريخ الاشتراك مستقل عن الدفع. كل حركة لها أثر واضح.")}
-      >
-        <a download href="/api/export" className="btn-secondary">
-          <Download size={16} />
-          {tr("تصدير السجل")}
-        </a>
-      </Heading>
-      <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
-        {tr(
-          "هذا سجل متابعة دفعات داخلي يديره المدرب، وليس فاتورة ضريبية أو إيصالًا من بوابة دفع.",
-        )}
-      </p>
-      <div className="mb-7 grid gap-4 sm:grid-cols-3">
-        {[
-          [tr("قيمة الباقات"), total],
-          [tr("صافي الدفعات"), received],
-          [tr("المتبقي"), total - received],
-        ].map(([label, value]) => (
-          <div key={String(label)} className="card p-6">
-            <p className="text-xs text-muted">{tr(label)}</p>
-            <p className="mt-3 text-2xl font-semibold">
-              {money(value, locale)}
-            </p>
-          </div>
-        ))}
-      </div>
-      <section className="card overflow-hidden">
-        <div className="section-title px-6 pt-6">
-          <h2>{tr("الاشتراكات")}</h2>
-          <Link className="btn-soft" href="/coach/clients">
-            {tr("إضافة باقة من ملف العميل")}
-            <Plus size={14} />
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table>
-            <thead>
-              <tr>
-                <th>{tr("العميل")}</th>
-                <th>{tr("الباقة")}</th>
-                <th>{tr("البداية")}</th>
-                <th>{tr("النهاية")}</th>
-                <th>{tr("المتبقي")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.subscriptions.map((s) => (
-                <tr key={s.id}>
-                  <td>
-                    <Link
-                      className="text-teal"
-                      href={`/coach/clients/${s.client_id}`}
-                    >
-                      {data.clients.find((c) => c.id === s.client_id)?.name ??
-                        tr("عميل محذوف")}
-                    </Link>
-                  </td>
-                  <td>{s.name}</td>
-                  <td>{formatDate(s.start_date, locale)}</td>
-                  <td>{formatDate(s.end_date, locale)}</td>
-                  <td>{money(remaining(data, s), locale)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {!data.subscriptions.length ? (
-            <div className="empty">{tr("ما فيه باقات بعد.")}</div>
-          ) : null}
-        </div>
-      </section>
-      <section className="card mt-7 overflow-hidden">
-        <h2 className="p-6">{tr("سجل الدفعات والتصحيحات")}</h2>
-        {data.payments.length ? (
-          <PaymentList data={data} payments={data.payments} />
-        ) : (
-          <div className="empty">
-            {tr("أضف دفعة من ملف العميل بعد إنشاء الباقة.")}
-          </div>
-        )}
-      </section>
-    </>
-  );
+  const clients = data.clients.filter(c => !c.archived);
+  return <>
+    <Heading title={tr("الاشتراكات")} text={tr("تابع تواريخ الاشتراك وجدّد بالمدة المناسبة.")} />
+    <section className="card overflow-hidden"><div className="overflow-x-auto"><table>
+      <thead><tr><th>{tr("المتدربون")}</th><th>{tr("بداية الاشتراك")}</th><th>{tr("نهاية الاشتراك")}</th><th>{tr("الحالة")}</th><th>{tr("تجديد الاشتراك")}</th></tr></thead>
+      <tbody>{clients.map(client => {
+        const sub = currentSubscription(data, client.id);
+        return <tr key={client.id}><td><Link className="text-teal" href={`/coach/clients/${client.id}?tab=finance`}>{client.name}</Link></td><td>{sub ? formatDate(sub.start_date, locale) : "—"}</td><td>{sub ? formatDate(sub.end_date, locale) : "—"}</td><td>{sub ? subscriptionState(data, sub) : tr("بدون اشتراك")}</td><td><SubscriptionRenewal client={client} subscriptions={data.subscriptions} /></td></tr>;
+      })}</tbody>
+    </table></div>{!clients.length && <div className="empty">{tr("أضف أول متدرب لبدء المتابعة.")}</div>}</section>
+  </>;
 }
 function JoinRequests({
   data,

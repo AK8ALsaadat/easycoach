@@ -20,10 +20,18 @@ export function ExerciseVisual({
   playable?: boolean;
   portalHash?: string;
 }) {
+  return <ExerciseVisualContent key={`${exercise.id}:${portalHash ?? ""}`} exercise={exercise} className={className} playable={playable} portalHash={portalHash} />;
+}
+
+function ExerciseVisualContent({ exercise, className, playable, portalHash }: {
+  exercise: CatalogExercise; className: string; playable: boolean; portalHash?: string;
+}) {
   const { t: tr, language: locale } = useLocale();
 
   const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
   const asset = Object.hasOwn(exerciseMedia, exercise.id)
     ? exerciseMedia[exercise.id]
     : undefined;
@@ -46,7 +54,7 @@ export function ExerciseVisual({
             preload="metadata"
             poster={poster}
             src={exerciseMediaUrl(exercise.id, "video", portalHash)}
-            onError={() => setFailed(true)}
+            onError={() => { setPlaying(false); setVideoFailed(true); }}
             aria-label={tr(
               "عرض أداء {0}",
               String(exerciseName(exercise, locale)),
@@ -57,6 +65,7 @@ export function ExerciseVisual({
             {/* Authenticated private media cannot go through the public Next image optimizer. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              key={retry}
               ref={(image) => {
                 if (image?.complete && image.naturalWidth === 0)
                   setFailed(true);
@@ -67,6 +76,7 @@ export function ExerciseVisual({
                 String(exerciseName(exercise, locale)),
               )}
               loading="lazy"
+              decoding="async"
               width={960}
               height={536}
               onError={() => setFailed(true)}
@@ -75,12 +85,13 @@ export function ExerciseVisual({
               <button
                 type="button"
                 className="exercise-play"
-                onClick={() => setPlaying(true)}
+                onClick={() => { setVideoFailed(false); setPlaying(true); }}
               >
                 <Play size={18} />
-                {tr("شاهد أداء الحركة")}
+                {videoFailed ? tr("إعادة تشغيل الفيديو") : tr("شاهد أداء الحركة")}
               </button>
             )}
+            {videoFailed && <span className="exercise-media-error" role="status">{tr("تعذر تشغيل الفيديو؛ الصورة والشرح متاحان.")}</span>}
           </>
         )
       ) : (
@@ -92,6 +103,7 @@ export function ExerciseVisual({
               : tr("الصورة التوضيحية غير متاحة")}
           </span>
           <small>{tr("راجع شرح الحركة أو فيديو مدربك")}</small>
+          {failed && playable && <button type="button" className="btn-secondary" onClick={() => { setFailed(false); setRetry(retry + 1); }}>{tr("إعادة تحميل الصورة")}</button>}
         </div>
       )}
     </div>
