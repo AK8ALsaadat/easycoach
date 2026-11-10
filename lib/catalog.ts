@@ -65,7 +65,7 @@ const aliases: Record<string, string> = {
 export type CatalogExercise = (typeof data)[number];
 export const catalog = data;
 export const catalogById = new Map(data.map((e) => [e.id, e]));
-type Translation = { name: string; instructions: string[] };
+type Translation = { name: string };
 const translations: Record<string, Translation> = arabic;
 export const exerciseName = (
   e: CatalogExercise,
@@ -74,11 +74,6 @@ export const exerciseName = (
   language === "en"
     ? e.name
     : (aliases[e.name] ?? translations[e.id]?.name ?? e.name);
-export const exerciseInstructions = (
-  e: CatalogExercise,
-  language: "ar" | "en" = "ar",
-) =>
-  language === "en" ? e.instructions : (translations[e.id]?.instructions ?? []);
 export function catalogSearch(e: CatalogExercise, query: string) {
   const terms: Record<string, string> = {
     سكوات: "squat",

@@ -91,7 +91,7 @@ function ExerciseVisualContent({ exercise, className, playable, portalHash }: {
                 {videoFailed ? tr("إعادة تشغيل الفيديو") : tr("شاهد أداء الحركة")}
               </button>
             )}
-            {videoFailed && <span className="exercise-media-error" role="status">{tr("تعذر تشغيل الفيديو؛ الصورة والشرح متاحان.")}</span>}
+            {videoFailed && <span className="exercise-media-error" role="status">{tr("تعذر تشغيل الفيديو؛ يمكنك إعادة المحاولة.")}</span>}
           </>
         )
       ) : (
@@ -102,7 +102,6 @@ function ExerciseVisualContent({ exercise, className, playable, portalHash }: {
               ? tr("تعذر تحميل العرض التوضيحي")
               : tr("الصورة التوضيحية غير متاحة")}
           </span>
-          <small>{tr("راجع شرح الحركة أو فيديو مدربك")}</small>
           {failed && playable && <button type="button" className="btn-secondary" onClick={() => { setFailed(false); setRetry(retry + 1); }}>{tr("إعادة تحميل الصورة")}</button>}
         </div>
       )}

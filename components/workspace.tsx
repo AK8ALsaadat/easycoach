@@ -1192,25 +1192,14 @@ function Library({ data }: { data: Snapshot }) {
       >
         <ExerciseCatalog
           embedded
-          selectionLabel={tr("برنامج جديد")}
-          onSelect={(exercise) => {
+          onConfirm={(exercises) => {
             const seed = structuredClone(blankContent);
-            seed.days[0].exercises = [
-              {
-                name: exerciseName(exercise),
-                catalogId: exercise.id,
-                description: "",
-                video: "",
-                sets: 3,
-                reps: "10–12",
-                rest: 90,
-              },
-            ];
+            seed.days[0].exercises = exercises.map(exercise=>({name:exerciseName(exercise,locale),catalogId:exercise.id,description:"",video:"",sets:3,reps:"10–12",rest:90}));
             setTemplate(null);
             setTemplateSeed(seed);
             setTemplateRevision((value) => value + 1);
             setTemplateSeedName(
-              ("برنامج " + exerciseName(exercise)).slice(0, 140),
+              ("برنامج " + exerciseName(exercises[0],locale)).slice(0, 140),
             );
             setEditor(true);
             setTab("templates");
@@ -1339,9 +1328,6 @@ function Library({ data }: { data: Snapshot }) {
                   </span>
                   <div className="min-w-0 flex-1">
                     <h3 className="font-medium">{e.name}</h3>
-                    <p className="mt-1 text-xs leading-7 text-muted">
-                      {e.description || tr("بدون شرح إضافي")}
-                    </p>
                     {e.video ? (
                       <a
                         className="mt-2 inline-block text-xs text-teal underline"
@@ -1380,7 +1366,7 @@ function Library({ data }: { data: Snapshot }) {
             <DataForm
               key={ex?.id ?? "new"}
               command="exercise_save"
-              base={ex ? { id: ex.id } : {}}
+              base={{...(ex ? { id: ex.id } : {}),description:ex?.description??""}}
               fields={[
                 {
                   name: "name",
@@ -1394,12 +1380,6 @@ function Library({ data }: { data: Snapshot }) {
                   type: "url",
                   value: ex?.video,
                   hint: "رابط https فقط، بدون رفع ملفات",
-                },
-                {
-                  name: "description",
-                  label: "شرح الحركة",
-                  type: "textarea",
-                  value: ex?.description,
                 },
               ]}
             />

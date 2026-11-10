@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { catalog, catalogSearch, exerciseInstructions, exerciseName } from "@/lib/catalog";
+import { catalog, catalogSearch, exerciseName } from "@/lib/catalog";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
 import { ExerciseVisual } from "@/components/exercise-visual";
+import { ProgramView } from "@/components/program-view";
+import { blankContent,type Program } from "@/lib/model";
 import { exerciseImageUrl, exerciseMedia, exerciseMediaUrl } from "@/lib/exercise-media";
 import coverage from "@/docs/exercise-media-coverage.json";
 import reviewedPhotos from "@/lib/exercise-data/reviewed-photos.json";
@@ -11,17 +13,17 @@ import { readFileSync } from "node:fs";
 import sharp from "sharp";
 
 describe("Arabic exercise library", () => {
-  it("provides a local Arabic name and nonempty Arabic instructions for every exercise", () => {
+  it("never renders old movement descriptions or catalog instructions to the trainee",()=>{
+    const content=structuredClone(blankContent);content.days[0].exercises[0]={...content.days[0].exercises[0],catalogId:"Barbell_Squat",name:"Barbell Squat",description:"LEGACY_MOVEMENT_INSTRUCTION_DO_NOT_RENDER"};
+    const program={id:"test",name:"برنامج",content,published_at:"2026-11-10T12:00:00Z",version:1} as Program;
+    const html=renderToStaticMarkup(createElement(ProgramView,{program}));expect(html).not.toContain("LEGACY_MOVEMENT_INSTRUCTION_DO_NOT_RENDER");expect(html).not.toContain("program-instructions");expect(html).not.toContain("طريقة أداء التمرين");
+  });
+  it("provides Arabic names without shipping movement instructions", () => {
     expect(catalog.length).toBe(876);
     for (const exercise of catalog) {
       expect(exerciseName(exercise), exercise.id).toMatch(/[\u0600-\u06ff]/);
       expect(exerciseName(exercise), exercise.id).not.toMatch(/\?{2}/);
-      const steps = exerciseInstructions(exercise);
-      expect(steps.length, exercise.id).toBeGreaterThan(0);
-      for (const step of steps) {
-        expect(step, exercise.id).toMatch(/[\u0600-\u06ff]/);
-        expect(step, exercise.id).not.toMatch(/\|\|\||\?{2}/);
-      }
+      expect(exercise, exercise.id).not.toHaveProperty("instructions");
     }
   });
 

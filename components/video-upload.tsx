@@ -177,7 +177,7 @@ export function VideoUpload({
         </div>
       ) : null}
       <p className="mt-2 text-xs text-muted">
-        {tr("MP4 / MOV / WebM · حتى 50 MB · فيديو شرح الحركة")}
+        {tr("MP4 / MOV / WebM · حتى 50 MB · فيديو التمرين")}
       </p>
       {error ? (
         <p role="alert" className="mt-2 text-sm text-red-700">

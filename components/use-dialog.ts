@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 export function useDialog<T extends HTMLElement = HTMLDivElement>(
   open: boolean,
   onClose: () => void,
+  initialFocus?:string,
 ) {
   const ref = useRef<T>(null);
   const close = useRef(onClose);
@@ -15,7 +16,8 @@ export function useDialog<T extends HTMLElement = HTMLDivElement>(
     const previous = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    ref.current?.focus();
+    const target=initialFocus?ref.current?.querySelector<HTMLElement>(initialFocus):null;
+    (target??ref.current)?.focus();
     function keydown(event: KeyboardEvent) {
       const dialogs = document.querySelectorAll('[aria-modal="true"]');
       if (dialogs.length && dialogs[dialogs.length - 1] !== ref.current) return;
@@ -55,6 +57,6 @@ export function useDialog<T extends HTMLElement = HTMLDivElement>(
       document.removeEventListener("keydown", keydown);
       previous?.focus();
     };
-  }, [open]);
+  }, [open,initialFocus]);
   return ref;
 }

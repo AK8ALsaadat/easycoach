@@ -1,7 +1,7 @@
 "use client";
 import { useLocale } from "./locale-provider";
 import { ExerciseVisual } from "./exercise-visual";
-import { catalogById, exerciseName, exerciseInstructions } from "@/lib/catalog";
+import { catalogById, exerciseName } from "@/lib/catalog";
 import type { Program, Content } from "@/lib/model";
 import { formatDate } from "@/lib/dates";
 import { Play, Timer, Utensils } from "lucide-react";
@@ -73,11 +73,6 @@ export function ProgramView({
                         ? exerciseName(catalogById.get(e.catalogId)!, locale)
                         : e.name}
                     </h3>
-                    {e.description ? (
-                      <p className="mt-2 max-w-2xl text-sm leading-8 text-muted">
-                        {e.description}
-                      </p>
-                    ) : null}
                   </div>
                   {e.video ? (
                     <a
@@ -87,26 +82,10 @@ export function ProgramView({
                       className="btn-secondary"
                     >
                       <Play size={14} />
-                      {tr("شرح الفيديو")}
+                      {tr("فيديو التمرين")}
                     </a>
                   ) : null}
                 </div>
-                {e.catalogId && catalogById.has(e.catalogId) ? (
-                  <details className="program-instructions">
-                    <summary>{tr("طريقة أداء التمرين")}</summary>
-                    <ol
-                      dir={locale === "ar" ? "rtl" : "ltr"}
-                      className="exercise-instructions list-inside list-decimal space-y-2 mt-3 text-sm leading-8 text-muted"
-                    >
-                      {exerciseInstructions(
-                        catalogById.get(e.catalogId)!,
-                        locale,
-                      ).map((line, step) => (
-                        <li key={step}>{line}</li>
-                      ))}
-                    </ol>
-                  </details>
-                ) : null}
                 {e.mediaId ? (
                   <video
                     controls

@@ -1,9 +1,22 @@
 import {describe,expect,it} from "vitest";
-import {appendExercise,customExercise,isStarterExercise,transferExercise,repeatProgramDay} from "@/lib/program-builder";
+import {appendExercise,appendExercises,customExercise,isStarterExercise,transferExercise,repeatProgramDay} from "@/lib/program-builder";
 import {blankContent,content,type Content} from "@/lib/model";
 
 const plan=():Content=>({...structuredClone(blankContent),days:[{name:"A",exercises:[customExercise("تمرين خاص")]},{name:"B",exercises:[]}]});
 describe("program builder",()=>{
+  it("adds a selection atomically in its chosen order with independent row IDs",()=>{
+    const initial=plan();const selected=[customExercise("أول اختيار"),customExercise("ثاني اختيار")];
+    const next=appendExercises(initial,1,selected);expect(next.days[1].exercises.map(e=>e.name)).toEqual(["أول اختيار","ثاني اختيار"]);
+    expect(next.days[0]).toBe(initial.days[0]);expect(initial.days[1].exercises).toHaveLength(0);
+    expect(next.days[1].exercises[0].rowId).not.toBe(selected[0].rowId);
+    next.days[1].exercises[0].sets=7;expect(selected[0].sets).toBe(3);
+  });
+  it("rejects the whole selection at capacity without partially changing the plan",()=>{
+    const initial=plan();initial.days[0].exercises=Array.from({length:39},()=>customExercise("تمرين"));
+    expect(appendExercises(initial,0,[customExercise("أ"),customExercise("ب")])).toBe(initial);
+    expect(appendExercises(initial,8,[customExercise("أ")])).toBe(initial);
+    expect(appendExercises(initial,0,[])).toBe(initial);expect(initial.days[0].exercises).toHaveLength(39);
+  });
   it("repeats a complete session with independent rows, exact loading and a chosen weekday",()=>{
     const initial=plan();initial.days[0].weekday=2;initial.days[0].exercises[0]={...initial.days[0].exercises[0],sets:4,reps:"8–10",rest:120,weight:55,rpe:8,tempo:"3-1-1"};
     const next=repeatProgramDay(initial,0,"حصة ثانية",2);
