@@ -1,6 +1,12 @@
 import type { Content } from "./model";
 export type ProgramExercise = Content["days"][number]["exercises"][number];
 
+export function repeatProgramDay(plan: Content, source: number, name: string, weekday?: number): Content {
+  if (!plan.days[source] || plan.days.length >= 14 || !name.trim() || name.trim().length > 100 || plan.days.some(day=>day.name===name.trim()) || (weekday!==undefined&&(!Number.isInteger(weekday)||weekday<0||weekday>6))) return plan;
+  const copy={...structuredClone(plan.days[source]),name:name.trim(),weekday,exercises:plan.days[source].exercises.map(exercise=>({...structuredClone(exercise),rowId:crypto.randomUUID()}))};
+  return {...plan,days:[...plan.days.slice(0,source+1),copy,...plan.days.slice(source+1)]};
+}
+
 export function customExercise(name: string): ProgramExercise {
   return { name: name.trim(), description: "", video: "", sets: 3, reps: "10–12", rest: 90, rowId: crypto.randomUUID() };
 }

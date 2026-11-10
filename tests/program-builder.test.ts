@@ -1,9 +1,23 @@
 import {describe,expect,it} from "vitest";
-import {appendExercise,customExercise,isStarterExercise,transferExercise} from "@/lib/program-builder";
+import {appendExercise,customExercise,isStarterExercise,transferExercise,repeatProgramDay} from "@/lib/program-builder";
 import {blankContent,content,type Content} from "@/lib/model";
 
 const plan=():Content=>({...structuredClone(blankContent),days:[{name:"A",exercises:[customExercise("تمرين خاص")]},{name:"B",exercises:[]}]});
 describe("program builder",()=>{
+  it("repeats a complete session with independent rows, exact loading and a chosen weekday",()=>{
+    const initial=plan();initial.days[0].weekday=2;initial.days[0].exercises[0]={...initial.days[0].exercises[0],sets:4,reps:"8–10",rest:120,weight:55,rpe:8,tempo:"3-1-1"};
+    const next=repeatProgramDay(initial,0,"حصة ثانية",2);
+    expect(next.days.map(day=>day.name)).toEqual(["A","حصة ثانية","B"]);expect(next.days[1].weekday).toBe(2);
+    expect(next.days[1].exercises[0]).toMatchObject({sets:4,reps:"8–10",rest:120,weight:55,rpe:8,tempo:"3-1-1"});
+    expect(next.days[1].exercises[0].rowId).not.toBe(initial.days[0].exercises[0].rowId);
+    next.days[1].exercises[0].sets=5;expect(initial.days[0].exercises[0].sets).toBe(4);expect(next.days[0].exercises[0].sets).toBe(4);
+  });
+  it("can leave the repeated session unscheduled and rejects duplicate names or excess days",()=>{
+    const initial=plan();initial.days[0].weekday=3;
+    expect(repeatProgramDay(initial,0,"نسخة").days[1].weekday).toBeUndefined();
+    expect(repeatProgramDay(initial,0,"A")).toBe(initial);expect(repeatProgramDay(initial,0," ")).toBe(initial);expect(repeatProgramDay(initial,0,"نسخة",7)).toBe(initial);
+    const full={...initial,days:Array.from({length:14},(_,i)=>({name:String(i),exercises:[customExercise("تمرين")]}))};expect(repeatProgramDay(full,0,"زائد")).toBe(full);
+  });
   it("creates a custom exercise without any catalog or media requirement",()=>{
     const exercise=customExercise("  تمريني الخاص  ");
     expect(exercise.name).toBe("تمريني الخاص");expect(exercise.catalogId).toBeUndefined();

@@ -3,6 +3,7 @@ import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { cookies } from "next/headers";
 import { LocaleProvider } from "@/components/locale-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 const font = IBM_Plex_Sans_Arabic({
   subsets: ["arabic", "latin"],
   weight: ["400", "500", "600", "700"],
@@ -19,12 +20,13 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const language =
-    (await cookies()).get("ec_language")?.value === "en" ? "en" : "ar";
+  const preferences=await cookies();
+  const language = preferences.get("ec_language")?.value === "en" ? "en" : "ar";
+  const theme=preferences.get("ec_theme")?.value === "dark" ? "dark" : "light";
   return (
-    <html lang={language} dir={language === "en" ? "ltr" : "rtl"}>
+    <html lang={language} dir={language === "en" ? "ltr" : "rtl"} data-theme={theme}>
       <body className={font.className}>
-        <LocaleProvider language={language}>{children}</LocaleProvider>
+        <LocaleProvider language={language}><ThemeProvider initialTheme={theme}>{children}</ThemeProvider></LocaleProvider>
       </body>
     </html>
   );

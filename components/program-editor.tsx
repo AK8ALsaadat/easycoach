@@ -29,7 +29,7 @@ import { useUnsavedChanges } from "./use-unsaved-changes";
 import { VideoUpload } from "./video-upload";
 import { MealEditor } from "./meal-editor";
 import { ProgramDayNav } from "./program-day-nav";
-import { appendExercise, customExercise, isStarterExercise, transferExercise } from "@/lib/program-builder";
+import { appendExercise, customExercise, isStarterExercise, transferExercise, repeatProgramDay } from "@/lib/program-builder";
 function withRowIds(value: Content): Content {
   return {
     ...value,
@@ -78,6 +78,11 @@ export function ProgramEditor({
   const [tab, setTab] = useState<"training" | "nutrition">("training");
   const [hasSaved, setHasSaved] = useState(Boolean(id));
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const [repeatSource,setRepeatSource]=useState<number|null>(null);
+  const [repeatName,setRepeatName]=useState("");
+  const [repeatWeekday,setRepeatWeekday]=useState("");
+  const [repeatError,setRepeatError]=useState("");
+  const repeatRef=useDialog(repeatSource!==null,()=>setRepeatSource(null));
   const [customName, setCustomName] = useState("");
   const [feedback, setFeedback] = useState("");
   const [undo, setUndo] = useState<{plan:Content;day:number}|null>(null);
@@ -173,6 +178,13 @@ export function ProgramEditor({
     const next=plan.days.length;
     edit(current=>({...current,days:[...current.days,{name:tr("اليوم {0}",String(next+1)),exercises:[]}]}));
     setDay(next); setCustomName(""); setFeedback("");
+  }
+  function openRepeat(index:number){
+    if(plan.days.length>=14)return;
+    const source=plan.days[index];if(!source)return;
+    let count=2,name="";
+    do {const suffix=` · ${tr("نسخة {0}",String(count++))}`;name=source.name.slice(0,100-suffix.length)+suffix;}while(plan.days.some(day=>day.name===name));
+    setRepeatName(name);setRepeatWeekday("");setRepeatError("");setRepeatSource(index);
   }
   function addCustom() {
     const title=customName.trim();
@@ -307,7 +319,7 @@ export function ProgramEditor({
         </div>
       ) : (
         <div className="program-builder-grid">
-          <ProgramDayNav days={plan.days} selected={day} onSelect={index=>{setDay(index);setFeedback("");}} onAdd={addDay}/>
+          <ProgramDayNav days={plan.days} selected={day} onSelect={index=>{setDay(index);setFeedback("");}} onAdd={addDay} onRepeat={openRepeat}/>
           <section className="program-session" aria-label={tr("إعداد الحصة التدريبية")}>
           <div className="session-toolbar">
             <div>
@@ -318,14 +330,14 @@ export function ProgramEditor({
                 {active.exercises.reduce((n, e) => n + e.sets, 0)} {tr("جولة")}
               </h2>
             </div>
-            <button
+            <div className="program-session-actions"><button type="button" className="btn-secondary" disabled={plan.days.length>=14} onClick={()=>openRepeat(day)}><Copy size={16}/>{tr("تكرار اليوم")}</button><button
               type="button"
               className="btn"
               onClick={() => setCatalogOpen(true)}
             >
               <Search size={16} />
               {tr("إضافة من مكتبة التمارين")}
-            </button>
+            </button></div>
           </div>
           <div className="program-quick-add">
             <label htmlFor="custom-exercise-name">{tr("أضف تمرينك الخاص")}</label>
@@ -334,7 +346,7 @@ export function ProgramEditor({
             <button type="button" className="btn" disabled={customName.trim().length<2 || active.exercises.length>=40} onClick={addCustom}><Plus size={16}/>{tr("إضافة التمرين")}</button></div>
             <p role="status">{feedback || tr("الافتراضي: 3 مجموعات · 10–12 عدة · 90 ثانية راحة. عدّلها بعد الإضافة.")}</p>
           </div>
-          {undo && <div className="program-undo" role="status"><span>{tr("تم الحذف أو النقل.")}</span><button type="button" className="btn-soft" onClick={()=>{edit(()=>undo.plan);setDay(undo.day);}}>{tr("تراجع")}</button></div>}
+          {undo && <div className="program-undo" role="status"><span>{tr("تم تعديل الجدول. يمكنك التراجع.")}</span><button type="button" className="btn-soft" onClick={()=>{edit(()=>undo.plan);setDay(undo.day);}}>{tr("تراجع")}</button></div>}
           <details className="program-day-settings"><summary>{tr("اسم اليوم، موعده والتقسيمة الأسبوعية")}</summary>
           <div className="grid gap-3 sm:grid-cols-2">
             <label>
@@ -452,30 +464,7 @@ export function ProgramEditor({
                 }))
               }
             />
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => {
-                if (plan.days.length >= 14) return;
-                edit((c) => ({
-                  ...c,
-                  days: [
-                    ...c.days,
-                    {
-                      ...structuredClone(active),
-                      exercises: active.exercises.map((e) => ({
-                        ...e,
-                        rowId: crypto.randomUUID(),
-                      })),
-                    },
-                  ],
-                }));
-                setDay(plan.days.length);
-              }}
-            >
-              <Copy size={16} />
-              {tr("نسخ اليوم")}
-            </button>
+
             <button
               type="button"
               className="btn-secondary text-red-700"
@@ -838,6 +827,20 @@ export function ProgramEditor({
       </div>
       {plan.days.some(d=>!d.exercises.length) && <p className="text-sm text-amber-800" role="status">{tr("أضف تمرينًا واحدًا على الأقل لكل يوم حتى تُحفظ المسودة وتصبح جاهزة للنشر.")}</p>}
       <Notice result={result} />
+      {repeatSource!==null && <div className="modal-backdrop" onClick={()=>setRepeatSource(null)}><div className="modal-sheet max-w-lg" ref={repeatRef} role="dialog" aria-modal="true" aria-labelledby="repeat-day-title" tabIndex={-1} onClick={event=>event.stopPropagation()}>
+        <div className="flex items-center justify-between gap-3 mb-4"><h2 id="repeat-day-title">{tr("تكرار اليوم")}</h2><button type="button" className="icon-button" aria-label={tr("إغلاق")} onClick={()=>setRepeatSource(null)}><X size={20}/></button></div>
+        <p className="mb-5 text-sm text-muted">{tr("تُنسخ التمارين وإعداداتها إلى حصة مستقلة. تعديل النسخة لا يغيّر الأصل.")}</p>
+        <form className="space-y-4" onSubmit={event=>{
+          event.preventDefault();const next=repeatProgramDay(plan,repeatSource,repeatName,repeatWeekday===""?undefined:Number(repeatWeekday));
+          if(next===plan){setRepeatError(tr("اختر اسمًا مختلفًا للنسخة وتأكد من أن عدد الأيام أقل من 14."));return;}
+          const previous={plan:structuredClone(plan),day};edit(()=>next);setDay(repeatSource+1);setRepeatSource(null);setUndo(previous);setFeedback("");
+        }}>
+          <label>{tr("اسم اليوم الجديد")}<input className="field mt-2" value={repeatName} maxLength={100} required onChange={event=>{setRepeatName(event.target.value);setRepeatError("");}}/></label>
+          <label>{tr("موعد الحصة الجديدة")}<select className="field mt-2" aria-label={tr("موعد الحصة الجديدة")} value={repeatWeekday} onChange={event=>setRepeatWeekday(event.target.value)}><option value="">{tr("بدون يوم محدد")}</option>{["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"].map((name,index)=><option key={index} value={index}>{tr(name)}</option>)}</select></label>
+          {repeatError && <p role="alert" className="text-sm text-red-700">{repeatError}</p>}
+          <div className="flex gap-2"><button type="submit" className="btn">{tr("إضافة النسخة للجدول")}</button><button type="button" className="btn-secondary" onClick={()=>setRepeatSource(null)}>{tr("إلغاء")}</button></div>
+        </form>
+      </div></div>}
       {catalogOpen ? (
         <div className="modal-backdrop">
           <div

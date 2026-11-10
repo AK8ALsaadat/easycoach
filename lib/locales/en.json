@@ -1243,5 +1243,16 @@
   "ملاحظات التغذية": "Nutrition notes",
   "حفظ السعرات للمتدرب": "Save trainee calorie target",
   "العودة لملخص المتدرب": "Back to trainee overview",
-  "لديك تعديلات لم تُحفظ بعد. هل تريد المغادرة دون حفظها؟": "You have unsaved changes. Leave without saving them?"
+  "لديك تعديلات لم تُحفظ بعد. هل تريد المغادرة دون حفظها؟": "You have unsaved changes. Leave without saving them?",
+  "تفعيل الوضع الفاتح": "Switch to light mode",
+  "تفعيل الوضع الداكن": "Switch to dark mode",
+  "تكرار اليوم": "Repeat day",
+  "تكرار {0}": "Repeat {0}",
+  "نسخة {0}": "Copy {0}",
+  "تم تعديل الجدول. يمكنك التراجع.": "Schedule updated. You can undo this change.",
+  "تُنسخ التمارين وإعداداتها إلى حصة مستقلة. تعديل النسخة لا يغيّر الأصل.": "Copy the exercises and their settings into an independent session. Editing the copy keeps the original intact.",
+  "اختر اسمًا مختلفًا للنسخة وتأكد من أن عدد الأيام أقل من 14.": "Choose a different name and keep the schedule below 14 days.",
+  "اسم اليوم الجديد": "New day name",
+  "موعد الحصة الجديدة": "New session weekday",
+  "إضافة النسخة للجدول": "Add copy to schedule"
 }

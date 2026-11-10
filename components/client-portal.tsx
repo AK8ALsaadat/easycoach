@@ -104,6 +104,7 @@ export function ClientPortal({ token }: { token: string }) {
     <div className="client-portal">
       <header className="portal-topbar">
         <Brand />
+        <LanguageSwitch />
         <span className="text-xs text-white/60">
           {tr("مع المدرب")} {data.coach}
         </span>

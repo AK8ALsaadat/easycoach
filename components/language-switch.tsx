@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { Languages } from "lucide-react";
 import { useLocale } from "./locale-provider";
 import { changeLanguage } from "@/app/language-actions";
+import { ThemeToggle } from "./theme-toggle";
 export function LanguageSwitch() {
   const { language } = useLocale(),
     router = useRouter();
   const [busy, setBusy] = useState(false);
   return (
+    <div className="appearance-controls"><ThemeToggle/>
     <button
       type="button"
       className="btn-secondary language-switch"
@@ -29,5 +31,6 @@ export function LanguageSwitch() {
       <Languages size={17} />
       <span>{language === "ar" ? "EN" : "العربية"}</span>
     </button>
+    </div>
   );
 }
