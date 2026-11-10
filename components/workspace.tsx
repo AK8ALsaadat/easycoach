@@ -44,6 +44,10 @@ import { ExerciseCatalog } from "./exercise-catalog";
 import { TemplateTools } from "./template-tools";
 import { ClientHub } from "./client-hub";
 import { ClientBoard } from "./client-board";
+import { ClientOverview } from "./client-overview";
+import { NutritionTargetEditor } from "./nutrition-target-editor";
+import { PhoneLink } from "./phone-link";
+import { clientInsights } from "@/lib/client-insights";
 import { SubscriptionRenewal } from "./subscription-renewal";
 import { clientMatchesQuery, renewalDue } from "@/lib/client-workflow";
 import { coachingAlerts } from "@/lib/coaching-alerts";
@@ -205,7 +209,7 @@ export function Workspace({
   clientId,
   initialFilter = "",
   initialQuery = "",
-  initialTab = "program",
+  initialTab = "overview",
   appUrl,
   local,
 }: {
@@ -497,6 +501,7 @@ function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
                       </p>
                     </div>
                   </Link>
+                  <PhoneLink phone={c.phone}/>
                 </td>
                 <td>
                   <span
@@ -752,12 +757,12 @@ function ClientDetail({
 }) {
   const { t: tr, language: locale } = useLocale();
 
-  const [tab, setTab] = useState(
-    ["program", "finance", "profile", "progress", "tracking"].includes(
+  const [tab] = useState(
+    ["overview", "program", "nutrition", "finance", "profile", "progress", "tracking"].includes(
       initialTab,
     )
       ? initialTab
-      : "program",
+      : "overview",
   );
   const [templateId, setTemplateId] = useState("");
   const [loaded, setLoaded] = useState<Template | null>(null);
@@ -773,6 +778,7 @@ function ClientDetail({
   );
   const selectedTemplate = templates.find((t) => t.id === templateId);
   const selected = loaded ?? draft ?? published;
+  const insight = clientInsights(data, client.id);
   const subs = data.subscriptions.filter((s) => s.client_id === client.id);
   const whatsapp = client.phone.replace(/^0/, "966").replace(/\D/g, "");
   const programUrl = `${appUrl}/me?client=${client.id}`;
@@ -788,9 +794,10 @@ function ClientDetail({
       </Link>
       <Heading
         title={client.name}
-        text={`${client.email}${client.phone ? " · " + client.phone : ""}`}
+        text={client.email}
       >
         <div className="flex flex-wrap gap-2">
+          <PhoneLink phone={client.phone}/>
           <span
             className={`badge ${client.trainee_user_id ? "bg-accent/40 text-teal" : ""}`}
           >
@@ -822,30 +829,33 @@ function ClientDetail({
           ) : null}
         </div>
       </Heading>
-      <PortalControl
+      {tab === "profile" && <PortalControl
         clientId={client.id}
         link={data.portal_links?.find(
           (l) => l.client_id === client.id && !l.revoked_at,
         )}
-      />
+      />}
       <div className="mb-6 flex flex-wrap gap-2">
         {[
-          ["program", tr("البرنامج والتغذية")],
+          ["overview", tr("ملخص المتدرب")],
+          ["program", tr("تعديل الجدول")],
+          ["nutrition", tr("تعديل السعرات")],
           ["finance", tr("الاشتراك والتجديد")],
           ["profile", tr("البيانات والدعوة")],
           ["progress", tr("الهدف والوزن")],
           ["tracking", tr("السجلات والمراجعات")],
         ].map(([key, label]) => (
-          <button
+          <Link
             key={key}
-            onClick={() => setTab(key)}
+            href={key === "overview" ? `/coach/clients/${client.id}` : key === "program" ? `/coach/clients/${client.id}/edit` : key === "nutrition" ? `/coach/clients/${client.id}/edit?tab=nutrition` : `/coach/clients/${client.id}?tab=${key}`}
             className={tab === key ? "btn" : "btn-secondary"}
+            aria-current={tab === key ? "page" : undefined}
           >
             {tr(label)}
-          </button>
+          </Link>
         ))}
       </div>
-      {tab === "tracking" ? (
+      {tab === "overview" ? <ClientOverview data={data} client={client}/> : tab === "nutrition" ? <NutritionTargetEditor data={data} client={client}/> : tab === "tracking" ? (
         <ClientHub
           clientId={client.id}
           management={data.management}
@@ -914,7 +924,8 @@ function ClientDetail({
                 ? `template-${loaded.id}`
                 : (draft?.id ?? published?.id ?? client.id)
             }
-            initial={selected?.content ?? blankContent}
+            initial={{...(selected?.content ?? blankContent),nutrition:{...(selected?.content.nutrition ?? blankContent.nutrition),...insight.nutrition}}}
+            separateNutrition
             name={selected?.name ?? "برنامج جديد"}
             id={draft?.id}
             clientId={client.id}

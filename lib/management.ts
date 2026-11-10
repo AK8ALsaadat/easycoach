@@ -225,13 +225,14 @@ export function effectiveNutrition(
   records: CoachingRecord[],
   clientId: string,
   publishedAt?: string | null,
+  today = riyadhToday(),
 ) {
   const latest = records
     .filter(
       (r) =>
         r.client_id === clientId &&
         r.kind === "nutrition_target" &&
-        r.entry_date <= riyadhToday(),
+        r.entry_date <= today,
     )
     .sort(
       (a, b) =>

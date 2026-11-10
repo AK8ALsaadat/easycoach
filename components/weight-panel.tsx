@@ -169,6 +169,7 @@ export function WeightPanel({
             {tr("اليوم")}
             <input
               aria-label={tr("تاريخ الوزن")}
+              disabled={busy}
               className="field mt-1"
               type="date"
               max={riyadhToday()}
@@ -181,6 +182,7 @@ export function WeightPanel({
             {tr("الوزن (كجم)")}
             <input
               aria-label={tr("الوزن بالكيلوجرام")}
+              disabled={busy}
               className="field mt-1"
               type="number"
               min={20}

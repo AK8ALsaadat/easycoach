@@ -8,26 +8,29 @@ export function ProgressChart({
   target,
   unit = "كجم",
   title,
+  defaultRange = "30",
 }: {
   points: { date: string; value: number }[];
   target?: number | null;
   unit?: string;
   title: string;
+  defaultRange?: "7" | "30" | "90" | "all";
 }) {
   const { t: tr } = useLocale();
 
-  const [range, setRange] = useState("30"),
+  const [range, setRange] = useState(defaultRange),
     [from, setFrom] = useState(""),
     [to, setTo] = useState(riyadhToday());
+  const earliest = points.filter(point=>point.date<=to && Number.isFinite(point.value)).map(point=>point.date).sort()[0] ?? to;
   const lower =
     from ||
-    (range === "all" ? "1900-01-01" : addDays(riyadhToday(), -Number(range)));
+    (range === "all" ? earliest : addDays(riyadhToday(), -Number(range)));
   const selected = points
-    .filter((point) => point.date >= lower && point.date <= to)
+    .filter((point) => point.date >= lower && point.date <= to && Number.isFinite(point.value))
     .sort((a, b) => a.date.localeCompare(b.date));
   const values = selected.map((point) => point.value),
-    min = Math.min(...values, ...(target ? [target] : [])),
-    max = Math.max(...values, ...(target ? [target] : [])),
+    min = Math.min(...values, ...(target != null ? [target] : [])),
+    max = Math.max(...values, ...(target != null ? [target] : [])),
     spread = Math.max(1, max - min),
     y = (value: number) => 150 - ((value - min) / spread) * 115;
   const first = selected[0],
@@ -37,7 +40,7 @@ export function ProgressChart({
   const x = (day: string) =>
     30 + ((Date.parse(day) - start) / Math.max(86400000, end - start)) * 540;
   return (
-    <section className="card p-5">
+    <section className="card p-5" role="region" aria-label={title}>
       <div className="section-title">
         <h2>{title}</h2>
         <select
@@ -45,7 +48,7 @@ export function ProgressChart({
           className="field max-w-48"
           value={range}
           onChange={(event) => {
-            setRange(event.target.value);
+            setRange(event.target.value as typeof range);
             setFrom("");
           }}
         >

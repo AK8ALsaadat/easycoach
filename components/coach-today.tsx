@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { Snapshot, Client } from "@/lib/model";
 import { SubscriptionRenewal } from "./subscription-renewal";
+import { PhoneLink } from "./phone-link";
 import { latestSubscription } from "@/lib/subscription-period";
 import { coachingAlerts } from "@/lib/coaching-alerts";
 import {
@@ -408,6 +409,7 @@ export function CoachToday({ data }: { data: Snapshot }) {
                           </p>
                         </div>
                       </Link>
+                      <PhoneLink phone={c.phone}/>
                     </td>
                     <td>
                       {p ? (

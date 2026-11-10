@@ -8,8 +8,11 @@ export function normalizeClientSearch(value: string) {
 }
 
 export function clientMatchesQuery(client: Pick<Client, "name" | "email" | "phone">, query: string) {
-  const text = normalizeClientSearch(`${client.name} ${client.email} ${client.phone}`);
-  return normalizeClientSearch(query).split(/\s+/).every(term => text.includes(term));
+  const text = normalizeClientSearch(`${client.name} ${client.email}`);
+  const phone = normalizeClientSearch(client.phone);
+  const terms = normalizeClientSearch(query).split(/\s+/);
+  const numericOnly = terms.every(term => /^\d+$/.test(term));
+  return terms.every(term => text.includes(term) || ((numericOnly || term.length >= 3) && phone.includes(term)));
 }
 
 export function renewalDue(subscriptions: Subscription[], clientId: string, today: string) {

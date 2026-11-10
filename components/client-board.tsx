@@ -6,6 +6,7 @@ import { coachingAlerts } from "@/lib/coaching-alerts";
 import { useLocale } from "./locale-provider";
 import { ManagementButton } from "./management-button";
 import { SubscriptionRenewal } from "./subscription-renewal";
+import { PhoneLink } from "./phone-link";
 
 export function ClientBoard({ data, clients }: { data: Snapshot; clients: Client[] }) {
   const { t: tr } = useLocale();
@@ -33,6 +34,7 @@ export function ClientBoard({ data, clients }: { data: Snapshot; clients: Client
         <div className="client-board-cards">{members.map(client => <article className="client-board-card" key={client.id}>
           {client.archived ? <p className="client-board-name">{client.name}</p> : <Link className="client-board-name" href={`/coach/clients/${client.id}`}><span className="client-board-avatar" aria-hidden="true">{client.name.trim().slice(0, 1)}</span><span>{client.name}</span></Link>}
           <p className="client-board-email" dir="auto">{client.email}</p>
+          <PhoneLink phone={client.phone}/>
           {column.id !== "inactive" && attention.get(client.id)?.slice(0, 2).map(label => <p className="client-board-alert" key={label}>{tr(label)}</p>)}
           {client.archived ? <ManagementButton command="client_archive" payload={{ client_id: client.id, archived: false }}>{tr("إعادة التفعيل")}</ManagementButton> : <Link className="btn-soft" href={`/coach/clients/${client.id}?tab=${column.tab}`}>{tr(column.action)}<ArrowUpLeft size={14} aria-hidden="true" /></Link>}
           {!client.archived && <SubscriptionRenewal client={client} subscriptions={data.subscriptions} />}

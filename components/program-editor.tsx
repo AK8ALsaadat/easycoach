@@ -3,6 +3,7 @@ import { useLocale } from "./locale-provider";
 import { ExerciseVisual } from "./exercise-visual";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Check,
   Copy,
@@ -24,6 +25,7 @@ import { mutate, type Result } from "@/app/actions";
 import { Notice } from "./forms";
 import { ExerciseCatalog } from "./exercise-catalog";
 import { useDialog } from "./use-dialog";
+import { useUnsavedChanges } from "./use-unsaved-changes";
 import { VideoUpload } from "./video-upload";
 import { MealEditor } from "./meal-editor";
 import { ProgramDayNav } from "./program-day-nav";
@@ -53,12 +55,14 @@ export function ProgramEditor({
   id,
   clientId,
   library = [],
+  separateNutrition = false,
 }: {
   initial: Content;
   name: string;
   id?: string;
   clientId?: string;
   library?: Exercise[];
+  separateNutrition?: boolean;
 }) {
   const { t: tr, language: locale } = useLocale();
 
@@ -138,14 +142,7 @@ export function ProgramEditor({
     }, 1200);
     return () => clearTimeout(timer);
   }, [dirty, busy, save, result, plan, name]);
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  useUnsavedChanges(dirty);
   const active = plan.days[day] ?? plan.days[0];
   function updateExercise(
     index: number,
@@ -234,13 +231,13 @@ export function ProgramEditor({
         >
           {tr("البرنامج التدريبي")}
         </button>
-        <button
+        {separateNutrition && clientId ? <Link className="btn-secondary" href={`/coach/clients/${clientId}/edit?tab=nutrition`}>{tr("تعديل السعرات")}</Link> : <button
           type="button"
           className={tab === "nutrition" ? "btn" : "btn-secondary"}
           onClick={() => setTab("nutrition")}
         >
           {tr("التغذية والأهداف")}
-        </button>
+        </button>}
       </div>
       {tab === "nutrition" ? (
         <div className="space-y-5">

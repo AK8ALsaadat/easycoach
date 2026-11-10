@@ -1069,6 +1069,7 @@ function RecordForm({
         }
       }}
     >
+      <fieldset disabled={busy} className="min-w-0">
       <h2>
         {kind === "measurement"
           ? tr("إضافة قياس مؤرخ")
@@ -1254,6 +1255,7 @@ function RecordForm({
           {localError}
         </p>
       )}
+      </fieldset>
     </form>
   );
 }
