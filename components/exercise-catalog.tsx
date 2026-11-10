@@ -9,10 +9,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
+  GripVertical,
 } from "lucide-react";
 import { ExerciseVisual } from "./exercise-visual";
 import { useDialog } from "./use-dialog";
-import { exerciseMedia } from "@/lib/exercise-media";
 import {
   catalog,
   catalogSearch,
@@ -29,19 +29,28 @@ export function ExerciseCatalog({
   onClose,
   embedded = false,
   selectionLabel = "للجدول",
+  onDropToDay,
+  dropDays = [],
+  initialDropDay = 0,
 }: {
   onSelect?: (e: CatalogExercise) => void;
   onClose?: () => void;
   embedded?: boolean;
   selectionLabel?: string;
+  onDropToDay?: (e: CatalogExercise, dayIndex: number) => boolean | void;
+  dropDays?: { name: string; count: number; exercises?: { rowId?: string; name: string; sets: number; reps: string }[] }[];
+  initialDropDay?: number;
 }) {
   const { t: tr, language: locale } = useLocale();
 
   const [query, setQuery] = useState("");
   const [muscle, setMuscle] = useState("");
   const [tool, setTool] = useState("");
-  const [level, setLevel] = useState("");
-  const [visualsOnly, setVisualsOnly] = useState(false);
+  const [showVisuals, setShowVisuals] = useState(true);
+  const [dragged, setDragged] = useState<CatalogExercise | null>(null);
+  const [targetDay, setTargetDay] = useState(initialDropDay);
+  const [hoverDay, setHoverDay] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState("");
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<CatalogExercise | null>(null);
   const dialogRef = useDialog(Boolean(selected), () => setSelected(null));
@@ -52,16 +61,9 @@ export function ExerciseCatalog({
           (e) =>
             (!muscle || e.primaryMuscles.includes(muscle)) &&
             (!tool || e.equipment === tool) &&
-            (!level || e.level === level) &&
-            (!visualsOnly || Object.hasOwn(exerciseMedia, e.id)) &&
             catalogSearch(e, query),
-        )
-        .sort(
-          (a, b) =>
-            Number(Object.hasOwn(exerciseMedia, b.id)) -
-            Number(Object.hasOwn(exerciseMedia, a.id)),
         ),
-    [query, muscle, tool, level, visualsOnly],
+    [query, muscle, tool],
   );
   const pageCount = Math.max(1, Math.ceil(found.length / pageSize));
   const currentPage = Math.min(page, pageCount - 1);
@@ -70,14 +72,26 @@ export function ExerciseCatalog({
     (currentPage + 1) * pageSize,
   );
   const activeFilters = Boolean(
-    query || muscle || tool || level || visualsOnly,
+    query || muscle || tool,
   );
+  const board = Boolean(onDropToDay && dropDays.length);
+  const targetIndex = Math.max(0, Math.min(targetDay, dropDays.length - 1));
+  const canAdd = Boolean(onSelect || board);
+  function addExercise(exercise: CatalogExercise, index = targetIndex) {
+    if (onDropToDay && dropDays[index]) {
+      if (onDropToDay(exercise, index) === false) {
+        setFeedback(tr("هذا اليوم ممتلئ. اختر يومًا آخر أو احذف تمرينًا أولًا."));
+        return;
+      }
+      setFeedback(tr("تمت إضافة {0} إلى {1}", exerciseName(exercise, locale), dropDays[index].name));
+    } else {
+      onSelect?.(exercise);
+    }
+  }
   function reset() {
     setQuery("");
     setMuscle("");
     setTool("");
-    setLevel("");
-    setVisualsOnly(false);
     setPage(0);
   }
   return (
@@ -153,37 +167,18 @@ export function ExerciseCatalog({
             </option>
           ))}
         </select>
-        <select
-          aria-label={tr("المستوى")}
-          className="field"
-          value={level}
-          onChange={(e) => {
-            setLevel(e.target.value);
-            setPage(0);
-          }}
-        >
-          <option value="">{tr("كل المستويات")}</option>
-          <option value="beginner">{tr("مبتدئ")}</option>
-          <option value="intermediate">{tr("متوسط")}</option>
-          <option value="expert">{tr("متقدم")}</option>
-        </select>
       </div>
       <div className="catalog-results-bar">
-        <p role="status" aria-live="polite">
-          <strong>{found.length}</strong> {tr("تمرين")}
-          {activeFilters ? tr(" يطابق البحث") : tr(" في المكتبة")}
-        </p>
+        <p>{tr("{0} تمرين مطابق", String(found.length))}</p>
         <div>
           <label className="visuals-filter">
             <input
               type="checkbox"
-              checked={visualsOnly}
-              onChange={(e) => {
-                setVisualsOnly(e.target.checked);
-                setPage(0);
-              }}
+              checked={showVisuals}
+              aria-controls="catalog-movements"
+              onChange={(e) => setShowVisuals(e.target.checked)}
             />
-            {tr("بصور توضيحية فقط")}
+            {tr("عرض الصور التوضيحية")}
           </label>
           {activeFilters && (
             <button type="button" className="reset-filters" onClick={reset}>
@@ -193,6 +188,55 @@ export function ExerciseCatalog({
           )}
         </div>
       </div>
+      {board && (
+        <div className="catalog-schedule">
+          <div className="catalog-schedule-heading">
+            <div><h3>{tr("جدولك التدريبي")}</h3><p>{tr("اسحب بطاقة إلى اليوم، أو اختر اليوم ثم اضغط إضافة.")}</p></div>
+            <label className="catalog-day-picker">
+              {tr("الإضافة إلى")}
+              <select className="field" value={targetIndex} onChange={event => setTargetDay(Number(event.target.value))}>
+                {dropDays.map((item, index) => <option key={index} value={index}>{item.name}</option>)}
+              </select>
+            </label>
+          </div>
+        <div className="catalog-drop-days" aria-label={tr("أيام الجدول الأسبوعي")}>
+          {dropDays.map((dropDay, index) => (
+            <section
+              key={index}
+              aria-label={dropDay.name}
+              data-day-index={index}
+              className={`catalog-drop-day ${index === targetIndex ? "is-selected" : ""} ${dragged ? "is-ready" : ""} ${hoverDay === index ? "is-over" : ""}`}
+              onDragOver={(event) => {
+                if (!dragged) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+                setHoverDay(index);
+              }}
+              onDragLeave={event => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHoverDay(null);
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                if (dragged) addExercise(dragged, index);
+                setDragged(null);
+                setHoverDay(null);
+              }}
+            >
+              <button type="button" className="catalog-day-title" aria-pressed={index === targetIndex} onClick={() => setTargetDay(index)}>
+                <strong>{dropDay.name}</strong><span>{dropDay.count}</span>
+              </button>
+              <ol className="catalog-day-cards">
+                {dropDay.exercises?.map((exercise, position) => <li key={exercise.rowId ?? position}>
+                  <strong>{exercise.name}</strong><span>{tr("{0} مجموعات", String(exercise.sets))} · {exercise.reps}</span>
+                </li>)}
+              </ol>
+              <small>{tr("أفلت التمرين هنا")}</small>
+            </section>
+          ))}
+        </div>
+        <p className="catalog-add-feedback" role="status" aria-live="polite">{feedback}</p>
+        </div>
+      )}
       {!found.length ? (
         <div className="empty catalog-empty">
           <SlidersHorizontal size={32} />
@@ -203,17 +247,28 @@ export function ExerciseCatalog({
           </button>
         </div>
       ) : (
-        <div className="exercise-grid">
+        <div id="catalog-movements" className={`exercise-grid ${showVisuals ? "" : "exercise-grid-compact"}`}>
           {paged.map((e) => (
-            <article key={e.id} className="movement-card">
+            <article
+              key={e.id}
+              className={`movement-card ${showVisuals ? "" : "movement-card-compact"}`}
+              draggable={Boolean(onDropToDay)}
+              onDragStart={(event) => {
+                setDragged(e);
+                event.dataTransfer.effectAllowed = "copy";
+                event.dataTransfer.setData("text/plain", e.id);
+              }}
+              onDragEnd={() => {setDragged(null); setHoverDay(null);}}
+            >
               <button
                 type="button"
                 className="movement-open"
                 onClick={() => setSelected(e)}
                 aria-label={tr("تفاصيل ") + exerciseName(e, locale)}
               >
-                <ExerciseVisual key={e.id} exercise={e} />
+                {showVisuals && <ExerciseVisual key={e.id} exercise={e} />}
                 <div className="movement-copy">
+                  {board && <GripVertical className="movement-drag-handle" size={16} aria-hidden="true" />}
                   <h3>{exerciseName(e, locale)}</h3>
                   <p className="movement-english" dir="ltr">
                     {e.name}
@@ -237,14 +292,14 @@ export function ExerciseCatalog({
                   {tr("شرح الحركة")}
                   <ArrowLeft size={16} />
                 </button>
-                {onSelect ? (
+                {canAdd ? (
                   <button
                     type="button"
                     className="exercise-add"
-                    onClick={() => onSelect(e)}
+                    onClick={() => addExercise(e)}
                   >
                     <Plus size={17} />
-                    {tr(selectionLabel)}
+                    {board ? tr("إضافة إلى {0}", dropDays[targetIndex].name) : tr(selectionLabel)}
                   </button>
                 ) : (
                   <span className="movement-level">
@@ -317,12 +372,12 @@ export function ExerciseCatalog({
                 <X size={22} />
               </button>
             </div>
-            <ExerciseVisual
+            {showVisuals && <ExerciseVisual
               key={selected.id}
               exercise={selected}
               playable
               className="exercise-detail-visual"
-            />
+            />}
             <div className="exercise-detail-body">
               <section className="exercise-anatomy">
                 <div>
@@ -372,13 +427,13 @@ export function ExerciseCatalog({
                 </ol>
               </section>
             </div>
-            {onSelect && (
+            {canAdd && (
               <div className="exercise-detail-action">
                 <button
                   type="button"
                   className="btn"
                   onClick={() => {
-                    onSelect(selected);
+                    addExercise(selected);
                     setSelected(null);
                   }}
                 >

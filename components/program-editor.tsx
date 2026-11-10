@@ -26,6 +26,8 @@ import { ExerciseCatalog } from "./exercise-catalog";
 import { useDialog } from "./use-dialog";
 import { VideoUpload } from "./video-upload";
 import { MealEditor } from "./meal-editor";
+import { ProgramDayNav } from "./program-day-nav";
+import { appendExercise, customExercise, isStarterExercise, transferExercise } from "@/lib/program-builder";
 function withRowIds(value: Content): Content {
   return {
     ...value,
@@ -63,7 +65,7 @@ export function ProgramEditor({
   const router = useRouter();
   const [name, setName] = useState(initialName);
   const [plan, setPlan] = useState<Content>(() =>
-    withRowIds(structuredClone(initial)),
+    withRowIds({ ...structuredClone(initial), days: initial.days.map(d => ({ ...structuredClone(d), exercises: d.exercises.length === 1 && isStarterExercise(d.exercises[0]) ? [] : structuredClone(d.exercises) })) }),
   );
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -72,11 +74,16 @@ export function ProgramEditor({
   const [tab, setTab] = useState<"training" | "nutrition">("training");
   const [hasSaved, setHasSaved] = useState(Boolean(id));
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [undo, setUndo] = useState<{plan:Content;day:number}|null>(null);
+  const customInput = useRef<HTMLInputElement>(null);
   const catalogRef = useDialog(catalogOpen, () => setCatalogOpen(false));
   const savedId = useRef(id);
   const revision = useRef(0);
   const lock = useRef(false);
   function changed() {
+    setUndo(null);
     revision.current++;
     setDirty(true);
     setResult(null);
@@ -125,12 +132,12 @@ export function ProgramEditor({
     }
   }, [plan, name, clientId]);
   useEffect(() => {
-    if (!dirty || busy || result?.ok === false) return;
+    if (!dirty || busy || result?.ok === false || !contentSchema.safeParse(plan).success || name.trim().length < 2) return;
     const timer = setTimeout(() => {
       void save();
     }, 1200);
     return () => clearTimeout(timer);
-  }, [dirty, busy, save, result]);
+  }, [dirty, busy, save, result, plan, name]);
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => {
@@ -159,40 +166,23 @@ export function ProgramEditor({
       ),
     }));
   }
-  function addCatalog(ex: CatalogExercise) {
-    if (active.exercises.length >= 40) return;
-    edit((c) => ({
-      ...c,
-      days: c.days.map((d, i) =>
-        i === day
-          ? {
-              ...d,
-              exercises: [
-                ...d.exercises.filter(
-                  (x) =>
-                    !(
-                      d.exercises.length === 1 &&
-                      x.name === "تمرين جديد" &&
-                      !x.description &&
-                      !x.video &&
-                      !x.mediaId &&
-                      !x.catalogId
-                    ),
-                ),
-                {
-                  name: exerciseName(ex, locale),
-                  description: "",
-                  video: "",
-                  catalogId: ex.id,
-                  sets: 3,
-                  reps: "10–12",
-                  rest: 90,
-                },
-              ],
-            }
-          : d,
-      ),
-    }));
+  function addCatalog(ex: CatalogExercise, targetDay = day) {
+    if ((plan.days[targetDay]?.exercises.length ?? 40) >= 40) return false;
+    edit(current => appendExercise(current, targetDay, { ...customExercise(exerciseName(ex, locale)), catalogId: ex.id }));
+    return true;
+  }
+  function addDay() {
+    if (plan.days.length >= 14) return;
+    const next=plan.days.length;
+    edit(current=>({...current,days:[...current.days,{name:tr("اليوم {0}",String(next+1)),exercises:[]}]}));
+    setDay(next); setCustomName(""); setFeedback("");
+  }
+  function addCustom() {
+    const title=customName.trim();
+    if(title.length<2 || active.exercises.length>=40) return;
+    edit(current=>appendExercise(current,day,customExercise(title)));
+    setCustomName("");setFeedback(tr("تمت إضافة {0} إلى {1}",title,active.name));
+    customInput.current?.focus();
   }
   function moveExercise(index: number, direction: number) {
     edit((c) => ({
@@ -319,12 +309,14 @@ export function ProgramEditor({
           />
         </div>
       ) : (
-        <>
+        <div className="program-builder-grid">
+          <ProgramDayNav days={plan.days} selected={day} onSelect={index=>{setDay(index);setFeedback("");}} onAdd={addDay}/>
+          <section className="program-session" aria-label={tr("إعداد الحصة التدريبية")}>
           <div className="session-toolbar">
             <div>
               <p className="eyebrow">{tr("بناء الحصة التدريبية")}</p>
               <h2>
-                {active.exercises.length} {tr("حركات")}{" "}
+                {active.name} · {active.exercises.length} {tr("حركات")}{" "}
                 <span className="text-muted">/</span>{" "}
                 {active.exercises.reduce((n, e) => n + e.sets, 0)} {tr("جولة")}
               </h2>
@@ -335,52 +327,18 @@ export function ProgramEditor({
               onClick={() => setCatalogOpen(true)}
             >
               <Search size={16} />
-              {tr("مكتبة الحركات · 876")}
+              {tr("إضافة من مكتبة التمارين")}
             </button>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {plan.days.map((d, i) => (
-              <button
-                type="button"
-                key={i}
-                className={day === i ? "btn-soft" : "btn-secondary"}
-                onClick={() => setDay(i)}
-              >
-                {d.name}
-              </button>
-            ))}
-            <button
-              type="button"
-              className="btn-secondary"
-              disabled={plan.days.length >= 14}
-              onClick={() => {
-                const index = plan.days.length;
-                edit((c) => ({
-                  ...c,
-                  days: [
-                    ...c.days,
-                    {
-                      name: `اليوم ${index + 1}`,
-                      exercises: [
-                        {
-                          name: "تمرين جديد",
-                          description: "",
-                          video: "",
-                          sets: 3,
-                          reps: "10",
-                          rest: 60,
-                        },
-                      ],
-                    },
-                  ],
-                }));
-                setDay(index);
-              }}
-            >
-              <Plus size={16} />
-              {tr("يوم")}
-            </button>
+          <div className="program-quick-add">
+            <label htmlFor="custom-exercise-name">{tr("أضف تمرينك الخاص")}</label>
+            <p>{tr("اكتب أي اسم تمرين، أو اختر من المكتبة. لا تحتاج صورة أو فيديو.")}</p>
+            <div><input ref={customInput} id="custom-exercise-name" className="field" placeholder={tr("مثال: سكوات بالدمبل مع توقف")} value={customName} maxLength={140} onChange={event=>setCustomName(event.target.value)} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();addCustom();}}}/>
+            <button type="button" className="btn" disabled={customName.trim().length<2 || active.exercises.length>=40} onClick={addCustom}><Plus size={16}/>{tr("إضافة التمرين")}</button></div>
+            <p role="status">{feedback || tr("الافتراضي: 3 مجموعات · 10–12 عدة · 90 ثانية راحة. عدّلها بعد الإضافة.")}</p>
           </div>
+          {undo && <div className="program-undo" role="status"><span>{tr("تم الحذف أو النقل.")}</span><button type="button" className="btn-soft" onClick={()=>{edit(()=>undo.plan);setDay(undo.day);}}>{tr("تراجع")}</button></div>}
+          <details className="program-day-settings"><summary>{tr("اسم اليوم، موعده والتقسيمة الأسبوعية")}</summary>
           <div className="grid gap-3 sm:grid-cols-2">
             <label>
               {tr("تقسيمة جاهزة")}
@@ -422,16 +380,7 @@ export function ProgramEditor({
                     days: names.map((name, index) => ({
                       name,
                       weekday: names.length === 3 ? index * 2 : index,
-                      exercises: [
-                        {
-                          name: "تمرين جديد",
-                          description: "",
-                          video: "",
-                          sets: 3,
-                          reps: "10–12",
-                          rest: 60,
-                        },
-                      ],
+                      exercises: [],
                     })),
                   }));
                   setDay(0);
@@ -535,22 +484,23 @@ export function ProgramEditor({
               className="btn-secondary text-red-700"
               disabled={plan.days.length === 1}
               onClick={() => {
-                edit((c) => ({
-                  ...c,
-                  days: c.days.filter((_, i) => i !== day),
-                }));
-                setDay(0);
+                const previous={plan:structuredClone(plan),day};
+                edit((c) => ({ ...c, days: c.days.filter((_, i) => i !== day) }));
+                setDay(0); setUndo(previous);
               }}
             >
               <Trash2 size={16} />
               {tr("حذف اليوم")}
             </button>
           </div>
+          </details>
+          {!active.exercises.length && <div className="program-empty-day"><Plus size={26}/><h3>{tr("ابدأ أول تمرين في هذا اليوم")}</h3><p>{tr("اكتب اسم تمرينك بالأعلى أو اختر عدة تمارين من المكتبة.")}</p><button type="button" className="btn-soft" onClick={()=>customInput.current?.focus()}>{tr("كتابة اسم تمرين")}</button></div>}
           <div className="space-y-4">
             {active.exercises.map((e, i) => (
               <div
                 key={`${day}:${e.rowId ?? i}`}
-                className="rounded-xl border bg-canvas/60 p-4"
+                className="program-exercise-card"
+                data-testid="program-exercise-row"
               >
                 {e.catalogId && catalogById.has(e.catalogId) ? (
                   <div className="exercise-visual">
@@ -584,7 +534,7 @@ export function ProgramEditor({
                     </ol>
                   </details>
                 )}
-                <div className="mb-4 flex items-center gap-3">
+                <div className="exercise-row-heading">
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-xs font-bold text-teal">
                     {i + 1}
                   </span>
@@ -619,8 +569,8 @@ export function ProgramEditor({
                     type="button"
                     aria-label={tr("حذف التمرين {0}", String(i + 1))}
                     className="text-muted hover:text-red-600"
-                    disabled={active.exercises.length === 1}
-                    onClick={() =>
+                    onClick={() => {
+                      const previous={plan:structuredClone(plan),day};
                       edit((c) => ({
                         ...c,
                         days: c.days.map((d, j) =>
@@ -633,12 +583,43 @@ export function ProgramEditor({
                               }
                             : d,
                         ),
-                      }))
-                    }
+                      })); setUndo(previous);
+                    }}
                   >
                     <Trash2 size={17} />
                   </button>
                 </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {(
+                    [
+                      ["sets", tr("المجموعات")],
+                      ["reps", tr("العدات")],
+                      ["rest", tr("الراحة (ثانية)")],
+                    ] as const
+                  ).map(([f, label]) => (
+                    <div key={f}>
+                      <label htmlFor={`ex-${i}-${f}`}>{tr(label)}</label>
+                      <input
+                        id={`ex-${i}-${f}`}
+                        className="field"
+                        type={f === "reps" ? "text" : "number"}
+                        min={f === "sets" ? 1 : 0}
+                        max={f === "sets" ? 20 : f === "rest" ? 600 : undefined}
+                        value={e[f]}
+                        onChange={(event) =>
+                          updateExercise(
+                            i,
+                            f,
+                            f === "reps"
+                              ? event.target.value
+                              : Number(event.target.value),
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+                <details className="program-exercise-more"><summary>{tr("الشرح والفيديو والأوزان المتقدمة")}</summary>
                 <div className="mt-4 border-t pt-4">
                   <VideoUpload
                     onComplete={(mediaId) => {
@@ -693,36 +674,6 @@ export function ProgramEditor({
                     </div>
                   ) : null}
                 </div>
-                <div className="grid grid-cols-3 gap-3">
-                  {(
-                    [
-                      ["sets", tr("المجموعات")],
-                      ["reps", tr("العدات")],
-                      ["rest", tr("الراحة (ثانية)")],
-                    ] as const
-                  ).map(([f, label]) => (
-                    <div key={f}>
-                      <label htmlFor={`ex-${i}-${f}`}>{tr(label)}</label>
-                      <input
-                        id={`ex-${i}-${f}`}
-                        className="field"
-                        type={f === "reps" ? "text" : "number"}
-                        min={f === "sets" ? 1 : 0}
-                        max={f === "sets" ? 20 : f === "rest" ? 600 : undefined}
-                        value={e[f]}
-                        onChange={(event) =>
-                          updateExercise(
-                            i,
-                            f,
-                            f === "reps"
-                              ? event.target.value
-                              : Number(event.target.value),
-                          )
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
                 <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
                   {(
                     [
@@ -768,10 +719,10 @@ export function ProgramEditor({
                     />
                   </label>
                 </div>
-                <details className="mt-4">
-                  <summary className="text-xs text-muted">
+                <div className="mt-4">
+                  <p className="text-xs text-muted">
                     {tr("شرح الحركة ورابط الفيديو")}
-                  </summary>
+                  </p>
                   <label className="mt-3" htmlFor={`ex-description-${i}`}>
                     {tr("الشرح")}
                   </label>
@@ -796,7 +747,14 @@ export function ProgramEditor({
                       updateExercise(i, "video", event.target.value)
                     }
                   />
+                </div>
                 </details>
+                <div className="program-exercise-actions">
+                  <button type="button" className="btn-secondary" disabled={active.exercises.length>=40} onClick={()=>edit(current=>appendExercise(current,day,e))}><Copy size={14}/>{tr("نسخ التمرين")}</button>
+                  {plan.days.length>1 && <select className="field" aria-label={tr("نقل التمرين {0} إلى يوم",String(i+1))} value="" onChange={event=>{const target=Number(event.target.value);const next=transferExercise(plan,day,i,target);if(next===plan)return;const previous={plan:structuredClone(plan),day};edit(()=>next);setUndo(previous);}}>
+                    <option value="">{tr("نقل إلى يوم آخر…")}</option>{plan.days.map((target,index)=>index===day?null:<option key={index} value={index} disabled={target.exercises.length>=40}>{target.name}</option>)}
+                  </select>}
+                </div>
               </div>
             ))}
           </div>
@@ -805,29 +763,7 @@ export function ProgramEditor({
               type="button"
               className="btn-secondary"
               disabled={active.exercises.length >= 40}
-              onClick={() =>
-                edit((c) => ({
-                  ...c,
-                  days: c.days.map((d, i) =>
-                    i === day
-                      ? {
-                          ...d,
-                          exercises: [
-                            ...d.exercises,
-                            {
-                              name: "تمرين جديد",
-                              description: "",
-                              video: "",
-                              sets: 3,
-                              reps: "10",
-                              rest: 60,
-                            },
-                          ],
-                        }
-                      : d,
-                  ),
-                }))
-              }
+              onClick={() => {customInput.current?.focus();customInput.current?.scrollIntoView({block:"center",behavior:"smooth"});}}
             >
               <Plus size={16} />
               {tr("تمرين جديد")}
@@ -839,28 +775,7 @@ export function ProgramEditor({
                 value=""
                 onChange={(event) => {
                   const ex = library.find((x) => x.id === event.target.value);
-                  if (ex && active.exercises.length < 40)
-                    edit((c) => ({
-                      ...c,
-                      days: c.days.map((d, i) =>
-                        i === day
-                          ? {
-                              ...d,
-                              exercises: [
-                                ...d.exercises,
-                                {
-                                  name: ex.name,
-                                  description: ex.description,
-                                  video: ex.video,
-                                  sets: 3,
-                                  reps: "10",
-                                  rest: 60,
-                                },
-                              ],
-                            }
-                          : d,
-                      ),
-                    }));
+                  if (ex) edit(current=>appendExercise(current,day,{...customExercise(ex.name),description:ex.description,video:ex.video}));
                 }}
               >
                 <option value="">{tr("إضافة نسخة من المكتبة…")}</option>
@@ -872,9 +787,10 @@ export function ProgramEditor({
               </select>
             ) : null}
           </div>
-        </>
+          </section>
+        </div>
       )}
-      <div className="sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white/95 p-4 shadow-lg backdrop-blur">
+      <div className="program-savebar sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white/95 p-4 shadow-lg backdrop-blur">
         <p className="max-w-md text-xs text-muted">
           {clientId
             ? tr("جاهز؟ انشر التحديث على رابط العميل.")
@@ -923,6 +839,7 @@ export function ProgramEditor({
           )}
         </div>
       </div>
+      {plan.days.some(d=>!d.exercises.length) && <p className="text-sm text-amber-800" role="status">{tr("أضف تمرينًا واحدًا على الأقل لكل يوم حتى تُحفظ المسودة وتصبح جاهزة للنشر.")}</p>}
       <Notice result={result} />
       {catalogOpen ? (
         <div className="modal-backdrop">
@@ -937,6 +854,13 @@ export function ProgramEditor({
             <ExerciseCatalog
               onSelect={addCatalog}
               onClose={() => setCatalogOpen(false)}
+              onDropToDay={addCatalog}
+              initialDropDay={day}
+              dropDays={plan.days.map((item) => ({
+                name: item.name,
+                count: item.exercises.length,
+                exercises: item.exercises,
+              }))}
             />
             <p className="sticky bottom-0 mt-4 bg-white p-3 text-center text-sm">
               {tr("الحصة الحالية:")} {active.exercises.length}{" "}

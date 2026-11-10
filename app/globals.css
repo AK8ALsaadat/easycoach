@@ -1771,3 +1771,44 @@ html[dir="ltr"] .lucide-arrow-left { transform: scaleX(-1); }
 .exercise-media-error { position:absolute; top:8px; inset-inline:8px; border-radius:6px; padding:6px; background:#fff8e9; color:#713f12; font-size:12px; }
 @media(max-width:1200px) { .client-board { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .client-board { grid-template-columns:minmax(0,1fr); } .client-board-hint { min-height:0; } }
+.program-builder-grid { display:grid; grid-template-columns:240px minmax(0,1fr); gap:20px; align-items:start; }
+.program-day-nav { position:sticky; top:20px; border:1px solid #e0e4e9; border-radius:16px; background:#f8fafc; padding:16px; min-width:0; }
+.program-nav-heading { display:flex; gap:8px; align-items:center; color:#1c2430; }
+.program-nav-heading h3 { flex:1; font-size:15px; }
+.program-nav-hint { color:#626d7c; font-size:12px; line-height:1.8; margin:12px 0; }
+.program-day-list { display:grid; gap:8px; }
+.program-day-item { display:flex; align-items:center; gap:8px; text-align:start; border:1px solid transparent; padding:12px 8px; border-radius:12px; min-width:0; }
+.program-day-item.selected { border-color:#b9cdfa; background:#eaf0fd; color:#184ca9; }
+.program-day-item > span:nth-child(2) { flex:1; min-width:0; overflow-wrap:anywhere; }
+.program-day-item strong { display:block; font-size:13px; }
+.program-day-item small { display:block; font-size:11px; color:#626d7c; margin-top:4px; }
+.program-day-number { display:grid; place-items:center; width:24px; height:24px; border-radius:8px; background:white; flex-shrink:0; font-size:12px; }
+.program-day-item .badge { font-size:10px; white-space:nowrap; }
+.program-day-empty { background:#fff5db; color:#854d0e; }
+.program-add-day { width:100%; margin-top:12px; justify-content:center; }
+.program-session { min-width:0; display:grid; gap:18px; }
+.program-session .session-toolbar { gap:12px; flex-wrap:wrap; }
+.program-session .session-toolbar h2 { font-size:18px; line-height:1.7; }
+.program-quick-add { padding:18px; border:1px solid #bfd3fa; background:#f4f8ff; border-radius:14px; }
+.program-quick-add > div { display:flex; gap:8px; margin:12px 0; }
+.program-quick-add .field { min-width:0; flex:1; background:white; }
+.program-quick-add > p { color:#626d7c; font-size:12px; line-height:1.8; }
+.program-quick-add .btn { flex-shrink:0; }
+.program-day-settings { border:1px solid #e0e4e9; padding:14px; border-radius:12px; }
+.program-day-settings > summary { font-size:13px; color:#526174; }
+.program-day-settings > div { margin-top:16px; }
+.program-exercise-card { border:1px solid #e0e4e9; border-radius:14px; padding:16px; background:white; }
+.program-exercise-card .exercise-visual > .exercise-visual-frame { width:100px; }
+.exercise-row-heading { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+.exercise-row-heading > .field { flex:1; min-width:140px; width:auto; font-weight:600; }
+.exercise-row-heading > button { min-width:32px; min-height:36px; }
+.program-exercise-more { padding-top:14px; margin-top:14px; border-top:1px solid #e0e4e9; }
+.program-exercise-more > summary { font-size:12px; color:#526174; }
+.program-exercise-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.program-exercise-actions .field { width:auto; flex:1; min-width:140px; font-size:12px; }
+.program-exercise-actions .btn-secondary { font-size:12px; }
+.program-empty-day { display:grid; justify-items:center; gap:12px; padding:32px 16px; text-align:center; border:1px dashed #b9c9df; border-radius:14px; background:#fafcff; }
+.program-empty-day p { font-size:13px; color:#626d7c; }
+.program-undo { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-radius:10px; background:#fff8e9; font-size:13px; }
+@media(max-width:1100px) { .program-builder-grid { grid-template-columns:minmax(0,1fr); } .program-day-nav { position:static; } .program-day-list { display:flex; overflow-x:auto; } .program-day-item { flex-shrink:0; min-width:170px; } .program-nav-hint { display:none; } .program-day-list { margin-top:12px; } }
+@media(max-width:600px) { .program-quick-add > div { flex-direction:column; } .program-exercise-card { padding:12px; } .program-day-nav { padding:12px; } .program-savebar { padding:10px; } .program-savebar > p { display:none; } .program-savebar > div { width:100%; } .program-savebar button { flex:1; white-space:nowrap; font-size:12px; padding-inline:10px; } }

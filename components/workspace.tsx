@@ -1407,7 +1407,7 @@ function Finance({ data }: { data: Snapshot }) {
       <thead><tr><th>{tr("المتدربون")}</th><th>{tr("بداية الاشتراك")}</th><th>{tr("نهاية الاشتراك")}</th><th>{tr("الحالة")}</th><th>{tr("تجديد الاشتراك")}</th></tr></thead>
       <tbody>{clients.map(client => {
         const sub = currentSubscription(data, client.id);
-        return <tr key={client.id}><td><Link className="text-teal" href={`/coach/clients/${client.id}?tab=finance`}>{client.name}</Link></td><td>{sub ? formatDate(sub.start_date, locale) : "—"}</td><td>{sub ? formatDate(sub.end_date, locale) : "—"}</td><td>{sub ? subscriptionState(data, sub) : tr("بدون اشتراك")}</td><td><SubscriptionRenewal client={client} subscriptions={data.subscriptions} /></td></tr>;
+        return <tr key={client.id}><td><Link className="text-teal" href={`/coach/clients/${client.id}?tab=finance`}>{client.name}</Link></td><td>{sub ? formatDate(sub.start_date, locale) : "—"}</td><td>{sub ? formatDate(latestSubscription(data.subscriptions, client.id)!.end_date, locale) : "—"}</td><td>{sub ? subscriptionState(data, sub) : tr("بدون اشتراك")}</td><td><SubscriptionRenewal client={client} subscriptions={data.subscriptions} /></td></tr>;
       })}</tbody>
     </table></div>{!clients.length && <div className="empty">{tr("أضف أول متدرب لبدء المتابعة.")}</div>}</section>
   </>;
