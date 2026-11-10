@@ -16,12 +16,11 @@ export type CoachingAlert = {
   urgent: boolean;
   date?: string;
 };
-export function coachingAlerts(data: Snapshot): CoachingAlert[] {
+export function coachingAlerts(data: Snapshot, today = riyadhToday()): CoachingAlert[] {
   const preferences = {
       ...defaultPreferences,
       ...data.management?.preferences,
     },
-    today = riyadhToday(),
     records = data.management?.records ?? [],
     alerts: CoachingAlert[] = [];
   for (const client of data.clients.filter(

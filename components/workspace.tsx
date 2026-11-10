@@ -43,17 +43,15 @@ import { ClientProgress, PortalControl } from "./client-progress";
 import { ExerciseCatalog } from "./exercise-catalog";
 import { TemplateTools } from "./template-tools";
 import { ClientHub } from "./client-hub";
-import { ClientBoard } from "./client-board";
+import { ClientRoster } from "./client-roster";
 import { ClientOverview } from "./client-overview";
 import { NutritionTargetEditor } from "./nutrition-target-editor";
 import { PhoneLink } from "./phone-link";
 import { clientInsights } from "@/lib/client-insights";
 import { SubscriptionRenewal } from "./subscription-renewal";
-import { clientMatchesQuery, renewalDue } from "@/lib/client-workflow";
 import { coachingAlerts } from "@/lib/coaching-alerts";
 import { NotificationSettings } from "./notification-settings";
 import { AccountSettings } from "./account-settings";
-import { ManagementButton } from "./management-button";
 import { exerciseName } from "@/lib/catalog";
 import { CoachToday } from "./coach-today";
 import { useDialog } from "./use-dialog";
@@ -458,99 +456,6 @@ function Heading({
     </div>
   );
 }
-function ClientTable({ data, clients }: { data: Snapshot; clients: Client[] }) {
-  const { t: tr, language: locale } = useLocale();
-
-  if (!clients.length)
-    return (
-      <div className="empty">
-        <Users size={28} />
-        <p>{tr("ما فيه عملاء في هذا العرض.")}</p>
-      </div>
-    );
-  return (
-    <div className="overflow-x-auto">
-      <table>
-        <thead>
-          <tr>
-            <th>{tr("العميل")}</th>
-            <th>{tr("البرنامج")}</th>
-            <th>{tr("الاشتراك")}</th>
-            <th>{tr("تجديد الاشتراك")}</th>
-            <th aria-label={tr("فتح ملف العميل")} />
-          </tr>
-        </thead>
-        <tbody>
-          {clients.map((c) => {
-            const program = data.programs.find(
-              (p) => p.client_id === c.id && p.published_at,
-            );
-            const sub = currentSubscription(data, c.id);
-            return (
-              <tr key={c.id}>
-                <td>
-                  <Link
-                    href={`/coach/clients/${c.id}`}
-                    className="flex items-center gap-3"
-                  >
-                    <Avatar name={c.name} />
-                    <div>
-                      <p className="whitespace-nowrap font-medium">{c.name}</p>
-                      <p className="text-xs text-muted">
-                        {c.trainee_user_id ? tr("حساب مرتبط") : c.email}
-                      </p>
-                    </div>
-                  </Link>
-                  <PhoneLink phone={c.phone}/>
-                </td>
-                <td>
-                  <span
-                    className={`badge ${program ? "bg-accent/30 text-teal" : "bg-amber-50 text-amber-800"}`}
-                  >
-                    {program ? tr("منشور") : tr("يحتاج برنامجًا")}
-                  </span>
-                </td>
-                <td>
-                  {sub ? (
-                    <div>
-                      <p className="text-xs">{subscriptionState(data, sub)}</p>
-                      <p className="text-xs text-muted">
-                        {tr("حتى")} {formatDate(latestSubscription(data.subscriptions, c.id)!.end_date, locale)}
-                      </p>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted">
-                      {tr("بدون باقة")}
-                    </span>
-                  )}
-                </td>
-                <td>{!c.archived && <SubscriptionRenewal client={c} subscriptions={data.subscriptions} />}</td>
-                <td>
-                  {c.archived ? (
-                    <ManagementButton
-                      command="client_archive"
-                      payload={{ client_id: c.id, archived: false }}
-                    >
-                      {tr("إعادة التفعيل")}
-                    </ManagementButton>
-                  ) : (
-                    <Link
-                      aria-label={tr("فتح ملف {0}", String(c.name))}
-                      href={`/coach/clients/${c.id}`}
-                      className="inline-flex size-8 items-center justify-center rounded-lg border"
-                    >
-                      <ChevronLeft size={15} />
-                    </Link>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 function Clients({
   data,
   initialFilter,
@@ -560,52 +465,15 @@ function Clients({
   initialFilter: string;
   initialQuery: string;
 }) {
-  const { t: tr, language: locale } = useLocale();
-
-  const router = useRouter();
-  const [query, setQuery] = useState(initialQuery);
-  const [filter, setFilter] = useState(
-    initialFilter === "add" || initialFilter === "balance" ? "" : initialFilter,
-  );
-  const [add, setAdd] = useState(initialFilter === "add");
-  const [importing, setImporting] = useState(false);
-  const today = riyadhToday();
-  const [sort, setSort] = useState("newest");
-  const [view, setView] = useState<"table" | "board">("board");
-  const alerts = coachingAlerts(data);
-  const clients = data.clients
-    .filter(
-      (c) =>
-        (filter === "archived" ? c.archived : !c.archived) &&
-        clientMatchesQuery(c, query),
-    )
-    .filter((c) =>
-      filter === "program"
-        ? !data.programs.some((p) => p.client_id === c.id && p.published_at)
-        : filter === "renew"
-          ? renewalDue(data.subscriptions, c.id, today)
-          : filter === "active" || filter === "inactive" || filter === "new"
-              ? (data.management?.details.find(
-                  (detail) => detail.client_id === c.id,
-                )?.status ?? "active") === filter
-              : ["checkin", "adherence", "stalled"].includes(filter)
-                ? alerts.some(
-                    (alert) => alert.clientId === c.id && alert.kind === filter,
-                  )
-                : true,
-    )
-    .sort((a, b) =>
-      sort === "name"
-        ? a.name.localeCompare(b.name, locale)
-        : sort === "oldest"
-          ? a.created_at.localeCompare(b.created_at)
-          : b.created_at.localeCompare(a.created_at),
-    );
+  const {t:tr}=useLocale();
+  const router=useRouter();
+  const [add,setAdd]=useState(initialFilter === "add");
+  const [importing,setImporting]=useState(false);
   return (
     <>
       <Heading
         title={tr("المتدربون")}
-        text={tr("كل عميل ببرنامجه واشتراكه وتفاصيله.")}
+        text={tr("متابعة أوضح، وقرارات أسرع لكل متدرب.")}
       >
         <div className="flex gap-2">
           <button
@@ -657,89 +525,7 @@ function Clients({
           </a>
         </section>
       ) : null}
-      <div className="card overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-4 p-5">
-          <div className="relative w-full max-w-sm">
-            <Search size={16} className="absolute start-3 top-3.5 text-muted" />
-            <input
-              className="field ps-10"
-              placeholder={tr("ابحث بالاسم أو الإيميل أو الجوال…")}
-              aria-label={tr("البحث عن عميل")}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {[
-              ["", tr("الكل")],
-              ["program", tr("بدون برنامج")],
-              ["renew", tr("تجديد قريب")],
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                className={filter === value ? "btn-soft" : "btn-secondary"}
-                aria-pressed={filter === value}
-                onClick={() => setFilter(value)}
-              >
-                {tr(label)}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="grid gap-3 px-5 pb-4 sm:grid-cols-2">
-          <label>
-            {tr("حالة ومتابعة")}
-            <select
-              aria-label={tr("تصفية حالة العملاء")}
-              className="field"
-              value={filter}
-              onChange={(event) => setFilter(event.target.value)}
-            >
-              {[
-                ["", tr("كل العملاء")],
-                ["active", tr("نشط")],
-                ["inactive", tr("غير نشط")],
-                ["new", tr("جديد")],
-                ["checkin", tr("مراجعات متأخرة أو معلقة")],
-                ["adherence", tr("التزام منخفض")],
-                ["stalled", tr("تقدم مستقر يحتاج مراجعة")],
-                ["archived", tr("المؤرشفون")],
-                ["program", tr("بدون برنامج")],
-                ["renew", tr("تجديد قريب")],
-                ].map(([key, label]) => (
-                <option key={key} value={key}>
-                  {tr(label)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {tr("ترتيب العملاء")}
-            <select
-              aria-label={tr("ترتيب العملاء")}
-              className="field"
-              value={sort}
-              onChange={(event) => setSort(event.target.value)}
-            >
-              <option value="newest">{tr("الأحدث أولًا")}</option>
-              <option value="oldest">{tr("الأقدم أولًا")}</option>
-              <option value="name">{tr("الاسم")}</option>
-            </select>
-          </label>
-        </div>
-        <div className="client-view-toolbar">
-          <p role="status">{tr("عدد النتائج")}: <strong>{clients.length}</strong></p>
-          <div role="group" aria-label={tr("طريقة عرض المتدربين")}>
-            <button type="button" className={view === "board" ? "btn-soft" : "btn-secondary"} aria-pressed={view === "board"} onClick={() => setView("board")}>{tr("لوحة المتابعة")}</button>
-            <button type="button" className={view === "table" ? "btn-soft" : "btn-secondary"} aria-pressed={view === "table"} onClick={() => setView("table")}>{tr("الجدول")}</button>
-          </div>
-        </div>
-        {!clients.length ? <div className="empty">
-          <Users size={28} aria-hidden="true" />
-          <p>{tr(query || filter ? "لا توجد نتائج مطابقة للبحث والتصفية." : "أضف أول متدرب لبدء المتابعة.")}</p>
-          {(query || filter) && <button type="button" className="btn-soft" onClick={() => { setQuery(""); setFilter(""); }}>{tr("مسح البحث والتصفية")}</button>}
-        </div> : view === "board" ? <ClientBoard clients={clients} data={data} /> : <ClientTable clients={clients} data={data} />}
-      </div>
+      <ClientRoster data={data} initialFilter={initialFilter} initialQuery={initialQuery} onAdd={()=>{setAdd(true);setImporting(false);window.scrollTo({top:0,behavior:"smooth"});}}/>
     </>
   );
 }

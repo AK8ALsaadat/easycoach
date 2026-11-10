@@ -1,0 +1,56 @@
+"use client";
+import {useMemo,useState,type ComponentProps} from "react";
+import Link from "next/link";
+import {ArrowUpLeft,CalendarDays,Check,ChevronLeft,ChevronRight,ClipboardList,Flame,Search,SlidersHorizontal,Users,X} from "lucide-react";
+import type {Snapshot} from "@/lib/model";
+import {clientRoster,rosterCounts,rosterMatches,compareRoster,type RosterRow} from "@/lib/client-roster";
+import {formatDate,riyadhToday} from "@/lib/dates";
+import {useLocale} from "./locale-provider";
+import {PhoneLink} from "./phone-link";
+import {SubscriptionRenewal} from "./subscription-renewal";
+import {ManagementButton} from "./management-button";
+
+function RosterLink({archived,...props}:ComponentProps<typeof Link>&{archived:boolean}) {
+  return archived?<span className={props.className}>{props.children}</span>:<Link {...props}/>;
+}
+const pageSize=20;
+function WeightTrend({row}:{row:RosterRow}) {
+  const values=row.weights.slice(-8).map(w=>Number(w.weight));
+  if(values.length<2)return null;
+  const min=Math.min(...values),span=Math.max(...values)-min;
+  const points=values.map((value,index)=>`${index*88/(values.length-1)},${span?28-(value-min)*22/span:17}`).join(" ");
+  return <svg className="roster-trend" viewBox="0 0 88 34" aria-hidden="true"><polyline points={points} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+}
+export function ClientRoster({data,initialFilter,initialQuery,onAdd}:{data:Snapshot;initialFilter:string;initialQuery:string;onAdd:()=>void}) {
+  const {t:tr,language}=useLocale();const today=riyadhToday();
+  const [query,setQuery]=useState(initialQuery),[filter,setFilter]=useState(["add","balance"].includes(initialFilter)?"":initialFilter);
+  const [sort,setSort]=useState("priority"),[advanced,setAdvanced]=useState(false),[page,setPage]=useState(0);
+  const rows=useMemo(()=>clientRoster(data,today),[data,today]);const counts=rosterCounts(rows);
+  const filtered=useMemo(()=>rows.filter(row=>rosterMatches(row,filter,query)).sort((a,b)=>compareRoster(a,b,sort,language)),[rows,filter,query,sort,language]);
+  const pages=Math.max(1,Math.ceil(filtered.length/pageSize)),current=Math.min(page,pages-1);
+  const choose=(value:string)=>{setFilter(value);setPage(0);};
+  const reset=()=>{setQuery("");setFilter("");setPage(0);};
+  const metrics=[{key:"",label:"كل المتدربين",value:counts.all,icon:Users,detail:"ملف واحد لكل متدرب"},{key:"attention",label:"يحتاج انتباهك",value:counts.attention,icon:Flame,detail:"متابعة أو إجراء مطلوب"},{key:"program",label:"بانتظار برنامج",value:counts.program,icon:ClipboardList,detail:"بدون برنامج منشور"},{key:"renew",label:"تجديد الاشتراك",value:counts.renew,icon:CalendarDays,detail:"منتهٍ أو ينتهي خلال 7 أيام"}];
+  return <div className="roster-workspace">
+    <div className="roster-metrics" aria-label={tr("ملخص المتدربين")}>{metrics.map(({key,label,value,icon:Icon,detail})=><button type="button" className={`roster-metric ${filter===key?"selected":""}`} aria-pressed={filter===key} key={key} onClick={()=>choose(key)}><span className="roster-metric-icon"><Icon size={19}/></span><span className="roster-metric-label">{tr(label)}</span><strong>{value}</strong><small>{tr(detail)}</small></button>)}</div>
+    <section className="card roster-directory" aria-label={tr("قائمة المتدربين")}>
+      <div className="roster-directory-heading"><div><h2>{tr(filter==="archived"?"أرشيف المتدربين":"مساحة المتابعة")}</h2><p>{tr("اعرف من يحتاجك، وافتح الإجراء المناسب مباشرة.")}</p></div><span className="roster-count" role="status">{tr("عدد النتائج")}: <strong>{filtered.length}</strong></span></div>
+      <div className="roster-controls"><div className="roster-search"><Search size={18}/><input aria-label={tr("البحث عن عميل")} placeholder={tr("ابحث بالاسم أو الإيميل أو الجوال…")} value={query} onChange={event=>{setQuery(event.target.value);setPage(0);}}/>{query&&<button type="button" aria-label={tr("مسح البحث")} onClick={()=>{setQuery("");setPage(0);}}><X size={16}/></button>}</div><select className="field roster-sort" aria-label={tr("ترتيب العملاء")} value={sort} onChange={event=>{setSort(event.target.value);setPage(0);}}>{[["priority","الأولوية أولًا"],["name","الاسم"],["newest","الأحدث أولًا"],["oldest","الأقدم أولًا"],["renewal","نهاية الاشتراك"]].map(([value,label])=><option key={value} value={value}>{tr(label)}</option>)}</select><button type="button" className="btn-secondary roster-filter-toggle" aria-expanded={advanced} aria-controls="roster-extra-filters" onClick={()=>setAdvanced(!advanced)}><SlidersHorizontal size={16}/>{tr("فلاتر إضافية")}</button></div>
+      {advanced&&<div id="roster-extra-filters" className="roster-extra"><label>{tr("حالة ومتابعة")}<select aria-label={tr("تصفية حالة العملاء")} className="field" value={filter} onChange={event=>choose(event.target.value)}>{[["","كل العملاء"],["attention","يحتاج انتباهك"],["active","نشط"],["inactive","غير نشط"],["new","جديد"],["checkin","مراجعات متأخرة أو معلقة"],["adherence","التزام منخفض"],["stalled","تقدم مستقر يحتاج مراجعة"],["program","بدون برنامج"],["renew","تجديد قريب"],["archived","المؤرشفون"]].map(([value,label])=><option key={value} value={value}>{tr(label)}</option>)}</select></label><p>{tr("الأعداد في الملخص تشمل جميع المتدربين غير المؤرشفين.")}</p></div>}
+      <div className="roster-active-filter"><span>{tr(filter?({attention:"يحتاج انتباهك",program:"بدون برنامج",renew:"تجديد قريب",active:"نشط",inactive:"غير نشط",new:"جديد",checkin:"مراجعات متأخرة أو معلقة",adherence:"التزام منخفض",stalled:"تقدم مستقر يحتاج مراجعة",archived:"المؤرشفون"}[filter]??"كل المتدربين"):"كل المتدربين")}</span><small>{tr("الوزن والتغيّر من آخر قياسين مسجلين")}</small>{(query||filter)&&<button type="button" onClick={reset}>{tr("مسح البحث والتصفية")}<X size={12}/></button>}</div>
+      {!filtered.length?<div className="roster-empty"><Users size={32}/><h3>{tr(query||filter?"لا توجد نتائج مطابقة للبحث والتصفية.":"ابدأ بأول متدرب")}</h3><p>{tr(query||filter?"جرّب اسمًا آخر أو اعرض جميع المتدربين.":"أضف متدربًا لتتابع برنامجه وتقدمه واشتراكه من مكان واحد.")}</p><button type="button" className="btn" onClick={query||filter?reset:onAdd}>{tr(query||filter?"مسح البحث والتصفية":"عميل جديد")}</button></div>:<div className="roster-table-wrap"><table className="roster-table"><thead><tr>{["المتدرب","المتابعة","البرنامج والسعرات","الوزن والتقدم","الاشتراك","الإجراء التالي"].map(label=><th key={label}>{tr(label)}</th>)}</tr></thead><tbody>{filtered.slice(current*pageSize,(current+1)*pageSize).map(row=>{
+        const {client}=row;const base=`/coach/clients/${client.id}`;const reason=row.inactive?tr(client.archived?"مؤرشف":"غير نشط"):row.alerts[0]?tr(row.alerts[0].label):row.needsProgram?tr("جهّز أول برنامج للمتدرب"):row.renew?tr("حان وقت تجديد الاشتراك"):tr("لا توجد تنبيهات مسجلة");
+        return <tr className="roster-row" key={client.id} data-client-id={client.id} data-priority={row.priority}>
+          <td className="roster-person"><RosterLink archived={client.archived} href={base} className="roster-person-link"><span className="roster-person-avatar" aria-hidden="true">{client.name.trim().slice(0,1)}</span><span><strong>{client.name}</strong><small dir="auto">{client.email}</small></span><ArrowUpLeft size={14}/></RosterLink><PhoneLink phone={client.phone}/></td>
+          <td className="roster-followup" data-label={tr("المتابعة")}><span className={`roster-state ${row.inactive?"muted":row.priority>=80?"attention":row.attention?"pending":"clear"}`}><span/>{reason}</span>{row.checkin?<small>{tr("آخر مراجعة")}: {formatDate(row.checkin.entry_date,language)}</small>:<small>{tr("لم تُسجل مراجعة بعد")}</small>}</td>
+          <td data-label={tr("البرنامج والسعرات")}><RosterLink archived={client.archived} className="roster-inline-link" href={`${base}/edit`}>{tr(row.published?"برنامج منشور":row.draft?"مسودة غير منشورة":"بدون برنامج")}<ArrowUpLeft size={12}/></RosterLink><RosterLink archived={client.archived} className="roster-calories" href={`${base}/edit?tab=nutrition`}>{row.nutrition?.calories?`${row.nutrition.calories.toLocaleString(language)} ${tr("سعرة")}`:tr("تحديد السعرات")}</RosterLink></td>
+          <td className="roster-weight" data-label={tr("الوزن والتقدم")}>{row.latestWeight?<RosterLink archived={client.archived} href={base}><div><strong dir="auto">{Number(row.latestWeight.weight)} <small>{tr("كجم")}</small></strong><WeightTrend row={row}/></div><small>{row.weightChange!==null?`${row.weightChange>0?"+":""}${Number(row.weightChange.toFixed(1))} ${tr("كجم")}`:tr("أول قياس")} · {formatDate(row.latestWeight.entry_date,language)}</small></RosterLink>:<span className="roster-no-data">{tr("بانتظار أول قياس")}</span>}</td>
+          <td className="roster-subscription" data-label={tr("الاشتراك")}><strong className={row.renew?"roster-due":""}>{row.subscription?formatDate(row.subscription.end_date,language):tr("بدون اشتراك")}</strong><small>{row.subscription?(row.subscription.start_date>today?tr("اشتراك قادم"):row.subscriptionDays!<0?tr("منتهٍ"):row.subscriptionDays===0?tr("ينتهي اليوم"):tr("متبقي {0} يوم",String(row.subscriptionDays))):tr("أضف تاريخ انتهاء الاشتراك")}</small></td>
+          <td className="roster-next">{client.archived?<ManagementButton command="client_archive" payload={{client_id:client.id,archived:false}}>{tr("إعادة التفعيل")}</ManagementButton>:<><RosterLink archived={client.archived} className="roster-primary-action" href={row.inactive?base:row.alerts.some(a=>a.urgent)?`${base}?tab=tracking`:row.needsProgram?`${base}/edit`:row.alerts.length?`${base}?tab=tracking`:base}>{tr(row.inactive?"فتح الملف":row.alerts.some(a=>a.urgent)?"مراجعة المتدرب":row.needsProgram?row.draft?"إكمال البرنامج":"إعداد البرنامج":row.alerts.length?"فتح المتابعة":"عرض الإحصائيات")}<ArrowUpLeft size={14}/></RosterLink><SubscriptionRenewal client={client} subscriptions={data.subscriptions}/></>}</td>
+        </tr>;
+      })}</tbody></table></div>}
+      {filtered.length>0&&<footer className="roster-pagination"><span>{tr("عرض {0}–{1} من {2}",String(current*pageSize+1),String(Math.min((current+1)*pageSize,filtered.length)),String(filtered.length))}</span><div><button type="button" className="icon-button" aria-label={tr("السابق")} disabled={!current} onClick={()=>setPage(current-1)}>{language==="ar"?<ChevronRight size={17}/>:<ChevronLeft size={17}/>}</button><span>{current+1} / {pages}</span><button type="button" className="icon-button" aria-label={tr("التالي")} disabled={current+1>=pages} onClick={()=>setPage(current+1)}>{language==="ar"?<ChevronLeft size={17}/>:<ChevronRight size={17}/>}</button></div></footer>}
+    </section>
+    <p className="roster-footnote"><Check size={13}/>{tr("افتح اسم المتدرب لعرض الصور والوزن وتاريخ السعرات بالتفصيل.")}</p>
+  </div>;
+}
