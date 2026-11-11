@@ -75,7 +75,7 @@ try {
   assert(await visitor.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   const trainee = await login("trainee@example.test");
   await trainee.getByLabel("هوية المدرب").getByText(name, { exact: true }).waitFor();
-  const other = await login("other@example.test");
+  const other = await login("coach2@example.test");
   await other.goto(base + "/coach/settings");
   assert.equal(await other.getByLabel("الاسم الظاهر للمتدربين").inputValue(), "");
   await page.goto(base + "/coach/settings");

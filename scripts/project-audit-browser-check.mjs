@@ -1,0 +1,129 @@
+// Synthetic local-only audit. Do not point this at a hosted environment.
+import { chromium } from "@playwright/test";
+import assert from "node:assert/strict";
+import sharp from "sharp";
+import path from "node:path";
+import { mkdir, writeFile } from "node:fs/promises";
+const base = process.env.TEST_BASE_URL ?? "http://127.0.0.1:3216";
+assert(["localhost", "127.0.0.1"].includes(new URL(base).hostname), "Local audit only");
+const output = path.resolve("artifacts/project-audit-browser");
+await mkdir(output, { recursive: true });
+process.env.TEMP = output; process.env.TMP = output;
+const browser = await chromium.launch({ headless: true, ...(process.platform === "win32" ? { channel: "msedge" } : {}) });
+const passed = [], errors = [];
+let lastPage;
+async function login(email, width = 1440) {
+  const context = await browser.newContext({ viewport: { width, height: 1000 } });
+  context.setDefaultTimeout(15000);
+  const page = await context.newPage(); lastPage = page;
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto(base + "/login");
+  await page.locator("#auth-email").fill(email);
+  await page.locator("#auth-password").fill("CoachPreview!2026");
+  await page.locator("button[type=submit]").click();
+  await page.waitForURL(email === "trainee@example.test" ? "**/me" : "**/coach");
+  return page;
+}
+async function snapshot(page) { const r = await page.request.get(base + "/api/export"); assert.equal(r.status(), 200); return r.json(); }
+async function until(check, label) {
+  for (let i = 0; i < 40; i++) { if (await check()) return; await new Promise(r => setTimeout(r, 250)); }
+  throw Error(label);
+}
+try {
+  const coach = await login("coach@example.test");
+  const state = await snapshot(coach);
+  const client = state.clients.find(c => c.email === "trainee@example.test"); assert(client);
+  const editor = `${base}/coach/clients/${client.id}/edit?tab=program`;
+  await coach.goto(editor);
+  await coach.locator("#plan-name").waitFor();
+  const stale = await coach.context().newPage();
+  await stale.goto(editor); await stale.locator("#plan-name").waitFor();
+  const name = "برنامج تدقيق محفوظ " + Date.now();
+  await coach.locator("#plan-name").fill(name);
+  await until(async () => (await snapshot(coach)).programs.some(p => p.client_id === client.id && !p.published_at && p.name === name), "Program autosave persistence failed");
+  passed.push("coach program autosave persisted in database"); console.log(passed.at(-1));
+  await stale.locator("#plan-name").fill("تعديل قديم يجب رفضه");
+  await stale.getByText("تغيرت المسودة من نافذة أخرى", { exact: false }).waitFor();
+  assert((await snapshot(coach)).programs.some(p => p.client_id === client.id && !p.published_at && p.name === name));
+  passed.push("stale second-tab draft rejected without overwriting current data"); console.log(passed.at(-1));
+  await stale.close();
+  await coach.getByRole("button", { name: "نشر للمتدرب", exact: true }).click();
+  await until(async () => (await snapshot(coach)).programs.some(p => p.client_id === client.id && p.published_at && p.name === name), "Publish persistence failed");
+  await coach.screenshot({ path: output + "/coach-desktop.png", fullPage: true });
+  const trainee = await login("trainee@example.test", 390);
+  await trainee.getByText(name, { exact: true }).waitFor();
+  assert.equal(await trainee.locator("html").getAttribute("dir"), "rtl");
+  assert(await trainee.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  passed.push("linked trainee sees saved publication on mobile RTL without overflow"); console.log(passed.at(-1));
+  await trainee.screenshot({ path: output + "/trainee-mobile.png", fullPage: true });
+  await trainee.getByRole("tab", { name: "صور التقدم", exact: true }).click();
+  const existingPhotos = (await snapshot(coach)).management.progress_photos.filter(p => p.client_id === client.id).length;
+  const bytes = await sharp({ create: { width: 80, height: 120, channels: 3, background: "#497cc2" } }).jpeg().withExif({ IFD0: { Artist: "Synthetic private metadata" } }).toBuffer();
+  await trainee.getByLabel("صورة تقدم خاصة", { exact: true }).setInputFiles({ name: "synthetic-front.jpg", mimeType: "image/jpeg", buffer: bytes });
+  await trainee.getByLabel("أوافق على رفع صور التقدم، وأفهم أن مدربي يستطيع رؤيتها.", { exact: true }).check();
+  await trainee.route("**/api/progress-photos/*", async route => {
+    if (route.request().method() !== "PUT") return route.continue();
+    await route.fetch(); // Persist bytes, then deliberately lose the browser's acknowledgement.
+    await route.abort("failed");
+  });
+  await trainee.getByRole("button", { name: "رفع صورة", exact: true }).click();
+  await trainee.getByRole("status").filter({ hasText: "تم حفظ الصور" }).waitFor();
+  await trainee.unroute("**/api/progress-photos/*");
+  const savedPhotos = (await snapshot(coach)).management.progress_photos.filter(p => p.client_id === client.id);
+  assert.equal(savedPhotos.length, existingPhotos + 1);
+  const photo = savedPhotos.toSorted((a,b) => b.created_at.localeCompare(a.created_at))[0];
+  const privatePhoto = await trainee.request.get(`${base}/api/progress-photos/${photo.id}`);
+  assert.equal(privatePhoto.status(), 200);
+  const metadata = await sharp(await privatePhoto.body()).metadata();
+  assert.equal(metadata.exif, undefined); assert.equal(metadata.width / metadata.height, 2 / 3);
+  const opener = trainee.locator(".progress-photo-timeline-image").first();
+  await opener.click();
+  const dialog = trainee.getByRole("dialog", { name: "عرض صورة التقدم" });
+  await dialog.waitFor(); await trainee.keyboard.press("Tab");
+  assert(await dialog.evaluate(el => el.contains(document.activeElement)));
+  await trainee.keyboard.press("Escape"); await dialog.waitFor({ state: "hidden" });
+  assert(await opener.evaluate(el => el === document.activeElement));
+  passed.push("photo upload survives lost PUT acknowledgement exactly once; saved bytes lack EXIF and preserve ratio; zoom keyboard focus/Escape works"); console.log(passed.at(-1));
+  await coach.goto(`${base}/coach/clients/${client.id}?tab=profile`);
+  coach.on("dialog", dialog => dialog.accept());
+  await coach.getByRole("button", { name: /تفعيل رابط العميل|تغيير الرابط والرمز/ }).click();
+  const portalUrl = await coach.getByLabel("رابط العميل الخاص").inputValue();
+  const pin = (await coach.locator(".portal-share strong").innerText()).trim();
+  const anon = await browser.newContext({ viewport: { width: 390, height: 844 } }); anon.setDefaultTimeout(15000);
+  const visitor = await anon.newPage(); lastPage = visitor;
+  await visitor.goto(portalUrl);
+  assert.equal(await visitor.locator(".client-portal").count(), 0);
+  await visitor.getByLabel("رمز دخول العميل").fill(pin);
+  await visitor.getByRole("button", { name: "افتح جدولي", exact: true }).click();
+  await visitor.locator(".client-portal").waitFor();
+  await visitor.getByText(name, { exact: true }).waitFor();
+  passed.push("separate anonymous browser enters portal with PIN and reads same published records"); console.log(passed.at(-1));
+  await anon.setOffline(true);
+  await visitor.getByRole("button", { name: "تحديث الجدول", exact: true }).click();
+  await visitor.getByText("تعذر الاتصال. بياناتك المدخلة ما زالت هنا", { exact: false }).waitFor();
+  assert.equal(await visitor.locator(".client-portal").count(), 1);
+  assert.equal(await visitor.getByRole("button", { name: "تحديث الجدول", exact: true }).isEnabled(), true);
+  await anon.setOffline(false);
+  await visitor.getByRole("button", { name: "تحديث الجدول", exact: true }).click();
+  await visitor.getByText(name, { exact: true }).waitFor();
+  passed.push("actual offline refresh preserves portal and recovers after reconnect"); console.log(passed.at(-1));
+  await visitor.screenshot({ path: output + "/portal-mobile.png", fullPage: true });
+  const other = await login("coach2@example.test");
+  assert.equal((await other.request.get(`${base}/api/progress-photos/${photo.id}`)).status(), 404);
+  assert(!(await snapshot(other)).clients.some(c => c.id === client.id));
+  await other.goto(`${base}/coach/clients/${client.id}`);
+  assert.equal(await other.getByText(client.email, { exact: true }).count(), 0);
+  passed.push("second coach cannot read first coach client through export or changed-ID profile URL"); console.log(passed.at(-1));
+  await coach.getByRole("button", { name: "إيقاف الرابط", exact: true }).click();
+  await visitor.getByRole("button", { name: "تحديث الجدول", exact: true }).click();
+  await visitor.locator(".portal-gate").waitFor();
+  assert.equal(await visitor.getByText(name, { exact: true }).count(), 0);
+  await trainee.reload(); await trainee.getByText(name, { exact: true }).waitFor();
+  passed.push("revoked portal session loses data while separately linked account retains access"); console.log(passed.at(-1));
+  assert.deepEqual(errors, []);
+  await writeFile(output + "/result.json", JSON.stringify({ passed, errors, syntheticLocalOnly: true }, null, 2));
+} catch (error) {
+  if (lastPage) await lastPage.screenshot({ path: output + "/failure.png", fullPage: true }).catch(() => {});
+  await writeFile(output + "/result.json", JSON.stringify({ passed, failure: String(error), syntheticLocalOnly: true }, null, 2));
+  throw error;
+} finally { await browser.close(); }

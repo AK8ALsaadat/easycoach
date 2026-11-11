@@ -117,8 +117,10 @@ export const commands = {
     client_id: id,
     name: z.string().min(2).max(140),
     content,
+    expected_draft_id: id.nullable().optional(),
+    expected_edit_revision: z.number().int().positive().nullable().optional(),
   }),
-  program_publish: z.object({ id }),
+  program_publish: z.object({ id, expected_edit_revision: z.number().int().positive().optional() }),
   subscription_create: z
     .object({
       client_id: id,
@@ -195,6 +197,7 @@ export type Template = {
   updated_at: string;
 };
 export type Program = Template & {
+  edit_revision?: number;
   client_id: string;
   published_at: string | null;
   created_at: string;

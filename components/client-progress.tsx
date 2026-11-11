@@ -49,18 +49,21 @@ export function ClientProgress({
           e.preventDefault();
           const f = new FormData(e.currentTarget);
           setBusy(true);
-          const r = await mutate("goal_save", {
-            client_id: clientId,
-            goal: f.get("goal"),
-            target_weight: f.get("target_weight")
-              ? Number(f.get("target_weight"))
-              : null,
-            focus: f.get("focus"),
-            notes: f.get("notes"),
-          });
-          setError(r.message);
-          setBusy(false);
-          if (r.ok) router.refresh();
+          try {
+            const r = await mutate("goal_save", {
+              client_id: clientId,
+              goal: f.get("goal"),
+              target_weight: f.get("target_weight")
+                ? Number(f.get("target_weight"))
+                : null,
+              focus: f.get("focus"),
+              notes: f.get("notes"),
+            });
+            setError(r.message);
+            if (r.ok) router.refresh();
+          } catch {
+            setError("تعذر الاتصال. لم نتأكد من الحفظ؛ احتفظ بالبيانات وأعد المحاولة.");
+          } finally { setBusy(false); }
         }}
       >
         <h2 className="flex items-center gap-2">
@@ -161,9 +164,13 @@ export function PortalControl({
             )
               return;
             setBusy(true);
-            setResult(await createPortal(clientId));
-            setBusy(false);
-            router.refresh();
+            try {
+              const result = await createPortal(clientId);
+              setResult(result);
+              if (result.ok) router.refresh();
+            } catch {
+              setResult({ error: "تعذر الاتصال. لم نتأكد من إنشاء الرابط؛ حدّث الصفحة قبل إعادة المحاولة." });
+            } finally { setBusy(false); }
           }}
         >
           {link && !link.revoked_at ? (

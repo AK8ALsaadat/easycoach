@@ -1,4 +1,5 @@
 "use client";
+import { uploadProgressPhoto } from "@/lib/upload-progress-photo";
 import { useLocale } from "./locale-provider";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -9,6 +10,7 @@ import type { ManagementData } from "@/lib/management";
 import type { CoachingRecord } from "@/lib/management";
 import type { WeightEntry } from "@/lib/model";
 import { prepareProgressPhoto } from "@/lib/prepare-progress-photo";
+import { useDialog } from "./use-dialog";
 
 type Angle = "front" | "back" | "side";
 type Slot = { file: File; preview: string; requestId: string };
@@ -52,6 +54,7 @@ export function ProgressPhotos({
   const [preparing, setPreparing] = useState<Angle | null>(null);
   const [message, setMessage] = useState("");
   const [zoom, setZoom] = useState<string | null>(null);
+  const zoomDialog = useDialog<HTMLDivElement>(Boolean(zoom), () => setZoom(null), "button");
   const [deleting, setDeleting] = useState("");
   const [compareAngle, setCompareAngle] = useState<Angle>("front");
   const [firstDate, setFirstDate] = useState<string | null>(null);
@@ -221,17 +224,10 @@ export function ProgressPhotos({
         if (!ticket.ok || !ticket.id || (!ticket.url && !ticket.alreadyReady))
           throw new Error(ticket.error ?? "تعذر تجهيز رفع الصورة.");
         if (!ticket.alreadyReady) {
-          const response = await fetch(ticket.url!, {
-            method: "PUT",
-            headers: {
+          await uploadProgressPhoto(ticket.url!, slot.file, {
               "Content-Type": slot.file.type,
               ...(ticket.portalHash ? { "x-portal-hash": ticket.portalHash } : {}),
-            },
-            body: slot.file,
-          });
-          if (!response.ok) throw new Error("تعذر رفع الصورة. أعد المحاولة؛ ستبقى الصورة المختارة هنا.");
-          const result = await finishPhoto(ticket.id, portalToken);
-          if (!result.ok) throw new Error(result.error);
+            }, () => finishPhoto(ticket.id!, portalToken));
         }
         URL.revokeObjectURL(slot.preview);
         setSlots((current) => {
@@ -399,7 +395,7 @@ export function ProgressPhotos({
         )}
       </section>
 
-      {zoom && <div className="fixed inset-0 z-50 grid place-items-center bg-black/90 p-3" role="dialog" aria-modal="true" aria-label={tr("عرض صورة التقدم")} onClick={() => setZoom(null)}>
+      {zoom && <div ref={zoomDialog} tabIndex={-1} className="fixed inset-0 z-50 grid place-items-center bg-black/90 p-3" role="dialog" aria-modal="true" aria-label={tr("عرض صورة التقدم")} onClick={() => setZoom(null)}>
         <button type="button" className="absolute end-4 top-4 rounded-full bg-white/15 p-3 text-white" aria-label={tr("إغلاق")} onClick={() => setZoom(null)}><X size={22} /></button>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={zoom} alt={tr("صورة تقدم محفوظة") + " · " + labelFor(compareAngle, tr)} className="max-h-[92dvh] max-w-[96vw] object-contain" onClick={(event) => event.stopPropagation()} />

@@ -1,7 +1,7 @@
 "use server";
 import { randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile, rename, unlink } from "node:fs/promises";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -13,9 +13,9 @@ import { cleanPendingPhotos } from "@/lib/photo-cleanup";
 import {
   accessPhoto,
   photoPath,
-  validPhoto,
   type PhotoAsset,
 } from "@/lib/progress-photos";
+import { sanitizeProgressPhoto } from "@/lib/sanitize-progress-photo";
 
 const metadata = z
   .object({
@@ -60,7 +60,7 @@ export async function photoTicket(input: unknown, portalToken?: string) {
       ? null
       : await adminClient()
           .storage.from("progress-photos")
-          .createSignedUploadUrl(photoPath(asset), { upsert: true });
+          .createSignedUploadUrl(photoPath(asset), { upsert: false });
     if (signed?.error) throw signed.error;
     return {
       ok: true,
@@ -83,6 +83,8 @@ export async function finishPhoto(assetId: string, portalToken?: string) {
         )
       : undefined;
     const asset = await accessPhoto(assetId, portalHash);
+    if (asset.status === "ready") return { ok: true, id: asset.id };
+    if (asset.status !== "pending") throw Error("الصورة غير متاحة");
     let bytes: Uint8Array;
     if (localMode())
       bytes = await readFile(
@@ -95,17 +97,39 @@ export async function finishPhoto(assetId: string, portalToken?: string) {
       if (result.error) throw result.error;
       bytes = new Uint8Array(await result.data.arrayBuffer());
     }
-    if (bytes.length !== Number(asset.size) || !validPhoto(bytes, asset.mime))
-      throw Error("الصورة أو حجمها غير صالح. استخدم JPG أو PNG أو WebP");
-    if (localMode())
-      await (
+    // Reservation size remains the original upload fingerprint. A retry can
+    // encounter already-sanitized bytes if finalization failed after Storage
+    // update, so validate actual byte/pixel limits rather than the original size.
+    const sanitized = await sanitizeProgressPhoto(bytes, asset.mime);
+    if (localMode()) {
+      const target = path.join(process.cwd(), "data/progress-photos", asset.id);
+      const temporary = `${target}.clean-${randomUUID()}`;
+      try {
+        await writeFile(temporary, sanitized, { flag: "wx" });
+        await rename(temporary, target);
+      } finally {
+        await unlink(temporary).catch((error: NodeJS.ErrnoException) => {
+          if (error.code !== "ENOENT") throw error;
+        });
+      }
+    } else {
+      // Update the existing object without a delete/create gap. The upload
+      // ticket is non-upsert, so it cannot overwrite this sanitized object.
+      const updated = await adminClient().storage.from("progress-photos")
+        .update(photoPath(asset), sanitized, { contentType: asset.mime, cacheControl: "0", upsert: false });
+      if (updated.error) throw updated.error;
+    }
+    if (localMode()) {
+      const result = await (
         await getLocalDatabase()
-      ).query("select private.finalize_photo($1::uuid)", [asset.id]);
-    else {
+      ).query<{ finalized: boolean }>("select private.finalize_photo($1::uuid) as finalized", [asset.id]);
+      if (result.rows[0]?.finalized !== true) throw Error("تعذر حفظ الصورة. حدّث الصفحة وأعد المحاولة");
+    } else {
       const result = await adminClient().rpc("finalize_photo", {
         asset: asset.id,
       });
       if (result.error) throw result.error;
+      if (result.data !== true) throw Error("تعذر حفظ الصورة. حدّث الصفحة وأعد المحاولة");
     }
     revalidatePath("/", "layout");
     return { ok: true, id: asset.id };

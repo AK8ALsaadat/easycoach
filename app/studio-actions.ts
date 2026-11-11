@@ -3,6 +3,7 @@ import { randomBytes, randomInt, randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { portalFailure } from "@/lib/portal-request";
 import { id, date, type PortalData } from "@/lib/model";
 import {
   hash,
@@ -70,7 +71,7 @@ export async function accessPortal(
               .parse(pin),
         )
       : jar.get("ec_portal_" + key.slice(0, 12))?.value;
-    if (!proof) return { ok: false, error: "أدخل رمز الدخول من مدربك" };
+    if (!proof) return portalFailure("أدخل رمز الدخول من مدربك");
     if (entry) {
       date.parse(entry.entry_date);
       if (!entry.remove) z.number().min(20).max(400).parse(entry.weight);
@@ -88,13 +89,13 @@ export async function accessPortal(
           true,
         )
       : null;
-    if (weightResult?.error) return { ok: false, error: weightResult.error };
+    if (weightResult?.error) return portalFailure(weightResult.error);
     const result = await rpc<PortalData & { error?: string }>(
       "portal_management",
       { token_hash: key, proof, command: "snapshot", payload: {} },
       true,
     );
-    if (result.error) return { ok: false, error: result.error };
+    if (result.error) return portalFailure(result.error);
     const schedule = await rpc<NonNullable<NonNullable<PortalData["management"]>["schedules"]>[number] | null>(
       "portal_schedule_snapshot",
       { token_hash: key, proof },

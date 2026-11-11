@@ -74,9 +74,11 @@ export function ClientHub({
     [exerciseName, setExerciseName] = useState("");
   const [result, setResult] = useState<Result | null>(null),
     [busy, setBusy] = useState(false),
-    [renewalRequested, setRenewalRequested] = useState(false),
+    [renewalRequestedFor, setRenewalRequestedFor] = useState<string | null>(null),
     [recordPage, setRecordPage] = useState(0),
     [workoutPage, setWorkoutPage] = useState(0);
+  const renewalRequested = renewalRequestedFor === clientId;
+  const renewalRequest = useRef<{ clientId: string; id: string; day: string; text: string } | null>(null);
   const details = management?.details.find(
     (detail) => detail.client_id === clientId,
   );
@@ -860,14 +862,19 @@ export function ClientHub({
               <h2>{tr("المراسلات داخل المنصة")}</h2>
               <div className="flex flex-wrap gap-2">
                 {!coach && showRenewalRequest && <button type="button" className="btn" disabled={busy || renewalRequested} onClick={async () => {
+                  if (!renewalRequest.current || renewalRequest.current.clientId !== clientId) renewalRequest.current = {
+                    clientId, id: crypto.randomUUID(), day: riyadhToday(),
+                    text: tr("أرغب في تجديد اشتراكي. تواصل معي من فضلك لمناقشة المدة والتكلفة."),
+                  };
+                  const request = renewalRequest.current;
                   const response = await action("record_save", {
-                    id: crypto.randomUUID(),
+                    id: request.id,
                     client_id: clientId,
                     kind: "message",
-                    entry_date: riyadhToday(),
-                    payload: { text: tr("أرغب في تجديد اشتراكي. تواصل معي من فضلك لمناقشة المدة والتكلفة.") },
+                    entry_date: request.day,
+                    payload: { text: request.text },
                   });
-                  if (response.ok) setRenewalRequested(true);
+                  if (response.ok) setRenewalRequestedFor(clientId);
                 }}>{tr(renewalRequested ? "تم إرسال طلب التجديد" : busy ? "جارٍ إرسال الطلب…" : "طلب تجديد الاشتراك")}</button>}
                 <button
                   className="btn-secondary"

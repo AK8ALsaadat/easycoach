@@ -725,6 +725,7 @@ function ClientDetail({
             separateNutrition
             name={selected?.name ?? "برنامج جديد"}
             id={draft?.id}
+            editRevision={draft?.edit_revision}
             clientId={client.id}
             library={data.exercises}
           />

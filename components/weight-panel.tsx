@@ -241,6 +241,8 @@ export function WeightPanel({
                         try {
                           const err = await onDelete(w.entry_date);
                           if (err) setError(err);
+                        } catch {
+                          setError("تعذر الاتصال. لم نتأكد من الحذف؛ حدّث السجل قبل إعادة المحاولة.");
                         } finally {
                           setBusy(false);
                         }

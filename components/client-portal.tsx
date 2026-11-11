@@ -15,6 +15,7 @@ import { TraineeCheckinStatus } from "./trainee-checkin-status";
 import { riyadhToday, formatDate } from "@/lib/dates";
 import { CoachIdentity } from "./coach-identity";
 import type { CoachBranding } from "@/lib/coach-branding";
+import { portalDataAfterResponse, requestPortal } from "@/lib/portal-request";
 export function ClientPortal({ token, branding }: { token: string; branding?: CoachBranding | null }) {
   const { t: tr } = useLocale();
 
@@ -24,9 +25,10 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
     [busy, setBusy] = useState(false),
     [updated, setUpdated] = useState("");
   const refresh = useCallback(async () => {
-    const r = await accessPortal(token);
+    const r = await requestPortal(() => accessPortal(token));
+    setData((current) => portalDataAfterResponse(current, r));
     if (r.ok && r.data) {
-      setData(r.data);
+      setError("");
       setUpdated(
         new Date().toLocaleTimeString("ar-SA", {
           hour: "2-digit",
@@ -34,15 +36,16 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
         }),
       );
     } else {
-      setData(null);
       setError(r.error ?? "تعذر تحديث الرابط. حاول الدخول مرة ثانية");
     }
     return r;
   }, [token]);
   useEffect(() => {
     let active = true;
-    void accessPortal(token).then((r) => {
-      if (active && r.ok && r.data) setData(r.data);
+    void requestPortal(() => accessPortal(token)).then((r) => {
+      if (!active) return;
+      setData((current) => portalDataAfterResponse(current, r));
+      if (!r.ok) setError(r.error ?? "تعذر فتح الرابط");
     });
     return () => {
       active = false;
@@ -66,12 +69,14 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
             e.preventDefault();
             setBusy(true);
             setError("");
-            const r = await accessPortal(token, pin);
-            if (r.ok && r.data) {
-              setData(r.data);
-              setPin("");
-            } else setError(r.error ?? "تعذر فتح الرابط");
-            setBusy(false);
+            try {
+              const r = await requestPortal(() => accessPortal(token, pin));
+              setData((current) => portalDataAfterResponse(current, r));
+              if (r.ok && r.data) setPin("");
+              else setError(r.error ?? "تعذر فتح الرابط");
+            } finally {
+              setBusy(false);
+            }
           }}
         >
           <span className="portal-icon mb-5">
@@ -134,11 +139,14 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
             }}>{tr("التواصل مع المدرب")}</button>
             <button
               className="btn-secondary"
+              disabled={busy}
               onClick={async () => {
                 setBusy(true);
-                const r = await refresh();
-                if (!r.ok) setError(r.error ?? "تعذر التحديث");
-                setBusy(false);
+                try {
+                  await refresh();
+                } finally {
+                  setBusy(false);
+                }
               }}
             >
               <RefreshCw size={15} className={busy ? "animate-spin" : ""} />
@@ -178,20 +186,20 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
               entries={data.weights}
               target={data.goal?.target_weight}
               onSave={async (day, weight) => {
-                const r = await accessPortal(token, undefined, {
+                const r = await requestPortal(() => accessPortal(token, undefined, {
                   entry_date: day,
                   weight,
-                });
-                if (r.ok && r.data) setData(r.data);
-                else return r.error;
+                }));
+                setData((current) => portalDataAfterResponse(current, r));
+                if (!r.ok) return r.error;
               }}
               onDelete={async (day) => {
-                const r = await accessPortal(token, undefined, {
+                const r = await requestPortal(() => accessPortal(token, undefined, {
                   entry_date: day,
                   remove: true,
-                });
-                if (r.ok && r.data) setData(r.data);
-                else return r.error;
+                }));
+                setData((current) => portalDataAfterResponse(current, r));
+                if (!r.ok) return r.error;
               }}
             /></div>
             <div className="border-t p-4 text-xs leading-7 text-muted">

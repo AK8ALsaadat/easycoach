@@ -758,6 +758,7 @@ export type Database = {
       };
       programs: {
         Row: {
+          edit_revision: number;
           client_id: string;
           coach_id: string;
           content: Json;
@@ -768,6 +769,7 @@ export type Database = {
           version: number;
         };
         Insert: {
+          edit_revision?: number;
           client_id: string;
           coach_id: string;
           content: Json;
@@ -778,6 +780,7 @@ export type Database = {
           version?: never;
         };
         Update: {
+          edit_revision?: number;
           client_id?: string;
           coach_id?: string;
           content?: Json;

@@ -10,5 +10,5 @@ export async function generateMetadata({ params }: Props) {
 export default async function Portal({ params }: Props) {
   const { token } = await params;
   if (!/^[a-f0-9]{64}$/.test(token)) notFound();
-  return <ClientPortal token={token} branding={await linkBranding(token, "p")} />;
+  return <ClientPortal key={token} token={token} branding={await linkBranding(token, "p")} />;
 }

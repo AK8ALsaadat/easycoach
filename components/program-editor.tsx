@@ -52,6 +52,7 @@ export function ProgramEditor({
   initial,
   name: initialName,
   id,
+  editRevision,
   clientId,
   library = [],
   separateNutrition = false,
@@ -59,6 +60,7 @@ export function ProgramEditor({
   initial: Content;
   name: string;
   id?: string;
+  editRevision?: number;
   clientId?: string;
   library?: Exercise[];
   separateNutrition?: boolean;
@@ -88,6 +90,7 @@ export function ProgramEditor({
   const customInput = useRef<HTMLInputElement>(null);
   const catalogRef = useDialog(catalogOpen, () => setCatalogOpen(false), "[data-picker-search]");
   const savedId = useRef(id);
+  const savedEditRevision = useRef<number | null>(editRevision ?? null);
   const revision = useRef(0);
   const lock = useRef(false);
   function changed() {
@@ -117,12 +120,13 @@ export function ProgramEditor({
       const response = await mutate(
         clientId ? "program_save" : "template_save",
         clientId
-          ? { client_id: clientId, name, content: check.data }
+          ? { client_id: clientId, name, content: check.data, expected_draft_id: savedId.current ?? null, expected_edit_revision: savedEditRevision.current }
           : { id: savedId.current, name, content: check.data },
       );
       setResult(response);
       if (response.ok) {
         savedId.current = (response.data as { id: string }).id;
+        savedEditRevision.current = (response.data as { edit_revision?: number }).edit_revision ?? null;
         setHasSaved(true);
         if (rev === revision.current) setDirty(false);
         return savedId.current;
@@ -771,10 +775,12 @@ export function ProgramEditor({
                 if (!draftId) return;
                 const response = await mutate("program_publish", {
                   id: draftId,
+                  expected_edit_revision: savedEditRevision.current ?? undefined,
                 });
                 setResult(response);
                 if (response.ok) {
                   savedId.current = undefined;
+                  savedEditRevision.current = null;
                   setResult({
                     ok: true,
                     message: "تم النشر. المتدرب يرى هذه النسخة الآن.",

@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/dates";
 import { Play, Timer, Utensils } from "lucide-react";
 import { useState } from "react";
 import { riyadhToday } from "@/lib/dates";
+import { resolveWorkoutDay } from "@/lib/trainee-workout-day";
 export function ProgramView({
   program,
   portalHash,
@@ -22,20 +23,17 @@ export function ProgramView({
   const weekday = new Date(riyadhToday() + "T12:00:00Z").getUTCDay();
   const scheduledIndex = program?.content.days.findIndex((day) => day.weekday === weekday) ?? -1;
   const hasWeekdaySchedule = Boolean(program?.content.days.some((day) => day.weekday !== undefined));
-  const [selectedDay, setSelectedDay] = useState<number>(() => {
-    return scheduledIndex >= 0 ? scheduledIndex : hasWeekdaySchedule ? -1 : 0;
-  });
-
-  if (!program)
-    return (
+  const [chosenDay, setSelectedDay] = useState<number | null>(null);
+  const selectedDay = resolveWorkoutDay(chosenDay, program?.content.days ?? [], weekday);
+  const nutritionPlan = nutrition ?? program?.content.nutrition;
+  return (
+    <div className="space-y-6">
+      {!program ? (
       <div className="empty card">
         <h2 className="text-ink">{tr("برنامجك قيد التجهيز")}</h2>
         <p>{tr("سيظهر هنا بعد أن ينشره مدربك. المسودات لا تظهر لك.")}</p>
       </div>
-    );
-  const nutritionPlan = nutrition ?? program.content.nutrition;
-  return (
-    <div className="space-y-6">
+      ) : <>
       <div className="card p-6">
         <span className="badge bg-accent/40 text-teal">
           {tr("آخر نسخة منشورة")}
@@ -146,7 +144,8 @@ export function ProgramView({
           </div>
         </section>
       ))}
-      <section className="card p-6">
+      </>}
+      {nutritionPlan && <section className="card p-6">
         <h2 className="flex items-center gap-2">
           <Utensils size={20} className="text-teal" />
           {tr("خطة التغذية")}
@@ -199,7 +198,7 @@ export function ProgramView({
             ))}
           </div>
         ) : null}
-      </section>
+      </section>}
     </div>
   );
 }
