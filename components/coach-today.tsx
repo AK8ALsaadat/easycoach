@@ -146,13 +146,13 @@ export function CoachToday({ data }: { data: Snapshot }) {
           </p>
         </div>
         <div className="dashboard-actions">
-          <Link className="btn-secondary" href="/coach/library">
-            <Dumbbell size={17} />
-            {tr("مكتبة التدريب")}
-          </Link>
           <Link className="btn" href="/coach/clients?add=1">
             <Plus size={17} />
             {tr("متدرب جديد")}
+          </Link>
+          <Link className="btn-secondary" href="/coach/library">
+            <Dumbbell size={17} />
+            {tr("مكتبة التدريب")}
           </Link>
         </div>
       </div>

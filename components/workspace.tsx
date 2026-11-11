@@ -272,6 +272,14 @@ export function Workspace({
             </Link>
           ))}
         </nav>
+        <Link
+          href="/coach/clients?add=1"
+          onClick={() => setMobile(false)}
+          className="sidebar-primary-action"
+        >
+          <Plus size={18} />
+          <span>{tr("إضافة متدرب")}</span>
+        </Link>
         <div className="sidebar-account">
           <Avatar name={data.profile!.name} />
           <div className="min-w-0 flex-1">

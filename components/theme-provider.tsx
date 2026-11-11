@@ -1,7 +1,7 @@
 "use client";
 import {createContext,useContext,useState,type ReactNode} from "react";
 type Theme="light"|"dark";
-const ThemeContext=createContext({theme:"light" as Theme,toggle:()=>{}});
+const ThemeContext=createContext({theme:"dark" as Theme,toggle:()=>{}});
 
 export function ThemeProvider({initialTheme,children}:{initialTheme:Theme;children:ReactNode}) {
   const [theme,setTheme]=useState(initialTheme);

@@ -22,7 +22,8 @@ export default async function RootLayout({
 }) {
   const preferences=await cookies();
   const language = preferences.get("ec_language")?.value === "en" ? "en" : "ar";
-  const theme=preferences.get("ec_theme")?.value === "dark" ? "dark" : "light";
+  // Dark is the first-visit default; keep an explicit light-mode choice.
+  const theme=preferences.get("ec_theme")?.value === "light" ? "light" : "dark";
   return (
     <html lang={language} dir={language === "en" ? "ltr" : "rtl"} data-theme={theme}>
       <body className={font.className}>
