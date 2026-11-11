@@ -5,6 +5,13 @@ import { notFound } from "next/navigation";
 import { actor, hash, rpc } from "@/lib/server";
 import { Brand } from "@/components/brand";
 import { LinkForm } from "@/components/link-form";
+import { linkBranding } from "@/lib/coach-branding-server";
+import { brandingPreview } from "@/lib/coach-branding";
+import { CoachIdentity } from "@/components/coach-identity";
+export async function generateMetadata({ params }: { params: Promise<{ kind: string; token: string }> }) {
+  const { kind, token } = await params;
+  return brandingPreview(await linkBranding(token, kind), process.env.APP_URL ?? "http://127.0.0.1:3200");
+}
 export default async function PublicLink({
   params,
 }: {
@@ -39,7 +46,7 @@ export default async function PublicLink({
     <main className="mx-auto max-w-lg px-5 py-10">
       <Brand />
       <section className="card mt-12 p-7">
-        <p className="mb-3 text-sm text-teal">{info.coach}</p>
+        <CoachIdentity branding={await linkBranding(token, kind)} fallback={info.coach} />
         <h1 className="text-2xl">
           {kind === "join"
             ? tr("اطلب الانضمام لمدربك")

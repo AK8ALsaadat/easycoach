@@ -118,6 +118,7 @@ export async function snapshot(): Promise<Snapshot> {
   } catch {
     if (data.management) data.management.schedules = [];
   }
+  data.coach_branding = await rpc("coach_branding_snapshot");
   return { ...data, demo: user.demo };
 }
 export async function requireCoach() {

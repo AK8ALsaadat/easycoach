@@ -14,6 +14,12 @@ export type Database = {
   };
   public: {
     Tables: {
+      coach_branding: {
+        Row: { coach_id: string; display_name: string; avatar_id: string | null; avatar_base64: string | null; updated_at: string };
+        Insert: { coach_id: string; display_name?: string; avatar_id?: string | null; avatar_base64?: string | null; updated_at?: string };
+        Update: { coach_id?: string; display_name?: string; avatar_id?: string | null; avatar_base64?: string | null; updated_at?: string };
+        Relationships: [{ foreignKeyName: "coach_branding_coach_id_fkey"; columns: ["coach_id"]; isOneToOne: true; referencedRelation: "profiles"; referencedColumns: ["id"] }];
+      };
       account_preferences: {
         Row: {
           checkin_days: number;
@@ -1051,6 +1057,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      coach_branding_snapshot: { Args: Record<PropertyKey, never>; Returns: Json };
+      coach_branding_save: { Args: { display_name: string; change_avatar: boolean; avatar_data: string | null; expected_version?: string | null }; Returns: Json };
+      coach_branding_link: { Args: { token_hash: string; link_type: string }; Returns: Json };
+      coach_branding_avatar: { Args: { asset: string }; Returns: string | null };
       app_command: { Args: { command: string; payload: Json }; Returns: Json };
       app_snapshot: { Args: never; Returns: Json };
       claim_invite: { Args: { token: string }; Returns: boolean };

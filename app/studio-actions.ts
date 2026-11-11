@@ -108,7 +108,8 @@ export async function accessPortal(
       maxAge: 7 * 86400,
       path: "/",
     });
-    return { ok: true, data: { ...result, portalHash: key } };
+    const branding = await rpc<import("@/lib/coach-branding").CoachBranding | null>("coach_branding_link", { token_hash: key, link_type: "p" }, true);
+    return { ok: true, data: { ...result, coach_branding: branding, portalHash: key } };
   } catch (e) {
     return { ok: false, error: readableError(e) };
   }

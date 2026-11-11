@@ -251,6 +251,7 @@ export type PrivacyRequest = {
   resolution: string;
 };
 export type Snapshot = {
+  coach_branding?: import("./coach-branding").CoachBranding[];
   demo?: boolean;
   management?: ManagementData;
   weights: WeightEntry[];
@@ -302,6 +303,7 @@ export type ClientGoal = {
   notes: string;
 };
 export type PortalData = {
+  coach_branding?: import("./coach-branding").CoachBranding | null;
   client_id?: string;
   management?: ManagementData;
   name: string;

@@ -52,6 +52,7 @@ import { SubscriptionRenewal } from "./subscription-renewal";
 import { coachingAlerts } from "@/lib/coaching-alerts";
 import { NotificationSettings } from "./notification-settings";
 import { AccountSettings } from "./account-settings";
+import { CoachBrandingSettings } from "./coach-branding-settings";
 import { exerciseName } from "@/lib/catalog";
 import { CoachToday } from "./coach-today";
 import { useDialog } from "./use-dialog";
@@ -1273,6 +1274,7 @@ function SettingsPage({ data }: { data: Snapshot }) {
       />
       <NotificationSettings data={data} />
       <AccountSettings name={data.profile!.name} />
+      <CoachBrandingSettings branding={data.coach_branding?.find(b => b.coach_id === data.profile?.id)} defaultName={data.profile!.name} />
       <div className="grid items-start gap-6 xl:grid-cols-2">
         <section className="card p-6">
           <h2 className="mb-3">{tr("رابط طلب الانضمام")}</h2>

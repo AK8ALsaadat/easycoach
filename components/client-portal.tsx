@@ -13,7 +13,9 @@ import { ClientHub } from "./client-hub";
 import { effectiveNutrition } from "@/lib/management";
 import { TraineeCheckinStatus } from "./trainee-checkin-status";
 import { riyadhToday, formatDate } from "@/lib/dates";
-export function ClientPortal({ token }: { token: string }) {
+import { CoachIdentity } from "./coach-identity";
+import type { CoachBranding } from "@/lib/coach-branding";
+export function ClientPortal({ token, branding }: { token: string; branding?: CoachBranding | null }) {
   const { t: tr } = useLocale();
 
   const [data, setData] = useState<PortalData | null>(null),
@@ -75,6 +77,7 @@ export function ClientPortal({ token }: { token: string }) {
           <span className="portal-icon mb-5">
             <LockKeyhole size={24} />
           </span>
+          {branding && <CoachIdentity branding={branding} />}
           <p className="eyebrow">{tr("بوابة المتدرب")}</p>
           <h1 className="mt-3">{tr("جاهز لحصتك؟")}</h1>
           <p className="my-4 text-sm text-muted">
@@ -104,12 +107,10 @@ export function ClientPortal({ token }: { token: string }) {
     );
   return (
     <div className="client-portal">
-      <header className="portal-topbar">
+      <header className="portal-topbar flex-wrap">
         <Brand />
         <LanguageSwitch />
-        <span className="text-xs text-white/60">
-          {tr("مع المدرب")} {data.coach}
-        </span>
+        <div className="w-full text-white sm:w-auto sm:max-w-sm"><CoachIdentity branding={data.coach_branding ?? branding} fallback={data.coach} /></div>
       </header>
       <main className="mx-auto max-w-6xl px-5 py-8">
         <div className="portal-welcome">

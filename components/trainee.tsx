@@ -16,6 +16,7 @@ import { ProgramView } from "./program-view";
 import { ClientHub } from "./client-hub";
 import { effectiveNutrition } from "@/lib/management";
 import { TraineeCheckinStatus } from "./trainee-checkin-status";
+import { CoachIdentity } from "./coach-identity";
 export function Trainee({
   data,
   selectedId,
@@ -113,6 +114,7 @@ export function Trainee({
                 </select>
               </div>
             ) : null}
+            <CoachIdentity branding={data.coach_branding?.find(b => b.coach_id === client.coach_id)} />
             <section className="card mb-6 p-5" aria-labelledby="linked-today-title">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div><p className="eyebrow">{tr("اليوم")}</p><h2 id="linked-today-title" className="mt-2 text-xl">{publishedProgram ? tr("خطتك لهذا اليوم") : tr("لا توجد خطة منشورة حاليًا")}</h2><p className="mt-2 text-sm text-muted">{clientWeights[0] ? `${tr("آخر وزن")}: ${clientWeights[0].weight} ${tr("كجم")} · ${formatDate(clientWeights[0].entry_date, locale)}` : tr("لا يوجد وزن مسجل بعد. سجّل تحديثًا سريعًا عندما يناسبك.")}</p><p className="mt-1 text-xs text-muted">{formatDate(today, locale)}</p></div>
