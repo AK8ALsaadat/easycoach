@@ -1,7 +1,7 @@
 ﻿"use client";
 import Link from "next/link";
 import { useLocale } from "./locale-provider";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Send, Check, Download } from "lucide-react";
 import { manage, portalManage, saveClientSchedule } from "@/app/management-actions";
@@ -38,6 +38,7 @@ type HubProps = {
   program?: Program;
   targetWeight?: number | null;
   coach?: boolean;
+  showRenewalRequest?: boolean;
   portalToken?: string;
   portalHash?: string;
   onUpdate?: () => Promise<unknown>;
@@ -60,6 +61,7 @@ export function ClientHub({
   program,
   targetWeight,
   coach = false,
+  showRenewalRequest = false,
   portalToken,
   portalHash,
   onUpdate,
@@ -72,6 +74,7 @@ export function ClientHub({
     [exerciseName, setExerciseName] = useState("");
   const [result, setResult] = useState<Result | null>(null),
     [busy, setBusy] = useState(false),
+    [renewalRequested, setRenewalRequested] = useState(false),
     [recordPage, setRecordPage] = useState(0),
     [workoutPage, setWorkoutPage] = useState(0);
   const details = management?.details.find(
@@ -219,6 +222,12 @@ export function ClientHub({
       setBusy(false);
     }
   }
+  useEffect(() => {
+    if (coach) return;
+    const openMessages = () => setTab("messages");
+    window.addEventListener("easycoach:open-messages", openMessages);
+    return () => window.removeEventListener("easycoach:open-messages", openMessages);
+  }, [coach]);
   const tabs = [
     ["progress", "القياسات والتقدم"],
     ["nutrition", "الماكروز الفعلية"],
@@ -849,13 +858,25 @@ export function ClientHub({
           <section className="card p-5">
             <div className="section-title">
               <h2>{tr("المراسلات داخل المنصة")}</h2>
-              <button
-                className="btn-secondary"
-                disabled={busy}
-                onClick={() => action("messages_read", { client_id: clientId })}
-              >
-                {tr("تحديد المحادثة كمقروءة")}
-              </button>
+              <div className="flex flex-wrap gap-2">
+                {!coach && showRenewalRequest && <button type="button" className="btn" disabled={busy || renewalRequested} onClick={async () => {
+                  const response = await action("record_save", {
+                    id: crypto.randomUUID(),
+                    client_id: clientId,
+                    kind: "message",
+                    entry_date: riyadhToday(),
+                    payload: { text: tr("أرغب في تجديد اشتراكي. تواصل معي من فضلك لمناقشة المدة والتكلفة.") },
+                  });
+                  if (response.ok) setRenewalRequested(true);
+                }}>{tr(renewalRequested ? "تم إرسال طلب التجديد" : busy ? "جارٍ إرسال الطلب…" : "طلب تجديد الاشتراك")}</button>}
+                <button
+                  className="btn-secondary"
+                  disabled={busy}
+                  onClick={() => action("messages_read", { client_id: clientId })}
+                >
+                  {tr("تحديد المحادثة كمقروءة")}
+                </button>
+              </div>
             </div>
             <p className="text-xs text-muted">
               {tr("هذه مراسلة داخل حسابك؛ لا تُرسل بريدًا أو رسالة واتساب.")}

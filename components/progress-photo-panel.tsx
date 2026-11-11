@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ImagePlus, Maximize2, RotateCcw, Trash2, Upload, X } from "lucide-react";
 import { photoTicket, finishPhoto, deleteProgressPhoto } from "@/app/photo-actions";
-import { riyadhToday } from "@/lib/dates";
+import { formatDate, riyadhToday } from "@/lib/dates";
 import type { ManagementData } from "@/lib/management";
 import type { CoachingRecord } from "@/lib/management";
 import type { WeightEntry } from "@/lib/model";
@@ -39,7 +39,7 @@ export function ProgressPhotos({
   measurements?: CoachingRecord[];
   weights?: WeightEntry[];
 }) {
-  const { t: tr } = useLocale();
+  const { t: tr, language } = useLocale();
   const router = useRouter();
   const [slots, setSlots] = useState<Partial<Record<Angle, Slot>>>({});
   const slotsRef = useRef(slots);
@@ -54,8 +54,8 @@ export function ProgressPhotos({
   const [zoom, setZoom] = useState<string | null>(null);
   const [deleting, setDeleting] = useState("");
   const [compareAngle, setCompareAngle] = useState<Angle>("front");
-  const [firstDate, setFirstDate] = useState("");
-  const [secondDate, setSecondDate] = useState("");
+  const [firstDate, setFirstDate] = useState<string | null>(null);
+  const [secondDate, setSecondDate] = useState<string | null>(null);
 
   useEffect(
     () => () => Object.values(slotsRef.current).forEach((slot) => slot && URL.revokeObjectURL(slot.preview)),
@@ -70,11 +70,13 @@ export function ProgressPhotos({
     () => [...new Set(clientPhotos.filter((photo) => photo.angle === compareAngle).map((photo) => photo.entry_date))].sort(),
     [clientPhotos, compareAngle],
   );
+  const selectedFirstDate = firstDate ?? (comparisonDates.length > 1 ? comparisonDates.at(-2)! : comparisonDates[0] ?? "");
+  const selectedSecondDate = secondDate ?? (comparisonDates.length > 1 ? comparisonDates.at(-1)! : "");
   const firstPhoto = clientPhotos
-    .filter((photo) => photo.angle === compareAngle && photo.entry_date === firstDate)
+    .filter((photo) => photo.angle === compareAngle && photo.entry_date === selectedFirstDate)
     .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
   const secondPhoto = clientPhotos
-    .filter((photo) => photo.angle === compareAngle && photo.entry_date === secondDate)
+    .filter((photo) => photo.angle === compareAngle && photo.entry_date === selectedSecondDate)
     .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
   const metricsFor = (date: string) => {
     if (!date) return null;
@@ -96,8 +98,19 @@ export function ProgressPhotos({
       calf: typeof payload.calf === "number" ? payload.calf : undefined,
     };
   };
-  const firstMetrics = metricsFor(firstDate);
-  const secondMetrics = metricsFor(secondDate);
+  const firstMetrics = metricsFor(selectedFirstDate);
+  const secondMetrics = metricsFor(selectedSecondDate);
+  const photoTimeline = useMemo(() => {
+    const grouped = new Map<string, typeof clientPhotos>();
+    for (const photo of clientPhotos) {
+      const datePhotos = grouped.get(photo.entry_date) ?? [];
+      datePhotos.push(photo);
+      grouped.set(photo.entry_date, datePhotos);
+    }
+    return [...grouped.entries()]
+      .map(([date, datePhotos]) => ({ date, photos: datePhotos }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [clientPhotos]);
   const metricRows = [
     ["الوزن", "weight", "كجم"],
     ["نسبة الدهون", "body_fat", "%"],
@@ -109,6 +122,46 @@ export function ProgressPhotos({
     ["الساق", "calf", "سم"],
   ] as const;
   const photoUrl = (id: string) => `/api/progress-photos/${id}${portalHash ? `?portal=${portalHash}` : ""}`;
+
+  function photoFigure(photo: ManagementData["progress_photos"][number], label: string, date: string) {
+    return (
+      <figure key={photo.id} className="overflow-hidden rounded-lg border border-line">
+        <button
+          type="button"
+          className="progress-photo-timeline-image"
+          onClick={() => setZoom(photoUrl(photo.id))}
+          aria-label={tr("تكبير صورة ") + tr(label) + " " + formatDate(date, language)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photoUrl(photo.id)} alt={`${tr(label)} · ${formatDate(date, language)}`} loading="lazy" />
+        </button>
+        <figcaption className="flex justify-end p-2">
+          <button type="button" className="btn-soft" disabled={Boolean(deleting)} onClick={() => void removePhoto(photo)}>
+            <Trash2 size={14} />{tr(deleting === photo.id ? "جارٍ الحذف…" : "حذف")}
+          </button>
+        </figcaption>
+      </figure>
+    );
+  }
+
+  async function removePhoto(photo: ManagementData["progress_photos"][number]) {
+    if (!window.confirm(tr("حذف هذه الصورة نهائيًا؟"))) return;
+    setDeleting(photo.id);
+    setMessage("");
+    try {
+      const result = await deleteProgressPhoto(photo.id, portalToken);
+      if (!result.ok) setMessage(result.error ?? "تعذر حذف الصورة.");
+      else {
+        setMessage("تم حذف الصورة من السجل.");
+        if (onUpdate) await onUpdate();
+        else router.refresh();
+      }
+    } catch {
+      setMessage("تعذر الاتصال. لم نتأكد من حذف الصورة؛ حدّث السجل قبل المحاولة مرة أخرى.");
+    } finally {
+      setDeleting("");
+    }
+  }
 
   async function selectFile(angle: Angle, original?: File) {
     const previous = slots[angle];
@@ -265,25 +318,25 @@ export function ProgressPhotos({
         <p className="mt-1 text-xs text-muted">{tr("اختر التاريخين والزاوية نفسها. الصور تحافظ على أبعادها؛ افتح أي صورة لعرضها بحجم أكبر.")}</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <label>{tr("الزاوية")}
-            <select className="field" value={compareAngle} onChange={(event) => { const next = event.target.value as Angle; setCompareAngle(next); const dates = [...new Set(clientPhotos.filter((photo) => photo.angle === next).map((photo) => photo.entry_date))].sort(); setFirstDate(dates[0] ?? ""); setSecondDate(dates.at(-1) ?? ""); }}>
+            <select className="field" value={compareAngle} onChange={(event) => { setCompareAngle(event.target.value as Angle); setFirstDate(null); setSecondDate(null); }}>
               {ANGLES.map(({ key, label }) => <option key={key} value={key}>{tr(label)}</option>)}
             </select>
           </label>
           <label>{tr("التاريخ الأول")}
-            <select className="field" value={firstDate} onChange={(event) => { setFirstDate(event.target.value); if (event.target.value === secondDate) setSecondDate(""); }}>
+            <select className="field" value={selectedFirstDate} onChange={(event) => { setFirstDate(event.target.value); if (event.target.value === selectedSecondDate) setSecondDate(""); }}>
               <option value="">{tr("اختر تاريخًا")}</option>
-              {comparisonDates.filter((date) => date !== secondDate).map((date) => <option value={date} key={date}>{date}</option>)}
+              {comparisonDates.filter((date) => date !== selectedSecondDate).map((date) => <option value={date} key={date}>{formatDate(date, language)}</option>)}
             </select>
           </label>
           <label>{tr("التاريخ الثاني")}
-            <select className="field" value={secondDate} onChange={(event) => { setSecondDate(event.target.value); if (event.target.value === firstDate) setFirstDate(""); }}>
+            <select className="field" value={selectedSecondDate} onChange={(event) => { setSecondDate(event.target.value); if (event.target.value === selectedFirstDate) setFirstDate(""); }}>
               <option value="">{tr("اختر تاريخًا")}</option>
-              {comparisonDates.filter((date) => date !== firstDate).map((date) => <option value={date} key={date}>{date}</option>)}
+              {comparisonDates.filter((date) => date !== selectedFirstDate).map((date) => <option value={date} key={date}>{formatDate(date, language)}</option>)}
             </select>
           </label>
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          {[{ photo: firstPhoto, date: firstDate, label: "التاريخ الأول" }, { photo: secondPhoto, date: secondDate, label: "التاريخ الثاني" }].map(({ photo, date, label }) => (
+          {[{ photo: firstPhoto, date: selectedFirstDate, label: "التاريخ الأول" }, { photo: secondPhoto, date: selectedSecondDate, label: "التاريخ الثاني" }].map(({ photo, date, label }) => (
             <figure className="overflow-hidden rounded-xl border border-line" key={label}>
               <figcaption className="flex items-center justify-between gap-3 px-3 py-2 text-sm"><strong>{tr(label)}</strong><span>{date || tr("لم يُحدد")}</span></figcaption>
               {photo ? <button type="button" className="block w-full bg-canvas" onClick={() => setZoom(photoUrl(photo.id))} aria-label={tr("تكبير صورة ") + tr(label)}>
@@ -296,7 +349,7 @@ export function ProgressPhotos({
         </div>
         <div className="mt-4 overflow-x-auto rounded-xl border border-line">
           <table className="w-full text-sm">
-            <thead><tr><th>{tr("المؤشر")}</th><th>{firstDate || tr("التاريخ الأول")}</th><th>{secondDate || tr("التاريخ الثاني")}</th><th>{tr("التغير")}</th></tr></thead>
+            <thead><tr><th>{tr("المؤشر")}</th><th>{selectedFirstDate ? formatDate(selectedFirstDate, language) : tr("التاريخ الأول")}</th><th>{selectedSecondDate ? formatDate(selectedSecondDate, language) : tr("التاريخ الثاني")}</th><th>{tr("التغير")}</th></tr></thead>
             <tbody>{metricRows.map(([label, key, unit]) => {
               const before = firstMetrics?.[key];
               const after = secondMetrics?.[key];
@@ -307,19 +360,43 @@ export function ProgressPhotos({
         </div>
       </section>
 
-      <section className="border-t pt-5">
-        <h3 className="font-semibold">{tr("السجل حسب الزاوية")}</h3>
-        <div className="mt-4 space-y-5">
-          {ANGLES.map(({ key, label }) => {
-            const rows = clientPhotos.filter((photo) => photo.angle === key).sort((a, b) => b.entry_date.localeCompare(a.entry_date) || b.created_at.localeCompare(a.created_at));
-            return <div key={key}><h4 className="mb-2 text-sm font-semibold">{tr(label)}</h4>{rows.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{rows.map((photo) => <figure key={photo.id} className="overflow-hidden rounded-lg border border-line"><button type="button" onClick={() => setZoom(photoUrl(photo.id))} className="block w-full bg-canvas" aria-label={tr("تكبير صورة ") + tr(label) + " " + photo.entry_date}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photoUrl(photo.id)} alt={`${tr(label)} · ${photo.entry_date}`} loading="lazy" className="h-48 w-full object-contain" />
-            </button><figcaption className="flex items-center justify-between gap-2 p-2 text-xs"><span className="flex items-center gap-2"><Check size={13} />{photo.entry_date}</span><button type="button" className="btn-soft" disabled={Boolean(deleting)} aria-label={tr("حذف الصورة ") + tr(label) + " " + photo.entry_date} onClick={async () => { if (!window.confirm("حذف هذه الصورة نهائيًا؟")) return; setDeleting(photo.id); const result = await deleteProgressPhoto(photo.id, portalToken); if (!result.ok) setMessage(result.error ?? "تعذر حذف الصورة."); else { setMessage("تم حذف الصورة من السجل."); if (onUpdate) await onUpdate(); else router.refresh(); } setDeleting(""); }}><Trash2 size={14} />{tr(deleting === photo.id ? "جارٍ الحذف…" : "حذف")}</button></figcaption></figure>)}</div> : <p className="text-xs text-muted">{tr("لا توجد صور محفوظة لهذه الزاوية بعد.")}</p>}</div>;
-          })}
-          {clientPhotos.some((photo) => photo.angle === "unspecified") && <p className="text-xs text-muted">{tr("توجد صور قديمة لم تُحدد زاويتها.")}</p>}
+      <section className="border-t pt-5" aria-labelledby="progress-photo-timeline-title">
+        <div className="section-title">
+          <div><h3 id="progress-photo-timeline-title" className="font-semibold">{tr("الخط الزمني لصور التقدم")}</h3><p className="mt-1 text-xs text-muted">{tr("الصور مرتبة من الأحدث إلى الأقدم، ومجموعة حسب تاريخ التصوير.")}</p></div>
+          {clientPhotos.length > 0 && <span className="badge">{tr("عدد الصور")}: {clientPhotos.length}</span>}
         </div>
-        {!clientPhotos.length && <p className="mt-4 text-sm text-muted">{tr("لا توجد صور تقدم محفوظة بعد.")}</p>}
+        {!photoTimeline.length ? <p className="mt-4 text-sm text-muted">{tr("لا توجد صور تقدم محفوظة بعد.")}</p> : (
+          <ol className="progress-photo-timeline">
+            {photoTimeline.map(({ date, photos: datePhotos }) => (
+              <li className="progress-photo-timeline-item" key={date}>
+                <div className="progress-photo-timeline-marker" aria-hidden="true"><Check size={13} /></div>
+                <article className="progress-photo-day-card">
+                  <header className="progress-photo-day-header"><div><h4>{formatDate(date, language)}</h4><p>{tr("عدد الصور")}: {datePhotos.length}</p></div></header>
+                  <div className="progress-photo-day-grid">
+                    {ANGLES.map(({ key, label }) => {
+                      const rows = datePhotos.filter((photo) => photo.angle === key).sort((a, b) => b.created_at.localeCompare(a.created_at));
+                      const photo = rows[0];
+                      return <section className={`progress-photo-angle-card ${photo ? "has-photo" : "is-missing"}`} key={key}>
+                        <h5>{tr(label)}</h5>
+                        {photo ? <>
+                          <button type="button" className="progress-photo-timeline-image" onClick={() => setZoom(photoUrl(photo.id))} aria-label={tr("تكبير صورة ") + tr(label) + " " + formatDate(date, language)}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={photoUrl(photo.id)} alt={`${tr(label)} · ${formatDate(date, language)}`} loading="lazy" />
+                          </button>
+                          <div className="progress-photo-angle-actions">
+                            <button type="button" className="btn-soft" disabled={Boolean(deleting)} onClick={() => void removePhoto(photo)}><Trash2 size={14} />{tr(deleting === photo.id ? "جارٍ الحذف…" : "حذف")}</button>
+                          </div>
+                          {rows.length > 1 && <details className="progress-photo-extra"><summary>{tr("صور إضافية ({0})", String(rows.length - 1))}</summary><div className="grid gap-2 pt-2">{rows.slice(1).map((extra) => photoFigure(extra, label, date))}</div></details>}
+                        </> : <p className="progress-photo-missing-note">{tr("لم تُرفع هذه الزاوية في هذا التاريخ.")}</p>}
+                      </section>;
+                    })}
+                  </div>
+                  {datePhotos.some((photo) => photo.angle === "unspecified") && <details className="progress-photo-legacy"><summary>{tr("صور قديمة بدون زاوية محددة")}</summary><div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{datePhotos.filter((photo) => photo.angle === "unspecified").map((photo) => photoFigure(photo, "زاوية غير محددة", date))}</div></details>}
+                </article>
+              </li>
+            ))}
+          </ol>
+        )}
       </section>
 
       {zoom && <div className="fixed inset-0 z-50 grid place-items-center bg-black/90 p-3" role="dialog" aria-modal="true" aria-label={tr("عرض صورة التقدم")} onClick={() => setZoom(null)}>

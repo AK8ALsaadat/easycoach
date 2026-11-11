@@ -14,7 +14,6 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import type { Snapshot, Client } from "@/lib/model";
-import { SubscriptionRenewal } from "./subscription-renewal";
 import { PhoneLink } from "./phone-link";
 import { latestSubscription } from "@/lib/subscription-period";
 import { coachingAlerts } from "@/lib/coaching-alerts";
@@ -304,7 +303,7 @@ export function CoachToday({
             <div>
               {tasks.slice(0, 5).map(({ client: c, items, urgent }, i) => (
                 <Link
-                  href={"/coach/clients/" + c.id + "?tab=tracking"}
+                  href={"/coach/clients/" + c.id + (items.includes("تجديد") ? "?tab=finance" : "?tab=tracking")}
                   key={c.id}
                   className="task-row"
                 >
@@ -421,7 +420,6 @@ export function CoachToday({
                 <th>{tr("التغذية")}</th>
                 <th>{tr("آخر وزن")}</th>
                 <th>{tr("الاشتراك")}</th>
-                <th>{tr("تجديد الاشتراك")}</th>
                 <th aria-label={tr("افتح ملف المتدرب")} />
               </tr>
             </thead>
@@ -499,7 +497,6 @@ export function CoachToday({
                         {s ? formatDate(latestSubscription(data.subscriptions, c.id)!.end_date, locale) : tr("بدون باقة")}
                       </span>
                     </td>
-                    <td><SubscriptionRenewal client={c} subscriptions={data.subscriptions} /></td>
                     <td>
                       <Link
                         className="btn-secondary !px-2"

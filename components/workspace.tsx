@@ -1189,7 +1189,7 @@ function Finance({ data }: { data: Snapshot }) {
   const { t: tr, language: locale } = useLocale();
   const clients = data.clients.filter(c => !c.archived);
   return <>
-    <Heading title={tr("الاشتراكات")} text={tr("تابع تواريخ الاشتراك وجدّد بالمدة المناسبة.")} />
+    <Heading title={tr("الاشتراكات")} text={tr("إدارة الاشتراكات للمدرب. سجّل المدة والقيمة هنا؛ الدفع يتم خارج المنصة.")} />
     <section className="card overflow-hidden"><div className="overflow-x-auto"><table>
       <thead><tr><th>{tr("المتدربون")}</th><th>{tr("بداية الاشتراك")}</th><th>{tr("نهاية الاشتراك")}</th><th>{tr("الحالة")}</th><th>{tr("تجديد الاشتراك")}</th></tr></thead>
       <tbody>{clients.map(client => {

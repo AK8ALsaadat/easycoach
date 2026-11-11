@@ -183,17 +183,17 @@ export function Trainee({
                             {tr(". طُبّق تمديد")} {f.days} {tr("يومًا.")}
                           </p>
                         ))}
-                      <p className="mt-5 text-xs text-muted">
-                        {tr(
-                          "لأي تعديل أو تجديد، تواصل مع مدربك.",
-                        )}
-                      </p>
+                      <p className="mt-5 text-xs text-muted">{tr("للتجديد أو تعديل الباقة، أرسل طلبًا لمدربك. الدفع يتم بالاتفاق معه.")}</p>
                     </>
                   ) : (
                     <p className="mt-4 text-sm text-muted">
                       {tr("لم يضف مدربك باقة بعد.")}
                     </p>
                   )}
+                  <button type="button" className="btn-secondary mt-4" onClick={() => {
+                    window.dispatchEvent(new Event("easycoach:open-messages"));
+                    document.getElementById("client-management-hub")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}>{tr(subscriptions.length ? "طلب تجديد الاشتراك من المدرب" : "التواصل مع المدرب")}</button>
                 </section>
                 <details className="card p-6">
                   <summary>{tr("طلب تصحيح أو حذف بياناتي")}</summary>
@@ -262,6 +262,7 @@ export function Trainee({
                 data.client_goals?.find((goal) => goal.client_id === clientId)
                   ?.target_weight
               }
+              showRenewalRequest={subscriptions.length > 0}
             />
           </div>
         )}

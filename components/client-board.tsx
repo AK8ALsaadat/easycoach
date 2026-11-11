@@ -5,7 +5,6 @@ import type { Client, Snapshot } from "@/lib/model";
 import { coachingAlerts } from "@/lib/coaching-alerts";
 import { useLocale } from "./locale-provider";
 import { ManagementButton } from "./management-button";
-import { SubscriptionRenewal } from "./subscription-renewal";
 import { PhoneLink } from "./phone-link";
 
 export function ClientBoard({ data, clients }: { data: Snapshot; clients: Client[] }) {
@@ -37,7 +36,6 @@ export function ClientBoard({ data, clients }: { data: Snapshot; clients: Client
           <PhoneLink phone={client.phone}/>
           {column.id !== "inactive" && attention.get(client.id)?.slice(0, 2).map(label => <p className="client-board-alert" key={label}>{tr(label)}</p>)}
           {client.archived ? <ManagementButton command="client_archive" payload={{ client_id: client.id, archived: false }}>{tr("إعادة التفعيل")}</ManagementButton> : <Link className="btn-soft" href={`/coach/clients/${client.id}?tab=${column.tab}`}>{tr(column.action)}<ArrowUpLeft size={14} aria-hidden="true" /></Link>}
-          {!client.archived && <SubscriptionRenewal client={client} subscriptions={data.subscriptions} />}
         </article>)}</div>
         {!members.length && <p className="client-board-empty">{tr("لا يوجد متدربون في هذا العمود")}</p>}
       </section>;

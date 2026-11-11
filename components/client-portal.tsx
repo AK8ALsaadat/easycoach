@@ -127,6 +127,10 @@ export function ClientPortal({ token }: { token: string }) {
             </p>
           </div>
           <div className="flex flex-col items-start gap-3">
+            <button type="button" className="btn-secondary" onClick={() => {
+              window.dispatchEvent(new Event("easycoach:open-messages"));
+              document.getElementById("client-management-hub")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}>{tr("التواصل مع المدرب")}</button>
             <button
               className="btn-secondary"
               onClick={async () => {
