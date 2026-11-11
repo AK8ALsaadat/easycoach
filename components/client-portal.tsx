@@ -11,6 +11,7 @@ import { WeightPanel } from "./weight-panel";
 import { Brand } from "./brand";
 import { ClientHub } from "./client-hub";
 import { effectiveNutrition } from "@/lib/management";
+import { riyadhToday, formatDate } from "@/lib/dates";
 export function ClientPortal({ token }: { token: string }) {
   const { t: tr } = useLocale();
 
@@ -148,8 +149,15 @@ export function ClientPortal({ token }: { token: string }) {
             {tr(error)}
           </p>
         ) : null}
+        <section className="card mt-6 p-5" aria-labelledby="portal-today-title">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div><p className="eyebrow">{tr("اليوم")}</p><h2 id="portal-today-title" className="mt-2 text-xl">{data.program ? tr("خطتك لهذا اليوم") : tr("لا توجد خطة منشورة حاليًا")}</h2><p className="mt-2 text-sm text-muted">{data.weights.at(-1) ? `${tr("آخر وزن")}: ${data.weights.at(-1)!.weight} ${tr("كجم")} · ${formatDate(data.weights.at(-1)!.entry_date)}` : tr("لا يوجد وزن مسجل بعد. سجّل تحديثًا سريعًا عندما يناسبك.")}</p><p className="mt-1 text-xs text-muted">{formatDate(riyadhToday())}</p></div>
+            <div className="flex flex-wrap gap-2"><a className="btn" href="#weight-panel">{tr("تسجيل الوزن")}</a><a className="btn-secondary" href="#client-management-hub">{tr("إرسال تحديث للمدرب")}</a></div>
+          </div>
+        </section>
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
           <ProgramView
+            focusToday
             nutrition={effectiveNutrition(
               data.management?.records ?? [],
               data.client_id ?? "",
@@ -159,7 +167,7 @@ export function ClientPortal({ token }: { token: string }) {
             portalHash={data.portalHash}
           />
           <aside className="space-y-5">
-            <WeightPanel
+            <div id="weight-panel"><WeightPanel
               entries={data.weights}
               target={data.goal?.target_weight}
               onSave={async (day, weight) => {
@@ -178,7 +186,7 @@ export function ClientPortal({ token }: { token: string }) {
                 if (r.ok && r.data) setData(r.data);
                 else return r.error;
               }}
-            />
+            /></div>
             <div className="border-t p-4 text-xs leading-7 text-muted">
               {tr(
                 "سجّل الوزن وقت ما يناسبك. تصحيح نفس اليوم يستبدل التسجيل السابق. وزن يوم واحد ما يختصر تقدمك.",

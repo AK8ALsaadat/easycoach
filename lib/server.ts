@@ -112,6 +112,12 @@ export async function snapshot(): Promise<Snapshot> {
     });
     data = await rpc<Snapshot>("management_snapshot");
   }
+  try {
+    const schedules = await rpc<NonNullable<NonNullable<Snapshot["management"]>["schedules"]>>("client_schedules_snapshot");
+    if (data.management) data.management.schedules = schedules;
+  } catch {
+    if (data.management) data.management.schedules = [];
+  }
   return { ...data, demo: user.demo };
 }
 export async function requireCoach() {

@@ -9,6 +9,7 @@ import { id, date } from "@/lib/model";
 import { hash, localMode, readableError, rpc } from "@/lib/server";
 import { adminClient } from "@/lib/supabase/admin";
 import { getLocalDatabase } from "@/lib/local-db";
+import { cleanPendingPhotos } from "@/lib/photo-cleanup";
 import {
   accessPhoto,
   photoPath,
@@ -18,8 +19,11 @@ import {
 
 const metadata = z
   .object({
+    id: id.optional(),
     client_id: id,
     entry_date: date,
+    angle: z.enum(["front", "back", "side"]),
+    consent_confirmed: z.literal(true),
     filename: z.string().min(1).max(160),
     size: z
       .number()
@@ -31,7 +35,8 @@ const metadata = z
   .strict();
 export async function photoTicket(input: unknown, portalToken?: string) {
   try {
-    const payload = { ...metadata.parse(input), id: randomUUID() };
+    const parsed = metadata.parse(input);
+    const payload = { ...parsed, id: parsed.id ?? randomUUID() };
     let asset: PhotoAsset;
     if (portalToken) {
       if (!/^[a-f0-9]{64}$/.test(portalToken)) throw Error("رابط غير صالح");
@@ -49,11 +54,13 @@ export async function photoTicket(input: unknown, portalToken?: string) {
         payload,
       });
     if (!asset.id) throw Error("تعذر تجهيز الصورة");
+    if (asset.status === "ready")
+      return { ok: true, id: asset.id, alreadyReady: true };
     const signed = localMode()
       ? null
       : await adminClient()
           .storage.from("progress-photos")
-          .createSignedUploadUrl(photoPath(asset), { upsert: false });
+          .createSignedUploadUrl(photoPath(asset), { upsert: true });
     if (signed?.error) throw signed.error;
     return {
       ok: true,
@@ -102,6 +109,38 @@ export async function finishPhoto(assetId: string, portalToken?: string) {
     }
     revalidatePath("/", "layout");
     return { ok: true, id: asset.id };
+  } catch (error) {
+    return { ok: false, error: readableError(error) };
+  }
+}
+
+export async function deleteProgressPhoto(assetId: string, portalToken?: string) {
+  try {
+    const photoId = id.parse(assetId);
+    if (portalToken) {
+      const key = hash(z.string().regex(/^[a-f0-9]{64}$/).parse(portalToken));
+      const proof = (await cookies()).get("ec_portal_" + key.slice(0, 12))?.value;
+      if (!proof) throw Error("يلزم فتح رابط المتدرب أولًا");
+      const result = await rpc<{ error?: string }>(
+        "portal_management",
+        { token_hash: key, proof, command: "photo_delete", payload: { id: photoId } },
+        true,
+      );
+      if (result.error) throw Error(result.error);
+    } else {
+      const result = await rpc<{ error?: string }>("management_command", {
+        command: "photo_delete",
+        payload: { id: photoId },
+      });
+      if (result.error) throw Error(result.error);
+      try {
+        await cleanPendingPhotos();
+      } catch {
+        // The private queue keeps failed object removals available for retry.
+      }
+    }
+    revalidatePath("/", "layout");
+    return { ok: true };
   } catch (error) {
     return { ok: false, error: readableError(error) };
   }

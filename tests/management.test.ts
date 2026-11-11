@@ -531,6 +531,34 @@ it("supports PIN-based check-ins without exposing notes or another client's reco
   expect(data.management.records.some((record) => record.kind === "note")).toBe(
     false,
   );
+  const photo = await call<{ id: string; angle: string }>(
+    null,
+    "portal_management",
+    {
+      token_hash: token,
+      proof,
+      command: "photo_reserve",
+      payload: {
+        id: randomUUID(),
+        client_id: ids[0],
+        entry_date: today,
+        angle: "back",
+        consent_confirmed: true,
+        filename: "portal-back.webp",
+        mime: "image/webp",
+        size: 70,
+      },
+    },
+  );
+  expect(photo.angle).toBe("back");
+  await call(null, "portal_management", {
+    token_hash: token,
+    proof,
+    command: "photo_delete",
+    payload: { id: photo.id },
+  });
+  expect(await call(null, "photo_access", { asset: photo.id, portal_hash: token, proof })).toBeNull();
+  await call(coach, "photo_cleanup", { completed: [photo.id] });
   await expect(
     call(null, "portal_management", {
       token_hash: token,
@@ -1082,6 +1110,8 @@ it("validates nested raw RPC exercise/meal inputs, ratings and photo ownership",
     id: randomUUID(),
     client_id: ids[0],
     entry_date: today,
+    angle: "front",
+    consent_confirmed: true,
     filename: "test.png",
     mime: "image/png",
     size: 70,
@@ -1167,6 +1197,8 @@ it("updates only the caller display name and erases coaching data with retryable
     id: randomUUID(),
     client_id: client.id,
     entry_date: today,
+    angle: "front",
+    consent_confirmed: true,
     filename: "erase.png",
     mime: "image/png",
     size: 70,
@@ -1272,6 +1304,109 @@ it("preserves unmapped phone fields during an explicit client merge and handles 
   );
   expect(count.rows[0].count).toBe(10000);
 }, 30000);
+
+it("stores photo angle and consent, and makes photo reservation retries idempotent", async () => {
+  const photoId = randomUUID();
+  const payload = {
+    id: photoId,
+    client_id: ids[0],
+    entry_date: today,
+    angle: "side",
+    consent_confirmed: true,
+    filename: "side.webp",
+    mime: "image/webp",
+    size: 70,
+  };
+  await expect(
+    command(coach, "photo_reserve", { ...payload, consent_confirmed: false }),
+  ).rejects.toThrow();
+  const created = await command<{
+    id: string;
+    angle: string;
+    consented_at: string;
+    consent_source: string;
+  }>(coach, "photo_reserve", payload);
+  expect(created).toMatchObject({
+    id: photoId,
+    angle: "side",
+    consent_source: "coach_attestation",
+  });
+  expect(created.consented_at).toBeTruthy();
+  expect(await command(coach, "photo_reserve", payload)).toMatchObject({ id: photoId });
+  await expect(
+    command(coach, "photo_reserve", { ...payload, angle: "front" }),
+  ).rejects.toThrow();
+  await db.query("select private.finalize_photo($1::uuid)", [photoId]);
+  const snapshotData = await snapshot();
+  expect(
+    snapshotData.management!.progress_photos.find((photo) => photo.id === photoId),
+  ).toMatchObject({ angle: "side", consented_at: created.consented_at });
+  expect(await call(other, "photo_access", { asset: photoId })).toBeNull();
+  await expect(command(other, "photo_delete", { id: photoId })).rejects.toThrow();
+  await command(trainee, "photo_delete", { id: photoId });
+  expect(await call(trainee, "photo_access", { asset: photoId })).toBeNull();
+  expect(
+    await call<Array<{ id: string }>>(coach, "photo_cleanup", { completed: [] }),
+  ).toContainEqual(expect.objectContaining({ id: photoId }));
+  await call(coach, "photo_cleanup", { completed: [photoId] });
+});
+
+it("validates the calf measurement in server-side record rules", async () => {
+  const saved = record(ids[0], "measurement", { calf: 40.5 });
+  await command(coach, "record_save", saved);
+  expect(
+    (await snapshot()).management!.records.find((item) => item.id === saved.id)
+      ?.payload.calf,
+  ).toBe(40.5);
+  await expect(
+    command(coach, "record_save", record(ids[0], "measurement", { calf: 121 })),
+  ).rejects.toThrow();
+});
+
+it("maps the Excel calf column into an importable measurement record", () => {
+  const sheet = {
+    name: "Measurements",
+    headers: ["email", "date", "source_key", "calf"],
+    rows: [["client@example.test", "2026-11-10", "calf-2026-11-10", "40.5"]],
+  };
+  const mapping = autoMapping(sheet);
+  const [row] = previewFullImport(
+    { ...sheet, sheets: [sheet] },
+    [mapping],
+    [],
+  );
+  expect(mapping.category).toBe("measurements");
+  expect(mapping.fields.calf).toBe(3);
+  expect(row.errors).toEqual([]);
+  expect(row.data?.payload?.calf).toBe(40.5);
+});
+
+it("queues abandoned pending uploads for private storage cleanup after one day", async () => {
+  const photo = await command<{ id: string }>(coach, "photo_reserve", {
+    id: randomUUID(),
+    client_id: ids[0],
+    entry_date: today,
+    angle: "back",
+    consent_confirmed: true,
+    filename: "abandoned.webp",
+    mime: "image/webp",
+    size: 70,
+  });
+  await db.query(
+    "update public.progress_photos set created_at=now()-interval '2 days' where id=$1",
+    [photo.id],
+  );
+  const cleanup = await call<Array<{ id: string; asset_path: string }>>(
+    coach,
+    "photo_cleanup",
+    { completed: [] },
+  );
+  expect(cleanup).toContainEqual(
+    expect.objectContaining({ id: photo.id, asset_path: expect.stringContaining(photo.id) }),
+  );
+  expect(await call(trainee, "photo_access", { asset: photo.id })).toBeNull();
+  await call(coach, "photo_cleanup", { completed: [photo.id] });
+});
 
 it("keeps historical nutrition targets from overriding a more recently published plan", async () => {
   const data = await snapshot();

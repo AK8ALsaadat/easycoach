@@ -136,6 +136,7 @@ export async function exportWorkbook(data: Snapshot) {
       "arm",
       "thigh",
       "hips",
+      "calf",
       "bmi",
       "historical_only",
       "notes",

@@ -6,6 +6,8 @@ export type CoachingAlert = {
   kind:
     | "checkin"
     | "weight"
+    | "measurement"
+    | "photo"
     | "adherence"
     | "stalled"
     | "message"
@@ -93,7 +95,7 @@ export function coachingAlerts(data: Snapshot, today = riyadhToday()): CoachingA
         daysBetween(
           last?.entry_date ?? client.created_at.slice(0, 10),
           today,
-        ) >= preferences.weight_days
+        ) >= (data.management?.schedules?.find((row) => row.client_id === client.id)?.weight_days ?? preferences.weight_days)
       )
         alerts.push({
           clientId: client.id,
@@ -102,6 +104,19 @@ export function coachingAlerts(data: Snapshot, today = riyadhToday()): CoachingA
           urgent: false,
           date: last?.entry_date,
         });
+      const schedule = data.management?.schedules?.find((row) => row.client_id === client.id);
+      const latestMeasurement = own
+        .filter((record) => record.kind === "measurement" && !record.payload.historical_only && ["waist", "chest", "hips", "arm", "thigh", "calf"].some((key) => typeof record.payload[key] === "number"))
+        .sort((a, b) => b.entry_date.localeCompare(a.entry_date))[0];
+      const measurementDays = schedule?.measurement_days ?? 30;
+      if (daysBetween(latestMeasurement?.entry_date ?? client.created_at.slice(0, 10), today) >= measurementDays)
+        alerts.push({ clientId: client.id, kind: "measurement", label: "موعد تحديث القياسات متأخر", urgent: false, date: latestMeasurement?.entry_date });
+      const latestPhoto = data.management?.progress_photos
+        ?.filter((photo) => photo.client_id === client.id && photo.status === "ready")
+        .sort((a, b) => b.entry_date.localeCompare(a.entry_date))[0];
+      const photoDays = schedule?.photo_days ?? 30;
+      if (daysBetween(latestPhoto?.entry_date ?? client.created_at.slice(0, 10), today) >= photoDays)
+        alerts.push({ clientId: client.id, kind: "photo", label: "موعد صور التقدم متأخر", urgent: false, date: latestPhoto?.entry_date });
       const target = data.client_goals?.find(
         (goal) => goal.client_id === client.id,
       )?.target_weight;

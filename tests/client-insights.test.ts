@@ -13,7 +13,7 @@ describe("trainee overview data",()=>{
   });
   it("filters other clients, future weights and unfinished photos without inventing empty stats",()=>{
     const data=fixture();data.weights=[{client_id:"a",entry_date:"2026-11-01",weight:80},{client_id:"a",entry_date:"2026-11-10",weight:78.5},{client_id:"a",entry_date:"2026-11-11",weight:100},{client_id:"b",entry_date:"2026-11-10",weight:120}] as Snapshot["weights"];
-    data.management!.progress_photos=[{id:"p",client_id:"a",status:"ready",entry_date:"2026-11-10",filename:"a.png"},{id:"x",client_id:"b",status:"ready",entry_date:"2026-11-10",filename:"b.png"},{id:"pending",client_id:"a",status:"pending",entry_date:"2026-11-10",filename:"c.png"}];
+    data.management!.progress_photos=[{id:"p",client_id:"a",status:"ready",entry_date:"2026-11-10",filename:"a.png",angle:"front",consented_at:"2026-11-10T12:00:00Z",created_at:"2026-11-10T12:00:00Z"},{id:"x",client_id:"b",status:"ready",entry_date:"2026-11-10",filename:"b.png",angle:"side",consented_at:"2026-11-10T12:00:00Z",created_at:"2026-11-10T12:00:00Z"},{id:"pending",client_id:"a",status:"pending",entry_date:"2026-11-10",filename:"c.png",angle:"front",consented_at:null,created_at:"2026-11-10T12:00:00Z"}];
     const result=clientInsights(data,"a","2026-11-10");expect(result.weightChange).toBe(-1.5);expect(result.weights).toHaveLength(2);expect(result.photos.map(p=>p.id)).toEqual(["p"]);expect(result.nutrition).toBeUndefined();expect(result.averageCalories).toBeNull();
   });
   it("separates scheduled targets from the current target and preserves zero targets",()=>{

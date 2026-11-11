@@ -40,6 +40,7 @@ export const fieldLabels: Record<string, string> = {
   arm: "الذراع",
   thigh: "الفخذ",
   hips: "الحوض",
+  calf: "الساق",
   calories: "السعرات",
   protein: "البروتين",
   carbs: "الكارب",
@@ -133,6 +134,7 @@ const aliases: Record<string, string[]> = {
   text: ["message", "foods", "mealplan", "الرسالة", "خطة الوجبات", "النص"],
   arm: ["arms", "armcm", "الذراع", "الذراعين"],
   thigh: ["thighs", "الفخذ", "الفخذين"],
+  calf: ["calves", "calfcm", "الساق", "السمانة"],
   protein: ["proteing", "protein", "البروتين"],
   fat: ["fatg", "fat", "الدهون"],
   calories: ["kcal", "calorietarget", "calories", "السعرات"],
@@ -348,6 +350,7 @@ export function previewFullImport(
                   "arm",
                   "thigh",
                   "hips",
+                  "calf",
                   "bmi",
                 ].includes(key) ||
                   key.startsWith("custom:")) &&
@@ -421,6 +424,7 @@ export function previewFullImport(
               "arm",
               "thigh",
               "hips",
+              "calf",
             ])
               if (values[key]) payload[key] = numeric(values[key]);
             const custom = Object.fromEntries(

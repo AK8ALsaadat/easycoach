@@ -5,16 +5,26 @@ import { catalogById, exerciseName } from "@/lib/catalog";
 import type { Program, Content } from "@/lib/model";
 import { formatDate } from "@/lib/dates";
 import { Play, Timer, Utensils } from "lucide-react";
+import { useState } from "react";
+import { riyadhToday } from "@/lib/dates";
 export function ProgramView({
   program,
   portalHash,
   nutrition,
+  focusToday = false,
 }: {
   program: Program | undefined;
   portalHash?: string;
   nutrition?: Content["nutrition"];
+  focusToday?: boolean;
 }) {
   const { t: tr, language: locale } = useLocale();
+  const weekday = new Date(riyadhToday() + "T12:00:00Z").getUTCDay();
+  const scheduledIndex = program?.content.days.findIndex((day) => day.weekday === weekday) ?? -1;
+  const hasWeekdaySchedule = Boolean(program?.content.days.some((day) => day.weekday !== undefined));
+  const [selectedDay, setSelectedDay] = useState<number>(() => {
+    return scheduledIndex >= 0 ? scheduledIndex : hasWeekdaySchedule ? -1 : 0;
+  });
 
   if (!program)
     return (
@@ -36,7 +46,11 @@ export function ProgramView({
           {tr("· النسخة")} {program.version}
         </p>
       </div>
-      {program.content.days.map((day, index) => (
+      {focusToday && program.content.days.length > 0 && <section className="card p-4" aria-label={tr("أيام البرنامج الأسبوعية")}>
+        <div className="flex flex-wrap gap-2">{program.content.days.map((day, index) => <button type="button" key={index} className={selectedDay === index ? "btn" : "btn-secondary"} aria-pressed={selectedDay === index} onClick={() => setSelectedDay(index)}>{day.name}</button>)}</div>
+        <p className="mt-3 text-sm text-muted">{selectedDay === -1 && hasWeekdaySchedule ? tr("لا توجد حصة مبرمجة اليوم؛ يوم راحة حسب جدولك.") : scheduledIndex === selectedDay ? tr("تم تحديد حصة اليوم حسب جدولك.") : tr("عرض يوم البرنامج: ") + (program.content.days[selectedDay]?.name ?? "")}</p>
+      </section>}
+      {program.content.days.map((day, index) => (!focusToday || selectedDay === index) && (
         <section className="card overflow-hidden" key={index}>
           <div className="flex items-center gap-3 border-b bg-canvas/50 px-6 py-4">
             <span className="flex size-8 items-center justify-center rounded-lg bg-accent/40 text-sm font-bold text-teal">

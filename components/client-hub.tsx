@@ -4,7 +4,7 @@ import { useLocale } from "./locale-provider";
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Send, Check, Download } from "lucide-react";
-import { manage, portalManage } from "@/app/management-actions";
+import { manage, portalManage, saveClientSchedule } from "@/app/management-actions";
 import { mutate, type Result } from "@/app/actions";
 import {
   actualMacros,
@@ -26,6 +26,7 @@ const measurementLabels: Record<string, string> = {
   arm: "الذراع",
   thigh: "الفخذ",
   hips: "الحوض",
+  calf: "الساق",
   bmi: "BMI",
   notes: "الملاحظات",
 };
@@ -234,6 +235,7 @@ export function ClientHub({
   ];
   return (
     <section
+      id="client-management-hub"
       className="client-hub space-y-4"
       data-testid="client-management-hub"
     >
@@ -267,7 +269,7 @@ export function ClientHub({
           onSubmit={async (event) => {
             event.preventDefault();
             const values = new FormData(event.currentTarget);
-            await action("details_save", {
+            const detailsResult = await action("details_save", {
               client_id: clientId,
               details: {
                 birth_date: values.get("birth_date") || null,
@@ -280,9 +282,19 @@ export function ClientHub({
                 status: values.get("status"),
               },
             });
+            if (!detailsResult.ok) return;
+            const scheduleResult = await saveClientSchedule({
+              client_id: clientId,
+              weight_days: Number(values.get("weight_days")),
+              measurement_days: Number(values.get("measurement_days")),
+              photo_days: Number(values.get("photo_days")),
+            });
+            setResult(scheduleResult);
+            if (scheduleResult.ok) await refresh();
           }}
         >
           <h2>{tr("المعلومات الشخصية وحالة المتدرب")}</h2>
+          <p className="mt-2 text-sm text-muted">{tr("حدد موعد كل نوع من المتابعة. إذا لم تحفظ موعدًا خاصًا، تُستخدم الإعدادات العامة للوزن و30 يومًا للقياسات والصور.")}</p>
           <div className="grid gap-3 mt-4 sm:grid-cols-2 lg:grid-cols-3">
             <label>
               {tr("تاريخ الميلاد")}
@@ -351,6 +363,9 @@ export function ClientHub({
                 <option value="new">{tr("جديد")}</option>
               </select>
             </label>
+            <label>{tr("تكرار الوزن (أيام)")}<input name="weight_days" type="number" min={1} max={90} className="field" defaultValue={management?.schedules?.find((row) => row.client_id === clientId)?.weight_days ?? management?.preferences.weight_days ?? 7} /></label>
+            <label>{tr("تكرار القياسات (أيام)")}<input name="measurement_days" type="number" min={1} max={180} className="field" defaultValue={management?.schedules?.find((row) => row.client_id === clientId)?.measurement_days ?? 30} /></label>
+            <label>{tr("تكرار الصور (أيام)")}<input name="photo_days" type="number" min={1} max={180} className="field" defaultValue={management?.schedules?.find((row) => row.client_id === clientId)?.photo_days ?? 30} /></label>
           </div>
           <button className="btn mt-4" disabled={busy}>
             {tr("حفظ المعلومات الشخصية")}
@@ -915,6 +930,9 @@ export function ClientHub({
           portalToken={portalToken}
           portalHash={portalHash}
           onUpdate={refresh}
+          coach={coach}
+          measurements={measurements}
+          weights={weights.filter((weight) => weight.client_id === clientId)}
         />
       )}
       <Notice result={result} />
@@ -963,6 +981,7 @@ function RecordForm({
           ["arm", "الذراع (سم)", 1, 200],
           ["thigh", "الفخذ (سم)", 1, 200],
           ["hips", "الحوض (سم)", 1, 300],
+          ["calf", "الساق (سم)", 1, 120],
         ]
       : kind === "checkin"
         ? [

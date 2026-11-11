@@ -4,6 +4,18 @@ import { revalidatePath } from "next/cache";
 import { managementCommands, recordInput } from "@/lib/management";
 import { rpc, hash, readableError } from "@/lib/server";
 import type { Result } from "./actions";
+import { z } from "zod";
+
+export async function saveClientSchedule(payload: unknown): Promise<Result> {
+  try {
+    const input = z.object({ client_id: z.string().uuid(), weight_days: z.number().int().min(1).max(90), measurement_days: z.number().int().min(1).max(180), photo_days: z.number().int().min(1).max(180) }).strict().parse(payload);
+    const data = await rpc("client_schedule_save", { payload: input });
+    revalidatePath("/", "layout");
+    return { ok: true, message: "تم حفظ مواعيد المتابعة", data };
+  } catch (error) {
+    return { ok: false, message: readableError(error) };
+  }
+}
 
 export async function manage(
   command: keyof typeof managementCommands,

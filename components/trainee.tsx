@@ -34,6 +34,8 @@ export function Trainee({
       : (clients[0]?.id ?? ""),
   );
   const client = clients.find((c) => c.id === clientId);
+  const publishedProgram = data.programs.find((p) => p.client_id === clientId && p.published_at);
+  const clientWeights = (data.weights ?? []).filter((weight) => weight.client_id === clientId).sort((a, b) => b.entry_date.localeCompare(a.entry_date));
   const subscriptions = data.subscriptions.filter(
     (s) => s.client_id === clientId,
   );
@@ -110,24 +112,26 @@ export function Trainee({
                 </select>
               </div>
             ) : null}
+            <section className="card mb-6 p-5" aria-labelledby="linked-today-title">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div><p className="eyebrow">{tr("اليوم")}</p><h2 id="linked-today-title" className="mt-2 text-xl">{publishedProgram ? tr("خطتك لهذا اليوم") : tr("لا توجد خطة منشورة حاليًا")}</h2><p className="mt-2 text-sm text-muted">{clientWeights[0] ? `${tr("آخر وزن")}: ${clientWeights[0].weight} ${tr("كجم")} · ${formatDate(clientWeights[0].entry_date, locale)}` : tr("لا يوجد وزن مسجل بعد. سجّل تحديثًا سريعًا عندما يناسبك.")}</p><p className="mt-1 text-xs text-muted">{formatDate(today, locale)}</p></div>
+                <div className="flex flex-wrap gap-2"><a className="btn" href="#linked-weight-panel">{tr("تسجيل الوزن")}</a><a className="btn-secondary" href="#client-management-hub">{tr("إرسال تحديث للمدرب")}</a></div>
+              </div>
+            </section>
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(290px,1fr)]">
               <ProgramView
+                focusToday
                 nutrition={effectiveNutrition(
                   data.management?.records ?? [],
                   clientId,
-                  data.programs.find(
-                    (p) => p.client_id === clientId && p.published_at,
-                  )?.published_at,
+                  publishedProgram?.published_at,
                 )}
-                program={data.programs.find(
-                  (p) => p.client_id === clientId && p.published_at,
-                )}
+                program={publishedProgram}
               />
               <aside className="space-y-6">
+                <div id="linked-weight-panel">
                 <WeightPanel
-                  entries={(data.weights ?? []).filter(
-                    (w) => w.client_id === clientId,
-                  )}
+                  entries={clientWeights}
                   target={
                     data.client_goals?.find((g) => g.client_id === clientId)
                       ?.target_weight
@@ -150,6 +154,7 @@ export function Trainee({
                     else return r.message;
                   }}
                 />
+                </div>
                 <section className="card p-6">
                   <h2 className="flex items-center gap-2">
                     <CalendarDays size={18} className="text-teal" />

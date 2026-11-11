@@ -30,6 +30,7 @@ export const recordSchemas = {
       arm: z.number().positive().max(200).optional(),
       thigh: z.number().positive().max(200).optional(),
       hips: z.number().positive().max(300).optional(),
+      calf: z.number().positive().max(120).optional(),
       bmi: z.number().positive().max(150).optional(),
       historical_only: z.boolean().optional(),
       custom: z
@@ -201,7 +202,11 @@ export type ManagementData = {
     entry_date: string;
     filename: string;
     status: string;
+    angle: "front" | "back" | "side" | "unspecified";
+    consented_at: string | null;
+    created_at: string;
   }[];
+  schedules?: { client_id: string; weight_days: number; measurement_days: number; photo_days: number }[];
 };
 export const defaultPreferences: Preferences = {
   language: "ar",
