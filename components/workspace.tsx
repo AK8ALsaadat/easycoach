@@ -208,6 +208,7 @@ export function Workspace({
   initialFilter = "",
   initialQuery = "",
   initialTab = "overview",
+  tutorialDismissed = false,
   appUrl,
   local,
 }: {
@@ -217,6 +218,7 @@ export function Workspace({
   initialFilter?: string;
   initialQuery?: string;
   initialTab?: string;
+  tutorialDismissed?: boolean;
   appUrl: string;
   local: boolean;
 }) {
@@ -377,7 +379,7 @@ export function Workspace({
             </p>
           )}
           {section === "today" ? (
-            <CoachToday data={data} />
+            <CoachToday data={data} tutorialDismissed={tutorialDismissed} />
           ) : section === "clients" ? (
             clientId ? (
               client ? (

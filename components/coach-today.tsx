@@ -24,7 +24,13 @@ import {
   daysBetween,
   formatDate,
 } from "@/lib/dates";
-export function CoachToday({ data }: { data: Snapshot }) {
+export function CoachToday({
+  data,
+  tutorialDismissed: initialTutorialDismissed = false,
+}: {
+  data: Snapshot;
+  tutorialDismissed?: boolean;
+}) {
   const { t: tr, language: locale } = useLocale();
 
   const [filter, setFilter] = useState("all"),
@@ -132,6 +138,11 @@ export function CoachToday({ data }: { data: Snapshot }) {
   const ready = clients.length
     ? Math.round(((clients.length - needs.length) / clients.length) * 100)
     : 0;
+  const [tutorialDismissed, setTutorialDismissed] = useState(initialTutorialDismissed);
+  function dismissTutorial() {
+    document.cookie = `ec_coach_tutorial=${data.profile?.id ?? ""}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
+    setTutorialDismissed(true);
+  }
   return (
     <div className="coach-home">
       <div className="dashboard-heading">
@@ -156,6 +167,38 @@ export function CoachToday({ data }: { data: Snapshot }) {
           </Link>
         </div>
       </div>
+      {!data.clients.length && !tutorialDismissed && (
+        <section className="coach-welcome-guide" aria-labelledby="coach-guide-title">
+          <div className="coach-welcome-heading">
+            <div>
+              <p className="eyebrow">{tr("بداية سهلة")}</p>
+              <h2 id="coach-guide-title">{tr("مرحبًا بك في إيزي كوتش")}</h2>
+              <p>{tr("جهّز حسابك في خطوات بسيطة، وبعدها ابدأ متابعة متدربيك.")}</p>
+            </div>
+            <button type="button" className="coach-guide-dismiss" onClick={dismissTutorial}>
+              {tr("إخفاء الدليل")}
+            </button>
+          </div>
+          <ol className="coach-welcome-steps">
+            <li>
+              <span>١</span>
+              <div><strong>{tr("أضف متدربك الأول")}</strong><p>{tr("سجّل اسمه وبيانات التواصل من صفحة المتدربين.")}</p></div>
+            </li>
+            <li>
+              <span>٢</span>
+              <div><strong>{tr("جهّز برنامجه")}</strong><p>{tr("أنشئ برنامجًا من مكتبة التدريب، ثم عيّنه من ملف المتدرب.")}</p></div>
+            </li>
+            <li>
+              <span>٣</span>
+              <div><strong>{tr("أرسل رابط بوابته")}</strong><p>{tr("من ملفه انسخ رابطًا خاصًا ليشاهد خطته ويرسل تحديثاته.")}</p></div>
+            </li>
+          </ol>
+          <div className="coach-guide-actions">
+            <Link className="btn" href="/coach/clients?add=1"><Plus size={17} />{tr("ابدأ بإضافة متدرب")}</Link>
+            <Link className="btn-secondary" href="/coach/library"><Dumbbell size={17} />{tr("تصفّح مكتبة التدريب")}</Link>
+          </div>
+        </section>
+      )}
       <div className="stat-strip" aria-label={tr("ملخص المتدربين")}>
         {[
           {

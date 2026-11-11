@@ -1,4 +1,5 @@
 import { redirect, notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { snapshot, localMode } from "@/lib/server";
 import { Workspace } from "@/components/workspace";
 export default async function CoachPage({
@@ -15,6 +16,9 @@ export default async function CoachPage({
 }) {
   const data = await snapshot();
   if (data.profile?.role !== "coach") redirect("/me");
+  const preferences = await cookies();
+  const tutorialDismissed =
+    preferences.get("ec_coach_tutorial")?.value === data.profile.id;
   const { path = [] } = await params;
   const search = await searchParams;
   const section = path[0] ?? "today";
@@ -30,6 +34,7 @@ export default async function CoachPage({
     <Workspace
       data={data}
       section={section}
+      tutorialDismissed={tutorialDismissed}
       clientId={path[1]}
       initialFilter={
         search.filter ?? (search.add ? "add" : "")

@@ -450,6 +450,71 @@
   display: flex;
   gap: 9px;
 }
+.coach-welcome-guide {
+  margin: 0 0 20px;
+  padding: 22px;
+  border: 1px solid var(--ui-accent-border);
+  border-radius: 20px;
+  background: linear-gradient(125deg, var(--ui-accent), var(--ui-surface));
+  box-shadow: var(--ui-shadow-soft);
+}
+.coach-welcome-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.coach-welcome-heading h2 {
+  margin: 0;
+  font-size: 21px;
+  letter-spacing: -.025em;
+}
+.coach-welcome-heading p:not(.eyebrow) {
+  margin: 5px 0 0;
+  color: var(--ui-text-muted);
+  font-size: 14px;
+}
+.coach-guide-dismiss {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--ui-line);
+  border-radius: 10px;
+  background: var(--ui-surface);
+  color: var(--ui-text-secondary);
+  font-size: 12px;
+}
+.coach-guide-dismiss:hover { background: var(--ui-surface-hover); }
+.coach-welcome-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+  padding: 0;
+  list-style: none;
+}
+.coach-welcome-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--ui-line-soft);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ui-surface) 82%, transparent);
+}
+.coach-welcome-steps li > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--ui-accent-strong);
+  color: var(--ui-link);
+  font-weight: 700;
+}
+.coach-welcome-steps strong { font-size: 14px; }
+.coach-welcome-steps p { margin: 4px 0 0; color: var(--ui-text-muted); font-size: 12px; line-height: 1.65; }
+.coach-guide-actions { display: flex; flex-wrap: wrap; gap: 9px; }
 .stat-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1153,6 +1218,12 @@
     padding-inline: 9px;
     font-size: 14px;
   }
+  .coach-welcome-guide { padding: 16px; border-radius: 16px; }
+  .coach-welcome-heading { gap: 10px; }
+  .coach-welcome-heading h2 { font-size: 18px; }
+  .coach-welcome-steps { grid-template-columns: minmax(0, 1fr); gap: 8px; margin: 14px 0; }
+  .coach-welcome-steps li { padding: 11px; }
+  .coach-guide-actions > a { flex: 1; padding-inline: 10px; font-size: 13px; }
   .stat-strip button {
     grid-template-columns: 20px 1fr;
     gap: 5px 9px;
