@@ -273,7 +273,7 @@
   "دليل التمارين": "Exercise guide",
   "مكتبة التمارين": "Exercise library",
   "اختر الحركة وراجع تفاصيلها قبل إضافتها للبرنامج.": "Choose the movement and review its details before adding it to the program.",
-  "إغلاق": "closing",
+  "إغلاق": "Close",
   "ابحث في التمارين": "Look into exercises",
   "ابحث باسم التمرين بالعربية أو الإنجليزية…": "Search by name of the exercise in Arabic or English...",
   "مسح البحث": "Clear search",
@@ -459,7 +459,7 @@
   "جولة": "Tour",
   "مكتبة الحركات · 876": "Movement Library · 876",
   "اليوم {0}": "Day {0}",
-  "يوم": "day",
+  "يوم": "days",
   "تقسيمة جاهزة": "Ready to split",
   "بناء تقسيمة أسبوعية": "Build a weekly breakdown",
   "دفع": "Pay",
@@ -1386,5 +1386,9 @@
   "تكرار الوزن (أيام)": "Weight interval (days)",
   "تكرار القياسات (أيام)": "Measurement interval (days)",
   "تكرار الصور (أيام)": "Photo interval (days)",
-  "عرض يوم البرنامج: ": "Viewing plan day: "
+  "عرض يوم البرنامج: ": "Viewing plan day: ",
+  "حالة المتابعة": "Check-in status",
+  "الصور": "Photos",
+  "حان موعد التحديث": "Due",
+  "متبقي": "In"
 }

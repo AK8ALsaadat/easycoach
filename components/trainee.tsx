@@ -15,6 +15,7 @@ import { DataForm } from "./forms";
 import { ProgramView } from "./program-view";
 import { ClientHub } from "./client-hub";
 import { effectiveNutrition } from "@/lib/management";
+import { TraineeCheckinStatus } from "./trainee-checkin-status";
 export function Trainee({
   data,
   selectedId,
@@ -115,7 +116,8 @@ export function Trainee({
             <section className="card mb-6 p-5" aria-labelledby="linked-today-title">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div><p className="eyebrow">{tr("اليوم")}</p><h2 id="linked-today-title" className="mt-2 text-xl">{publishedProgram ? tr("خطتك لهذا اليوم") : tr("لا توجد خطة منشورة حاليًا")}</h2><p className="mt-2 text-sm text-muted">{clientWeights[0] ? `${tr("آخر وزن")}: ${clientWeights[0].weight} ${tr("كجم")} · ${formatDate(clientWeights[0].entry_date, locale)}` : tr("لا يوجد وزن مسجل بعد. سجّل تحديثًا سريعًا عندما يناسبك.")}</p><p className="mt-1 text-xs text-muted">{formatDate(today, locale)}</p></div>
-                <div className="flex flex-wrap gap-2"><a className="btn" href="#linked-weight-panel">{tr("تسجيل الوزن")}</a><a className="btn-secondary" href="#client-management-hub">{tr("إرسال تحديث للمدرب")}</a></div>
+                <TraineeCheckinStatus clientId={clientId} today={today} weights={clientWeights} records={data.management?.records ?? []} management={data.management} />
+                  <div className="flex flex-wrap gap-2"><a className="btn" href="#linked-weight-panel">{tr("تسجيل الوزن")}</a><a className="btn-secondary" href="#client-management-hub">{tr("إرسال تحديث للمدرب")}</a></div>
               </div>
             </section>
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(290px,1fr)]">

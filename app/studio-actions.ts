@@ -95,6 +95,12 @@ export async function accessPortal(
       true,
     );
     if (result.error) return { ok: false, error: result.error };
+    const schedule = await rpc<NonNullable<NonNullable<PortalData["management"]>["schedules"]>[number] | null>(
+      "portal_schedule_snapshot",
+      { token_hash: key, proof },
+      true,
+    );
+    if (result.management) result.management.schedules = schedule ? [schedule] : [];
     jar.set("ec_portal_" + key.slice(0, 12), proof, {
       httpOnly: true,
       sameSite: "strict",

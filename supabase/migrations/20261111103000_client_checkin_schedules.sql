@@ -32,8 +32,23 @@ grant execute on function public.client_schedule_save(jsonb) to authenticated;
 grant execute on function private.save_client_schedule(jsonb) to authenticated;
 create function public.client_schedules_snapshot() returns jsonb language sql security definer set search_path='' as $$
  select coalesce(jsonb_agg(jsonb_build_object('client_id',client_id,'weight_days',weight_days,'measurement_days',measurement_days,'photo_days',photo_days) order by client_id),'[]'::jsonb)
- from public.client_checkin_schedules where coach_id=private.session_uid()
+ from public.client_checkin_schedules s where s.coach_id=private.session_uid()
+ or exists(select 1 from public.clients c where c.id=s.client_id and c.trainee_user_id=private.session_uid() and not c.archived)
 $$;
-alter function public.client_schedules_snapshot() owner to coach_api;
+alter function public.client_schedules_snapshot() owner to postgres;
 revoke all on function public.client_schedules_snapshot() from public,anon;
 grant execute on function public.client_schedules_snapshot() to authenticated;
+create function private.portal_schedule_snapshot(token_hash text, proof text) returns jsonb language plpgsql security definer set search_path='' as $$
+declare portal_data jsonb; cid uuid;
+begin
+ portal_data:=private.portal_management(token_hash,proof,'snapshot','{}'::jsonb);
+ cid:=(portal_data->>'client_id')::uuid;
+ return coalesce((select jsonb_build_object('client_id',client_id,'weight_days',weight_days,'measurement_days',measurement_days,'photo_days',photo_days) from public.client_checkin_schedules where client_id=cid),'null'::jsonb);
+end $$;
+alter function private.portal_schedule_snapshot(text,text) owner to postgres;
+revoke all on function private.portal_schedule_snapshot(text,text) from public,anon,authenticated;
+grant execute on function private.portal_schedule_snapshot(text,text) to coach_api;
+create function public.portal_schedule_snapshot(token_hash text, proof text) returns jsonb language sql security definer set search_path='' as $$ select private.portal_schedule_snapshot(token_hash,proof) $$;
+alter function public.portal_schedule_snapshot(text,text) owner to coach_api;
+revoke all on function public.portal_schedule_snapshot(text,text) from public;
+grant execute on function public.portal_schedule_snapshot(text,text) to anon,authenticated;
