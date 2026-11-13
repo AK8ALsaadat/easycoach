@@ -1857,7 +1857,7 @@ td { padding-block:18px; }
   .roster-footnote { font-size:10px; align-items:start; line-height:1.8; text-align:center; padding:0 8px; }
 }
 /* In-app support desk */
-.support-fab{position:fixed;z-index:70;inset-inline-start:26px;bottom:25px;display:grid;place-items:center;width:56px;height:56px;border:1px solid color-mix(in srgb,var(--ui-primary) 28%,transparent);border-radius:50%;background:var(--ui-primary);color:var(--ui-on-primary);box-shadow:0 12px 32px #0003;transition:transform .16s,box-shadow .16s}
+.support-fab{position:fixed;z-index:70;inset-inline-end:26px;bottom:25px;display:grid;place-items:center;width:56px;height:56px;border:1px solid color-mix(in srgb,var(--ui-primary) 28%,transparent);border-radius:50%;background:var(--ui-primary);color:var(--ui-on-primary);box-shadow:0 12px 32px #0003;transition:transform .16s,box-shadow .16s}
 .support-fab:hover{transform:translateY(-2px);box-shadow:0 16px 36px #0004}
 .support-fab:focus-visible{outline:3px solid var(--ui-accent);outline-offset:3px}
 .support-overlay{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:18px;background:#020817a8;backdrop-filter:blur(5px)}
@@ -1877,7 +1877,7 @@ td { padding-block:18px; }
 .support-inbox{padding:22px;margin-bottom:24px}
 .support-ticket{margin-top:16px;border:1px solid var(--ui-line);border-radius:14px;padding:16px;background:var(--ui-canvas)}
 .support-ticket select{border:1px solid var(--ui-line);border-radius:9px;background:var(--ui-surface);color:var(--ui-text-primary);padding:7px}
-@media(max-width:600px){.support-fab{inset-inline-start:16px;bottom:16px;width:52px;height:52px}.support-dialog{padding:19px;border-radius:18px}.support-types button{font-size:.84rem}}
+@media(max-width:600px){.support-fab{inset-inline-end:16px;bottom:16px;width:52px;height:52px}.support-dialog{padding:19px;border-radius:18px}.support-types button{font-size:.84rem}}
 
 /* ───────── Shared additions: macros, dialogs, menus, toasts, consent, PWA ───────── */
 :root { --ui-danger:#b42318; --ui-danger-surface:#fef3f2; --ui-macro-protein:#2f6fe4; --ui-macro-carbs:#d68a1c; --ui-macro-fat:#12a594; }
