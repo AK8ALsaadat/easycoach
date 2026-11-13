@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
@@ -56,7 +57,9 @@ export async function supabase() {
     },
   });
 }
-export async function actor() {
+// Memoized per request: rpc() consults the actor before every call, and
+// without the cache each consultation was its own Auth network round trip.
+export const actor = cache(async () => {
   if (localMode()) {
     await localGuard();
     const token = (await cookies()).get("ec_session")?.value;
@@ -83,7 +86,7 @@ export async function actor() {
     name: String(data.user.user_metadata.display_name ?? "مستخدم جديد"),
     role: data.user.user_metadata.role === "coach" ? "coach" : "trainee",
   };
-}
+});
 export async function rpc<T>(
   name: string,
   args: Record<string, unknown> = {},
@@ -112,28 +115,22 @@ export async function snapshot(): Promise<Snapshot> {
     });
     data = await rpc<Snapshot>("management_snapshot");
   }
-  try {
-    const schedules = await rpc<NonNullable<NonNullable<Snapshot["management"]>["schedules"]>>("client_schedules_snapshot");
-    if (data.management) data.management.schedules = schedules;
-  } catch {
-    if (data.management) data.management.schedules = [];
-  }
+  // These reads are independent, so one round trip instead of four in a row.
+  const [schedules, consents, paused, branding] = await Promise.all([
+    rpc<NonNullable<NonNullable<Snapshot["management"]>["schedules"]>>("client_schedules_snapshot").catch(() => []),
+    // Unknown (e.g. migration not applied yet): uploads stay locked and no notice is shown.
+    rpc<NonNullable<NonNullable<Snapshot["management"]>["photo_consents"]>>("photo_consent_snapshot").catch(() => undefined),
+    data.profile?.role !== "coach"
+      ? rpc<NonNullable<Snapshot["paused_access"]>>("trainee_access_status").catch(() => [] as NonNullable<Snapshot["paused_access"]>)
+      : Promise.resolve(undefined),
+    rpc<Snapshot["coach_branding"]>("coach_branding_snapshot"),
+  ]);
   if (data.management) {
-    try {
-      data.management.photo_consents = await rpc<NonNullable<NonNullable<Snapshot["management"]>["photo_consents"]>>("photo_consent_snapshot");
-    } catch {
-      // Unknown (e.g. migration not applied yet): uploads stay locked and no notice is shown.
-      data.management.photo_consents = undefined;
-    }
+    data.management.schedules = schedules;
+    data.management.photo_consents = consents;
   }
-  if (data.profile?.role !== "coach") {
-    try {
-      data.paused_access = await rpc<NonNullable<Snapshot["paused_access"]>>("trainee_access_status");
-    } catch {
-      data.paused_access = [];
-    }
-  }
-  data.coach_branding = await rpc("coach_branding_snapshot");
+  if (data.profile?.role !== "coach") data.paused_access = paused;
+  data.coach_branding = branding;
   return data;
 }
 export async function requireCoach() {
