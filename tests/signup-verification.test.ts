@@ -27,13 +27,13 @@ beforeEach(() => {
 it("normalizes pasted Arabic/Persian digits and whitespace, retaining leading zeros", () => {
   expect(normalizeEmailOtp("٠٠١٢ ٣٤٥٦")).toBe("00123456");
   expect(normalizeEmailOtp("۰۰۱۲۳۴۵۶")).toBe("00123456");
-  expect(validEmailOtp("00123456")).toBe(true);
-  expect(validEmailOtp("123456")).toBe(false);
+  expect(validEmailOtp("001234")).toBe(true);
+  expect(validEmailOtp("00123456")).toBe(false);
 });
 
 it("verifies the cookie's email with type email, then requires a verified server identity", async () => {
-  const result = await verifySignupCode(codeForm("٠٠١٢٣٤٥٦"));
-  expect(state.verify).toHaveBeenCalledWith({ email: "otp@example.test", token: "00123456", type: "email" });
+  const result = await verifySignupCode(codeForm("٠٠١٢٣٤"));
+  expect(state.verify).toHaveBeenCalledWith({ email: "otp@example.test", token: "001234", type: "email" });
   expect(result).toMatchObject({ ok: true, url: "/coach" });
   expect(state.actor).toHaveBeenCalledTimes(1);
   expect(state.clear).toHaveBeenCalledTimes(1);
@@ -42,41 +42,41 @@ it("verifies the cookie's email with type email, then requires a verified server
 describe("OTP rejection paths", () => {
   it.each(["invalid", "expired", "already-used"])("does not establish application access for a %s provider rejection", async () => {
     state.verify.mockResolvedValue({ data: {}, error: { status: 403, code: "otp_expired" } });
-    expect((await verifySignupCode(codeForm("00123456"))).ok).toBe(false);
+    expect((await verifySignupCode(codeForm("001234"))).ok).toBe(false);
     expect(state.snapshot).not.toHaveBeenCalled();
     expect(state.clear).not.toHaveBeenCalled();
   });
   it("does not call the provider for missing context or incorrect code length", async () => {
-    expect((await verifySignupCode(codeForm("123456"))).ok).toBe(false);
+    expect((await verifySignupCode(codeForm("12345"))).ok).toBe(false);
     state.pending = null;
-    expect((await verifySignupCode(codeForm("00123456"))).ok).toBe(false);
+    expect((await verifySignupCode(codeForm("001234"))).ok).toBe(false);
     expect(state.verify).not.toHaveBeenCalled();
   });
   it("never treats a returned user without a session as verification success", async () => {
     state.verify.mockResolvedValue({ data: { session: null, user: { email_confirmed_at: "yes" } }, error: null });
-    expect((await verifySignupCode(codeForm("00123456"))).ok).toBe(false);
+    expect((await verifySignupCode(codeForm("001234"))).ok).toBe(false);
     expect(state.snapshot).not.toHaveBeenCalled();
   });
   it("denies a mismatched email or an unverified server identity", async () => {
     state.actor.mockResolvedValue(null);
-    expect((await verifySignupCode(codeForm("00123456"))).ok).toBe(false);
+    expect((await verifySignupCode(codeForm("001234"))).ok).toBe(false);
     state.actor.mockResolvedValue({ email: "other@example.test" });
-    expect((await verifySignupCode(codeForm("00123456"))).ok).toBe(false);
+    expect((await verifySignupCode(codeForm("001234"))).ok).toBe(false);
     expect(state.snapshot).not.toHaveBeenCalled();
   });
   it("preserves safe invitation redirects, denies external redirects, and routes trainees to me", async () => {
     state.pending!.next = "https://attacker.example";
-    expect(await verifySignupCode(codeForm("00123456"))).toMatchObject({ url: "/coach" });
+    expect(await verifySignupCode(codeForm("001234"))).toMatchObject({ url: "/coach" });
     state.snapshot.mockResolvedValue({ profile: { role: "trainee" } });
-    expect(await verifySignupCode(codeForm("00123456"))).toMatchObject({ url: "/me" });
+    expect(await verifySignupCode(codeForm("001234"))).toMatchObject({ url: "/me" });
     state.pending!.next = "/invite/" + "a".repeat(64);
-    expect(await verifySignupCode(codeForm("00123456"))).toMatchObject({ url: state.pending!.next });
+    expect(await verifySignupCode(codeForm("001234"))).toMatchObject({ url: state.pending!.next });
   });
   it("handles verification throttling and network failure without reflecting provider payloads", async () => {
     state.verify.mockResolvedValue({ data: {}, error: { status: 429 } });
-    expect(await verifySignupCode(codeForm("00123456"))).toMatchObject({ ok: false, message: expect.stringContaining("محاولات") });
+    expect(await verifySignupCode(codeForm("001234"))).toMatchObject({ ok: false, message: expect.stringContaining("محاولات") });
     state.verify.mockRejectedValue(new Error("synthetic private provider details"));
-    expect(JSON.stringify(await verifySignupCode(codeForm("00123456")))).not.toContain("private provider");
+    expect(JSON.stringify(await verifySignupCode(codeForm("001234")))).not.toContain("private provider");
   });
 });
 

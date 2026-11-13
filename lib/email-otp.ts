@@ -1,6 +1,6 @@
-// Read from EasyCoach's live Supabase Auth configuration on 2026-11-14:
-// mailer_otp_length=8, smtp_max_frequency=60. Keep these aligned when changing Auth.
-export const EMAIL_OTP_LENGTH = 8;
+// Matches EasyCoach's live Supabase Auth configuration (changed 2026-11-14):
+// mailer_otp_length=6, smtp_max_frequency=60. Keep these aligned when changing Auth.
+export const EMAIL_OTP_LENGTH = 6;
 export const EMAIL_RESEND_SECONDS = 60;
 export const SIGNUP_PENDING_SECONDS = 86400;
 

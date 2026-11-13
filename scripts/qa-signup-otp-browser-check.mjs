@@ -35,7 +35,7 @@ const provider = createServer(async (req, res) => {
   if (url.pathname === "/auth/v1/verify") {
     counts.verify++;
     const user = users.get(body.email);
-    if (!user || body.token !== "00123456" || user.consumed || fixture.expired) return send({ code: "otp_expired", msg: "Invalid or expired token" }, 403);
+    if (!user || body.token !== "001234" || user.consumed || fixture.expired) return send({ code: "otp_expired", msg: "Invalid or expired token" }, 403);
     user.email_confirmed_at = new Date().toISOString(); user.consumed = true;
     return send(session(user));
   }
@@ -101,11 +101,11 @@ try {
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await page.screenshot({ path: "artifacts/signup-otp-mobile.png", fullPage: true });
   pass("Refresh preserves the email and cooldown; mobile RTL, keyboard field and one-time-code hints work");
-  await page.locator("#signup-otp").fill("00000000");
+  await page.locator("#signup-otp").fill("000000");
   await page.getByRole("button", { name: "تأكيد البريد وفتح الحساب", exact: true }).click();
   await page.getByRole("alert").filter({ hasText: "الرمز غير صحيح" }).waitFor();
   fixture.expired = true;
-  await page.locator("#signup-otp").fill("00123456");
+  await page.locator("#signup-otp").fill("001234");
   await page.getByRole("button", { name: "تأكيد البريد وفتح الحساب", exact: true }).click();
   await page.getByRole("alert").filter({ hasText: "الرمز غير صحيح" }).waitFor();
   fixture.expired = false;
@@ -121,10 +121,10 @@ try {
   assert.equal(counts.resend, 1);
   pass("Resend uses signup; a provider 429 is an error and restarts the wait instead of claiming success");
   await page.locator("#signup-otp").evaluate(element => {
-    const data = new DataTransfer(); data.setData("text", "٠٠١٢ ٣٤٥٦");
+    const data = new DataTransfer(); data.setData("text", "٠٠١٢ ٣٤");
     element.dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }));
   });
-  assert.equal(await page.locator("#signup-otp").inputValue(), "00123456");
+  assert.equal(await page.locator("#signup-otp").inputValue(), "001234");
   const before = counts.verify;
   await page.locator("#signup-otp").evaluate(element => { element.form.requestSubmit(); element.form.requestSubmit(); });
   await page.waitForURL("**/coach");
@@ -157,7 +157,7 @@ try {
   assert.equal(await other.locator("#auth-password").inputValue(), "");
   pass("Correcting email restarts registration, clears pending metadata and never carries a password forward");
   const mail = await browser.newPage({ viewport: { width: 390, height: 900 } });
-  await mail.setContent((await readFile("supabase/templates/EasyCoach_OTP_Email.html", "utf8")).replace("{{ .Token }}", "00000000"));
+  await mail.setContent((await readFile("supabase/templates/EasyCoach_OTP_Email.html", "utf8")).replace("{{ .Token }}", "000000"));
   await mail.locator("img").evaluate(async img => { if (!img.complete) await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; }); });
   assert(await mail.locator("img").evaluate(img => img.naturalWidth === 512 && img.naturalHeight === 512));
   assert(await mail.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
