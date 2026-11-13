@@ -3,6 +3,7 @@ import { useLocale } from "./locale-provider";
 import { formatNumber, formatSigned } from "@/lib/plural";
 import { useState } from "react";
 import { addDays, riyadhToday } from "@/lib/dates";
+import { InteractiveLineChart } from "./interactive-line-chart";
 
 export function ProgressChart({
   points,
@@ -29,17 +30,8 @@ export function ProgressChart({
   const selected = points
     .filter((point) => point.date >= lower && point.date <= to && Number.isFinite(point.value))
     .sort((a, b) => a.date.localeCompare(b.date));
-  const values = selected.map((point) => point.value),
-    min = Math.min(...values, ...(target != null ? [target] : [])),
-    max = Math.max(...values, ...(target != null ? [target] : [])),
-    spread = Math.max(1, max - min),
-    y = (value: number) => 150 - ((value - min) / spread) * 115;
   const first = selected[0],
-    last = selected.at(-1),
-    start = first ? Date.parse(first.date) : 0,
-    end = last ? Date.parse(last.date) : 1;
-  const x = (day: string) =>
-    30 + ((Date.parse(day) - start) / Math.max(86400000, end - start)) * 540;
+    last = selected.at(-1);
   return (
     <section className="card p-5" role="region" aria-label={title}>
       <div className="section-title">
@@ -111,48 +103,13 @@ export function ProgressChart({
               </span>
             )}
           </div>
-          <svg
-            role="img"
-            aria-label={title}
-            viewBox="0 0 600 190"
-            className="w-full my-4"
-            style={{ direction: "ltr" }}
-          >
-            <path d="M30 165H570" stroke="#dce3ed" />
-            {target != null && (
-              <line
-                x1={30}
-                x2={570}
-                y1={y(target)}
-                y2={y(target)}
-                stroke="#8c99ab"
-                strokeDasharray="5 5"
-              />
-            )}
-            <polyline
-              points={selected
-                .map((point) => `${x(point.date)},${y(point.value)}`)
-                .join(" ")}
-              fill="none"
-              stroke="#2463eb"
-              strokeWidth={3}
+          <div className="my-4">
+            <InteractiveLineChart
+              points={selected}
+              target={target}
+              unit={unit}
+              label={title}
             />
-            {selected.map((point, i) => (
-              <circle
-                key={i}
-                cx={x(point.date)}
-                cy={y(point.value)}
-                r={4}
-                fill="#2463eb"
-                tabIndex={0}
-              >
-                <title>{`${point.date}: ${formatNumber(point.value)} ${tr(unit)}`}</title>
-              </circle>
-            ))}
-          </svg>
-          <div className="flex justify-between text-xs text-muted" dir="ltr">
-            <span>{first.date}</span>
-            <span>{last!.date}</span>
           </div>
         </>
       ) : (

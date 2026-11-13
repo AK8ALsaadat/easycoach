@@ -6,6 +6,7 @@ import type { WeightEntry } from "@/lib/model";
 import { riyadhToday, formatDate } from "@/lib/dates";
 import { formatNumber, formatSigned, lastEntries } from "@/lib/plural";
 import { ConfirmDialog } from "./modal";
+import { InteractiveLineChart } from "./interactive-line-chart";
 export function WeightPanel({
   entries,
   target,
@@ -53,17 +54,6 @@ export function WeightPanel({
       setBusy(false);
     }
   }
-  const low = Math.min(...recent.map((e) => Number(e.weight))) - 1,
-    high = Math.max(...recent.map((e) => Number(e.weight))) + 1;
-  const start = recent[0] ? Date.parse(recent[0].entry_date) : 0,
-    end = recent.at(-1) ? Date.parse(recent.at(-1)!.entry_date) : 1;
-  // The plot leaves room on the left for labelled Y-axis values (kg).
-  const plotStart = 52, plotEnd = 492;
-  const points = recent.map(
-    (e) =>
-      `${plotStart + ((Date.parse(e.entry_date) - start) / Math.max(86400000, end - start)) * (plotEnd - plotStart)},${135 - ((Number(e.weight) - low) / (high - low)) * 110}`,
-  );
-  const yTicks = [35, 80, 125].map((y) => ({ y, value: low + ((135 - y) / 110) * (high - low) }));
   return (
     <section className={"weight-panel " + (compact ? "" : "card p-5")}>
       <div className="section-title">
@@ -110,59 +100,15 @@ export function WeightPanel({
         </div>
       </div>
       {recent.length > 1 ? (
-        <div className="weight-chart">
-          <svg
-            viewBox="0 0 500 155"
-            role="img"
-            aria-label={tr("تغير الوزن خلال آخر 30 تسجيلًا")}
-          >
-            <defs>
-              <linearGradient id="weight-fill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0" stopColor="#3677f2" stopOpacity=".2" />
-                <stop offset="1" stopColor="#3677f2" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            {yTicks.map(({ y, value }) => (
-              <g key={y}>
-                <line
-                  x1={plotStart}
-                  x2={plotEnd}
-                  y1={y}
-                  y2={y}
-                  stroke="currentColor"
-                  opacity=".12"
-                />
-                <text x={plotStart - 6} y={y + 4} textAnchor="end" direction="ltr" className="weight-axis-label">
-                  {formatNumber(value)}
-                </text>
-              </g>
-            ))}
-            <path
-              d={`M ${points[0]} L ${points.join(" L ")} L ${plotEnd},150 L ${plotStart},150 Z`}
-              fill="url(#weight-fill)"
-            />
-            <polyline
-              points={points.join(" ")}
-              fill="none"
-              stroke="#3677f2"
-              strokeWidth="3"
-              strokeLinejoin="round"
-            />
-            {points.map((p, i) => (
-              <circle
-                key={i}
-                cx={p.split(",")[0]}
-                cy={p.split(",")[1]}
-                r="3"
-                fill="#3677f2"
-              />
-            ))}
-          </svg>
-          <div className="flex justify-between text-xs text-muted">
-            <span>{formatDate(recent[0].entry_date, locale)}</span>
-            <span>{formatDate(recent.at(-1)!.entry_date, locale)}</span>
-          </div>
-        </div>
+        <InteractiveLineChart
+          points={recent.map((entry) => ({
+            date: entry.entry_date,
+            value: Number(entry.weight),
+          }))}
+          target={target}
+          unit="كجم"
+          label={tr("تغير الوزن خلال آخر 30 تسجيلًا")}
+        />
       ) : (
         <div className="my-5 flex items-center gap-3 border border-dashed p-4 text-xs text-muted">
           <TrendingDown size={24} />
