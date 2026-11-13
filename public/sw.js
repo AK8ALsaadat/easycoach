@@ -12,6 +12,11 @@ const OFFLINE_URL = "/offline";
 const OFFLINE_PLAN_URL = "/api/offline-plan";
 const PRECACHE = [OFFLINE_URL, "/icons/icon-192.png", "/icons/icon-512.png", "/icons/maskable-512.png"];
 const PRIVATE_PREFIXES = ["/coach", "/api/", "/auth", "/login", "/logout", "/access", "/p/", "/invite", "/join", "/upload", "/trainee"];
+let privateGeneration = 0;
+function clearPrivate() {
+  privateGeneration++;
+  return caches.delete(PLAN_CACHE);
+}
 
 /** Decides the strategy for a request. Exposed for tests. */
 function route(url, request) {
@@ -37,6 +42,7 @@ self.addEventListener("activate", (event) => {
     caches
       .keys()
       .then((keys) => Promise.all(keys.filter((key) => key.startsWith("ec-static-") && key !== STATIC_CACHE).map((key) => caches.delete(key))))
+      .then(() => clearPrivate())
       .then(() => self.clients.claim()),
   );
 });
@@ -44,7 +50,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
   // Sent on logout: a shared phone must not keep the previous trainee's plan.
-  if (event.data?.type === "CLEAR_PRIVATE") event.waitUntil?.(caches.delete(PLAN_CACHE));
+  if (event.data?.type === "CLEAR_PRIVATE") event.waitUntil?.(clearPrivate());
 });
 
 async function cacheFirst(request) {
@@ -59,9 +65,11 @@ async function cacheFirst(request) {
 }
 
 async function planNetworkFirst(request) {
+  const generation = privateGeneration;
   const cache = await caches.open(PLAN_CACHE);
   try {
     const response = await fetch(request, { cache: "no-store", credentials: "same-origin" });
+    if (generation !== privateGeneration) return new Response(null, { status: 401 });
     if (response.ok && (response.headers.get("content-type") || "").includes("application/json")) {
       await cache.put(OFFLINE_PLAN_URL, response.clone());
     } else if ([401, 403, 404].includes(response.status)) {
@@ -69,7 +77,7 @@ async function planNetworkFirst(request) {
     }
     return response;
   } catch {
-    const cached = await cache.match(OFFLINE_PLAN_URL);
+    const cached = generation === privateGeneration ? await cache.match(OFFLINE_PLAN_URL) : null;
     if (cached) return cached;
     return new Response(JSON.stringify({ offline: true, plans: [] }), { status: 503, headers: { "Content-Type": "application/json" } });
   }
@@ -85,6 +93,10 @@ async function navigate(request) {
 
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
+  // Cover direct navigation, no-JS forms and OAuth/account changes as well as
+  // the explicit logout button. Old in-flight responses cannot repopulate it.
+  if (url.origin === self.location.origin && /^\/(login|logout|auth)(\/|$)/.test(url.pathname))
+    event.waitUntil(clearPrivate());
   const strategy = route(url, event.request);
   if (strategy === "static") event.respondWith(cacheFirst(event.request));
   else if (strategy === "plan") event.respondWith(planNetworkFirst(event.request));

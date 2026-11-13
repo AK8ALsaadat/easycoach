@@ -62,8 +62,8 @@ export const paylinkStore = {
     return value ? { ...value, price: Number(value.price), outstanding: Number(value.outstanding), pending: value.pending.map((p) => ({ ...p, amount: Number(p.amount) })) } : null;
   },
   invoiceOpen: (coach: string, subscription: string, client: string, orderNo: string, total: number) =>
-    call<string>("paylink_invoice_open", { coach, subscription, client, order_no: orderNo, total }),
-  invoiceAttach: (orderNo: string, transaction: string, url: string) => call<boolean | null>("paylink_invoice_attach", { order_no: orderNo, transaction, url }),
+    call<string>("paylink_invoice_reserve", { coach, subscription, client, order_no: orderNo, total }),
+  invoiceAttach: (orderNo: string, transaction: string, url: string | null) => call<boolean | null>("paylink_invoice_attach", { order_no: orderNo, transaction, url }),
   invoiceAbandon: (orderNo: string) => call<boolean | null>("paylink_invoice_abandon", { order_no: orderNo }),
   invoiceLookup: async (transaction: string | null, orderNo: string | null) => {
     const value = await call<StoredInvoice | null>("paylink_invoice_lookup", { transaction, order_no: orderNo });

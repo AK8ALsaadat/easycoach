@@ -14,11 +14,13 @@ const browser = await chromium.launch({ headless: true, ...(process.platform ===
 const passed = [], errors = [];
 let lastPage;
 async function login(email, width = 1440) {
-  const context = await browser.newContext({ viewport: { width, height: 1000 } });
+  const context = await browser.newContext({ viewport: { width, height: 1000 }, extraHTTPHeaders: { "x-forwarded-for": `qa-local-${crypto.randomUUID()}` } });
   context.setDefaultTimeout(15000);
   const page = await context.newPage(); lastPage = page;
+  page.setDefaultNavigationTimeout(60000);
   page.on("pageerror", error => errors.push(error.message));
   await page.goto(base + "/login");
+  await page.waitForLoadState("networkidle");
   await page.locator("#auth-email").fill(email);
   await page.locator("#auth-password").fill("CoachPreview!2026");
   await page.locator("button[type=submit]").click();
@@ -57,6 +59,7 @@ try {
   assert(await trainee.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   passed.push("linked trainee sees saved publication on mobile RTL without overflow"); console.log(passed.at(-1));
   await trainee.screenshot({ path: output + "/trainee-mobile.png", fullPage: true });
+  await ensurePhotoConsent(trainee);
   await trainee.getByRole("tab", { name: "صور التقدم", exact: true }).click();
   const existingPhotos = (await snapshot(coach)).management.progress_photos.filter(p => p.client_id === client.id).length;
   const bytes = await sharp({ create: { width: 80, height: 120, channels: 3, background: "#497cc2" } }).jpeg().withExif({ IFD0: { Artist: "Synthetic private metadata" } }).toBuffer();
@@ -87,18 +90,15 @@ try {
   passed.push("photo upload survives lost PUT acknowledgement exactly once; saved bytes lack EXIF and preserve ratio; zoom keyboard focus/Escape works"); console.log(passed.at(-1));
   await coach.goto(`${base}/coach/clients/${client.id}?tab=profile`);
   coach.on("dialog", dialog => dialog.accept());
-  await coach.getByRole("button", { name: /تفعيل رابط العميل|تغيير الرابط والرمز/ }).click();
-  const portalUrl = await coach.getByLabel("رابط العميل الخاص").inputValue();
-  const pin = (await coach.locator(".portal-share strong").innerText()).trim();
+  await coach.getByRole("button", { name: /إنشاء رابط دخول للمتدرب|تجديد رابط الدخول/ }).click();
+  const portalUrl = await coach.getByLabel("رابط المتدرب الخاص").inputValue();
   const anon = await browser.newContext({ viewport: { width: 390, height: 844 } }); anon.setDefaultTimeout(15000);
   const visitor = await anon.newPage(); lastPage = visitor;
   await visitor.goto(portalUrl);
-  assert.equal(await visitor.locator(".client-portal").count(), 0);
-  await visitor.getByLabel("رمز دخول العميل").fill(pin);
-  await visitor.getByRole("button", { name: "افتح جدولي", exact: true }).click();
   await visitor.locator(".client-portal").waitFor();
+  await ensurePhotoConsent(visitor);
   await visitor.getByText(name, { exact: true }).waitFor();
-  passed.push("separate anonymous browser enters portal with PIN and reads same published records"); console.log(passed.at(-1));
+  passed.push("separate anonymous browser exchanges bearer link for a session and reads same published records"); console.log(passed.at(-1));
   await anon.setOffline(true);
   await visitor.getByRole("button", { name: "تحديث الجدول", exact: true }).click();
   await visitor.getByText("تعذر الاتصال. بياناتك المدخلة ما زالت هنا", { exact: false }).waitFor();

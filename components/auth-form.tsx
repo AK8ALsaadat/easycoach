@@ -9,6 +9,7 @@ import {
   type Result,
 } from "@/app/actions";
 import { Notice } from "./forms";
+import { passwordRequirements, passwordStrength, registrationPasswordIssue } from "@/lib/password";
 function GoogleMark() {
   return (
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48">
@@ -26,18 +27,28 @@ export function AuthForm({ next, local, google = false }: { next: string; local:
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [email,setEmail]=useState(local ? "coach@example.test" : "");
+  const [password, setPassword] = useState(local ? "CoachPreview!2026" : "");
+  const [confirmation, setConfirmation] = useState("");
+  const requirements = passwordRequirements(password);
+  const strength = passwordStrength(password);
   const formRef = useRef<HTMLFormElement>(null);
   return (
     <div>
       <form
+        method="post"
         ref={formRef}
         onSubmit={async (event) => {
           event.preventDefault();
+          const form = new FormData(event.currentTarget);
+          if (register) {
+            const issue = registrationPasswordIssue(String(form.get("password") ?? ""), String(form.get("password_confirmation") ?? ""));
+            if (issue) { setResult({ ok: false, message: issue }); return; }
+          }
           setBusy(true);
           try {
             setResult(
               await (register ? registerAction : loginAction)(
-                new FormData(event.currentTarget),
+                form,
               ),
             );
           } finally {
@@ -90,12 +101,39 @@ export function AuthForm({ next, local, google = false }: { next: string; local:
             className="field"
             type="password"
             required
-            minLength={register ? 12 : 8}
+            minLength={8}
+            maxLength={128}
+            aria-describedby={register ? "password-rules password-strength-label" : undefined}
             autoComplete={register ? "new-password" : "current-password"}
-            defaultValue={local ? "CoachPreview!2026" : ""}
+            value={password}
+            onChange={event => { setPassword(event.target.value); setResult(null); }}
           />
         </div>
-        <button disabled={busy} className="btn w-full" type="submit">
+        {register ? (
+          <>
+            <div className="space-y-2 text-sm">
+              <p id="password-strength-label" aria-live="polite">{tr("قوة كلمة المرور: {0}", tr(strength.label))}</p>
+              <div role="meter" aria-label={tr("قوة كلمة المرور")} aria-valuemin={0} aria-valuemax={4} aria-valuenow={strength.score} aria-valuetext={tr(strength.label)} className="h-2 overflow-hidden rounded-full bg-canvas">
+                <div className={`h-full transition-all ${strength.score < 2 ? "bg-red-500" : strength.score === 2 ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${strength.score * 25}%` }} />
+              </div>
+              <ul id="password-rules" className="space-y-1 text-xs text-muted">
+                {([
+                  [requirements.length, "8 أحرف على الأقل"],
+                  [requirements.uppercase, "حرف إنجليزي كبير واحد على الأقل (A–Z)"],
+                  [requirements.symbol, "رمز خاص واحد على الأقل مثل ! @ # $ %"],
+                ] as const).map(([met, label]) => <li key={label} className={met ? "text-emerald-600" : undefined}><span aria-hidden="true">{met ? "✓" : "○"} </span>{tr(label)}</li>)}
+              </ul>
+            </div>
+            <div>
+              <label htmlFor="auth-password-confirmation">{tr("تأكيد كلمة المرور")}</label>
+              <input id="auth-password-confirmation" name="password_confirmation" className="field" type="password" required minLength={8} maxLength={128} autoComplete="new-password" value={confirmation} onChange={event => { setConfirmation(event.target.value); setResult(null); }} aria-invalid={Boolean(confirmation && password !== confirmation)} aria-describedby="password-match" />
+              <p id="password-match" role="status" className={`mt-2 text-xs ${password === confirmation ? "text-emerald-600" : "text-danger"}`}>
+                {confirmation ? tr(password === confirmation ? "كلمتا المرور متطابقتان" : "كلمتا المرور غير متطابقتين") : ""}
+              </p>
+            </div>
+          </>
+        ) : null}
+        <button disabled={busy || (register && Boolean(registrationPasswordIssue(password, confirmation)))} className="btn w-full" type="submit">
           {busy
             ? tr("نتحقق من بياناتك…")
             : register
@@ -153,6 +191,8 @@ export function AuthForm({ next, local, google = false }: { next: string; local:
           className="mt-5 text-sm text-teal"
           onClick={() => {
             setRegister(!register);
+            setPassword("");
+            setConfirmation("");
             setResult(null);
           }}
         >

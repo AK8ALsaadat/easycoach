@@ -18,6 +18,7 @@ import {
 } from "@/lib/server";
 import { getLocalDatabase } from "@/lib/local-db";
 import { arabicIssues } from "@/lib/form-errors";
+import { registrationPasswordIssue } from "@/lib/password";
 import { cleanPendingPhotos } from "@/lib/photo-cleanup";
 
 export type Result = {
@@ -122,10 +123,13 @@ export async function registerAction(form: FormData): Promise<Result> {
       .object({
         name: z.string().min(2).max(120),
         email,
-        password: z.string().min(12).max(128),
+        password: z.string(),
+        password_confirmation: z.string({ error: "أعد كتابة كلمة المرور للتأكيد" }),
         role: z.enum(["coach", "trainee"]),
       })
       .parse(Object.fromEntries(form));
+    const passwordIssue = registrationPasswordIssue(input.password, input.password_confirmation);
+    if (passwordIssue) return { ok: false, message: passwordIssue };
     const { error } = await (
       await supabase()
     ).auth.signUp({

@@ -42,6 +42,8 @@ export async function POST(request: NextRequest) {
   let stored;
   try {
     stored = await paylinkStore.invoiceLookup(transactionNo, null);
+    if (!stored && event.data.merchantOrderNumber && /^EC-[A-Z0-9-]{8,60}$/.test(event.data.merchantOrderNumber))
+      stored = await paylinkStore.invoiceLookup(null, event.data.merchantOrderNumber);
   } catch {
     paylinkLog("paylink.webhook.store_unavailable");
     return status(503);
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest) {
     return status(401);
   }
 
-  const result = await PaylinkService.verify({ transactionNo });
+  const result = await PaylinkService.verify({ transactionNo, orderNumber: event.data.merchantOrderNumber });
   if (result.state === "error") return status(500);
   return status(200);
 }

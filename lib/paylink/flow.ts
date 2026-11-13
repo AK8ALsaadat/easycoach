@@ -11,7 +11,7 @@ import type { CheckoutContext, SettleResult, StoredInvoice } from "./store";
 export type FlowStore = {
   checkoutContext(trainee: string, subscription: string): Promise<CheckoutContext | null>;
   invoiceOpen(coach: string, subscription: string, client: string, orderNo: string, total: number): Promise<string>;
-  invoiceAttach(orderNo: string, transaction: string, url: string): Promise<boolean | null>;
+  invoiceAttach(orderNo: string, transaction: string, url: string | null): Promise<boolean | null>;
   invoiceAbandon(orderNo: string): Promise<boolean | null>;
   invoiceLookup(transaction: string | null, orderNo: string | null): Promise<StoredInvoice | null>;
   invoiceSettle(transaction: string, paidAmount: number, methodType: string | null): Promise<SettleResult>;
@@ -68,7 +68,7 @@ function errorCode(error: unknown): string {
 
 async function applyInvoice(deps: FlowDeps, stored: StoredInvoice, invoice: PaylinkInvoice): Promise<VerifyResult> {
   const tx = stored.transaction_no!;
-  if (invoice.transactionNo !== tx || (invoice.orderNumber && invoice.orderNumber !== stored.order_number)) {
+  if (invoice.transactionNo !== tx || invoice.orderNumber !== stored.order_number || invoice.currency !== "SAR") {
     deps.log("paylink.verify.mismatch", { order: stored.order_number });
     return { state: "error", errors: [] };
   }
@@ -98,8 +98,11 @@ export async function verifyTransaction(deps: FlowDeps, ref: { transactionNo?: s
   const tx = ref.transactionNo && /^[A-Za-z0-9-]{1,64}$/.test(ref.transactionNo) ? ref.transactionNo : null;
   const order = ref.orderNumber && /^EC-[A-Z0-9-]{8,60}$/.test(ref.orderNumber) ? ref.orderNumber : null;
   if (!tx && !order) return { state: "unknown", errors: [] };
-  const stored = await deps.store.invoiceLookup(tx, tx ? null : order);
-  if (!stored || !stored.transaction_no) return { state: "unknown", errors: [] };
+  let stored = await deps.store.invoiceLookup(tx, tx ? null : order);
+  // addInvoice may have succeeded while its acknowledgement or local attach failed.
+  // Recover only after the merchant API confirms BOTH references below.
+  if (!stored && tx && order) stored = await deps.store.invoiceLookup(null, order);
+  if (!stored || (!stored.transaction_no && !tx)) return { state: "unknown", errors: [] };
   // Both given (a callback): they must name the same invoice.
   if (tx && order && stored.order_number !== order) return { state: "unknown", errors: [] };
   if (stored.status === "paid") return { state: "paid", errors: [], amount: stored.amount };
@@ -110,7 +113,17 @@ export async function verifyTransaction(deps: FlowDeps, ref: { transactionNo?: s
     return { state: "error", errors: [] };
   }
   try {
-    return await applyInvoice(deps, stored, await client.getInvoice(stored.transaction_no));
+    if (!stored.transaction_no && tx) {
+      const invoice = await client.getInvoice(tx);
+      if (invoice.transactionNo !== tx || invoice.orderNumber !== stored.order_number || invoice.currency !== "SAR") return { state: "error", errors: [] };
+      const attached = await deps.store.invoiceAttach(stored.order_number, tx, null);
+      if (!attached) {
+        const current = await deps.store.invoiceLookup(tx, null);
+        if (!current || current.id !== stored.id) return { state: "error", errors: [] };
+      }
+      return await applyInvoice(deps, { ...stored, transaction_no: tx }, invoice);
+    }
+    return await applyInvoice(deps, stored, await client.getInvoice(stored.transaction_no!));
   } catch (error) {
     deps.log("paylink.verify.failed", { order: stored.order_number, code: errorCode(error) });
     return { state: "error", errors: stored.payment_errors ?? [] };
@@ -136,6 +149,7 @@ export async function startCheckout(
       const stored = await deps.store.invoiceLookup(pending.transaction_no, null);
       if (!stored) continue;
       const result = await applyInvoice(deps, stored, invoice);
+      if (result.state === "error") return { kind: "error", code: "unavailable" };
       if (result.state === "paid" || result.state === "review") settledEarlier = true;
       // A declined card ("failed") leaves the invoice Pending and still payable: reuse it too.
       else if (
@@ -148,6 +162,8 @@ export async function startCheckout(
         reuse = pending.payment_url;
     } catch (error) {
       deps.log("paylink.checkout.recheck_failed", { order: pending.order_number, code: errorCode(error) });
+      // Its payment state is unknown. Creating a replacement could charge twice.
+      return { kind: "error", code: "unavailable" };
     }
   }
   if (settledEarlier) {
@@ -169,6 +185,7 @@ export async function startCheckout(
     await deps.store.invoiceOpen(context.coach_id, context.subscription_id, context.client_id, orderNumber, context.outstanding);
   } catch (error) {
     if ((error as { code?: string }).code === "P0429") return { kind: "error", code: "rate_limited" };
+    if ((error as { code?: string }).code === "P0409") return { kind: "error", code: "unavailable" };
     throw error;
   }
   try {
@@ -182,11 +199,16 @@ export async function startCheckout(
       cancelUrl: `${deps.appUrl}/payments/paylink/cancel`,
       products: [{ title: `اشتراك إيزي كوتش - ${context.subscription_name}`.slice(0, 200), price: context.outstanding, qty: 1 }],
     });
-    await deps.store.invoiceAttach(orderNumber, created.transactionNo, created.url);
+    const attached = await deps.store.invoiceAttach(orderNumber, created.transactionNo, created.url);
+    if (!attached) throw new PaylinkError("invalid_response");
     deps.log("paylink.checkout.created", { order: orderNumber });
     return { kind: "redirect", url: created.url, reused: false };
   } catch (error) {
-    await deps.store.invoiceAbandon(orderNumber).catch(() => null);
+    // Only a definite rejection before invoice creation permits another attempt.
+    // Network/HTTP/attach failures may hide a payable remote invoice: keep the
+    // reservation for verified callback/webhook recovery instead of charging again.
+    if (error instanceof PaylinkError && ["auth_failed", "rejected"].includes(error.code))
+      await deps.store.invoiceAbandon(orderNumber).catch(() => null);
     deps.log("paylink.checkout.failed", { order: orderNumber, code: errorCode(error) });
     return { kind: "error", code: "unavailable" };
   }

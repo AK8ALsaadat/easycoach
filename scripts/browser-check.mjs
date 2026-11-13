@@ -20,6 +20,7 @@ const errors = [];
 const contexts = [];
 async function login(email) {
   const context = await browser.newContext({
+    extraHTTPHeaders: { "x-forwarded-for": `qa-local-${crypto.randomUUID()}` },
     viewport: { width: 1512, height: 1000 },
     reducedMotion: "reduce",
   });
@@ -29,6 +30,7 @@ async function login(email) {
   const page = await context.newPage();
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(base + "/login");
+  await page.waitForLoadState("networkidle");
   await page.locator("#auth-email").fill(email);
   await page.locator("#auth-password").fill("CoachPreview!2026");
   await page.locator('button[type="submit"]').click();
@@ -173,7 +175,7 @@ try {
   const second = await login("coach2@example.test");
   assert(!(await snapshot(second)).clients.some((c) => c.id === clientId));
   await second.goto(base + "/coach/clients/" + clientId);
-  await second.getByText("العميل غير متاح", { exact: true }).waitFor();
+  await second.getByText("المتدرب غير متاح", { exact: true }).waitFor();
   const student = await login("trainee@example.test");
   await student.getByText("برنامجك، بوضوح.", { exact: true }).waitFor();
   assert((await snapshot(student)).programs.every((p) => p.published_at));

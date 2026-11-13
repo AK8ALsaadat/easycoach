@@ -84,7 +84,7 @@ function fakeClient() {
     async createInvoice(input) {
       const tx = String(++next);
       created.push({ orderNumber: input.orderNumber, amount: input.amount, clientMobile: input.clientMobile, title: input.products[0].title });
-      remote.set(tx, { transactionNo: tx, orderNumber: input.orderNumber, orderStatus: "Pending", amount: input.amount, paymentType: null, paymentErrors: [] });
+      remote.set(tx, { transactionNo: tx, orderNumber: input.orderNumber, currency: "SAR", orderStatus: "Pending", amount: input.amount, paymentType: null, paymentErrors: [] });
       return { transactionNo: tx, url: `https://payment.paylink.sa/pay/info/${tx}`, orderStatus: "PENDING" };
     },
     async getInvoice(tx) {
@@ -116,6 +116,67 @@ function setup(price = 300, phone = "0501234567") {
 }
 
 const checkout = (deps: FlowDeps, extra: { mobile?: string } = {}) => startCheckout(deps, { userId: "trainee-1", subscriptionId: SUB, ...extra });
+
+describe("audit payment failure boundaries", () => {
+  it.each([null, "USD"])("refuses missing or foreign settlement currency (%s)", async (currency) => {
+    const { deps, paylink, store } = setup();
+    await checkout(deps);
+    const tx = store.invoices[0].transaction_no!;
+    paylink.pay(tx);
+    const original = paylink.client.getInvoice;
+    paylink.client.getInvoice = async (id) => ({ ...await original(id), currency });
+    expect(await verifyTransaction(deps, { transactionNo: tx })).toMatchObject({ state: "error" });
+    expect(store.payments).toEqual([]);
+  });
+  it("keeps an uncertain creation reserved and recovers it only from verified merchant data", async () => {
+    const { deps, paylink, store } = setup();
+    const create = paylink.client.createInvoice;
+    let tx = "";
+    paylink.client.createInvoice = async (input) => {
+      tx = (await create(input)).transactionNo;
+      throw new PaylinkError("network");
+    };
+    expect(await checkout(deps)).toEqual({ kind: "error", code: "unavailable" });
+    expect(store.invoices[0]).toMatchObject({ status: "pending", transaction_no: null });
+    const order = store.invoices[0].order_number;
+    // Untrusted webhook references alone must never change the ledger.
+    expect(await verifyTransaction(deps, { transactionNo: "999", orderNumber: order })).toMatchObject({ state: "error" });
+    expect(store.payments).toEqual([]);
+    expect(store.invoices[0].transaction_no).toBeNull();
+    paylink.pay(tx);
+    expect(await verifyTransaction(deps, { transactionNo: tx, orderNumber: order })).toMatchObject({ state: "paid" });
+    expect(await verifyTransaction(deps, { transactionNo: tx, orderNumber: order })).toMatchObject({ state: "paid" });
+    expect(store.payments).toEqual([300]);
+    expect(paylink.created).toHaveLength(1);
+  });
+
+  it("refuses a paid response without the merchant order number", async () => {
+    const { deps, paylink, store } = setup();
+    await checkout(deps);
+    const tx = store.invoices[0].transaction_no!;
+    paylink.pay(tx);
+    const original = paylink.client.getInvoice;
+    paylink.client.getInvoice = async (id) => ({ ...await original(id), orderNumber: null });
+    expect(await verifyTransaction(deps, { transactionNo: tx })).toMatchObject({ state: "error" });
+    expect(store.payments).toEqual([]);
+  });
+
+  it("does not offer payment when the database did not attach the transaction", async () => {
+    const { deps, store } = setup();
+    store.invoiceAttach = async () => null;
+    expect(await checkout(deps)).toEqual({ kind: "error", code: "unavailable" });
+    expect(store.invoices[0].transaction_no).toBeNull();
+  });
+
+  it("does not create another invoice when an existing invoice cannot be verified", async () => {
+    const { deps, paylink, store } = setup();
+    await checkout(deps);
+    paylink.client.getInvoice = async () => { throw new PaylinkError("network"); };
+    expect(await checkout(deps)).toEqual({ kind: "error", code: "unavailable" });
+    expect(paylink.created).toHaveLength(1);
+    expect(store.payments).toEqual([]);
+  });
+});
 
 describe("checkout", () => {
   it("creates an invoice for what is owed, titled with the package name", async () => {

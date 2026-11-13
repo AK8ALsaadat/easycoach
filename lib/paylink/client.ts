@@ -47,6 +47,7 @@ export type CreatedInvoice = { transactionNo: string; url: string; orderStatus: 
 export type PaylinkInvoice = {
   transactionNo: string;
   orderNumber: string | null;
+  currency?: string | null;
   orderStatus: "Paid" | "Pending" | "Canceled" | string;
   amount: number;
   paymentType: string | null;
@@ -123,7 +124,7 @@ const InvoiceResponse = z
     transactionNo: id,
     orderStatus: z.string().min(1).max(40),
     amount: z.coerce.number().finite(),
-    gatewayOrderRequest: z.object({ orderNumber: z.union([z.string(), z.number()]).transform(String).nullish() }).passthrough().nullish(),
+    gatewayOrderRequest: z.object({ orderNumber: z.union([z.string(), z.number()]).transform(String).nullish(), currency: z.string().nullish() }).passthrough().nullish(),
     paymentReceipt: z.object({ paymentMethod: z.string().nullish() }).passthrough().nullish(),
     paymentErrors: z.unknown().optional(),
   })
@@ -236,6 +237,7 @@ export function createPaylinkClient(credentials: PaylinkCredentials, fetcher: ty
     return {
       transactionNo: parsed.data.transactionNo,
       orderNumber: parsed.data.gatewayOrderRequest?.orderNumber ?? null,
+      currency: parsed.data.gatewayOrderRequest?.currency ?? null,
       orderStatus: normalizeStatus(parsed.data.orderStatus),
       amount: parsed.data.amount,
       paymentType: parsed.data.paymentReceipt?.paymentMethod?.slice(0, 40) ?? null,

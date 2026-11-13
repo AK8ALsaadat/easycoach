@@ -26,7 +26,7 @@ try {
     secrets.push(privateEnv.SUPABASE_SERVICE_ROLE_KEY);
 } catch {}
 let count = 0;
-for (const file of await walk(".next/static")) {
+for (const file of await walk(path.join(process.env.EASYCOACH_EVIDENCE_DIST_DIR || ".next", "static"))) {
   const text = await readFile(file, "utf8");
   if ([...patterns, ...secrets].some((v) => text.includes(v)))
     throw Error("Server-only content detected in a browser artifact: " + file);

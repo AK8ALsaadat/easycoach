@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import type { PGlite } from "@electric-sql/pglite";
 import { rpcLocal } from "@/lib/local-db";
 import { coach, fixtureDatabase, other } from "./helpers/db";
+import { readFile } from "node:fs/promises";
 
 /** The SQL side of Paylink: what a trainee may pay, settling exactly once, and isolation. */
 
@@ -40,6 +41,32 @@ beforeAll(async () => {
   db = fx.db;
 });
 
+describe("audit checkout reservation", () => {
+  it("admits only one concurrent checkout and preserves unresolved legacy invoices", async () => {
+    const { clientId, subId } = await setup();
+    const reserve = (order: string) => sql<string>(
+      "select public.paylink_invoice_reserve(coach=>$1,subscription=>$2,client=>$3,order_no=>$4,total=>$5) as r",
+      [coach, subId, clientId, order, 300],
+    );
+    const results = await Promise.allSettled([reserve(orderNo()), reserve(orderNo())]);
+    expect(results.filter(r => r.status === "fulfilled")).toHaveLength(1);
+    expect((await db.query("select id from public.paylink_invoices where subscription_id=$1", [subId])).rows).toHaveLength(1);
+
+    const legacy = await setup();
+    await open(coach, legacy.subId, legacy.clientId, orderNo(), 300);
+    await expect(sql("select public.paylink_invoice_reserve(coach=>$1,subscription=>$2,client=>$3,order_no=>$4,total=>300) as r",
+      [coach, legacy.subId, legacy.clientId, orderNo()])).rejects.toMatchObject({ code: "P0409" });
+  });
+
+  it("denies reservation RPCs to ordinary users", async () => {
+    const { clientId, subId } = await setup();
+    await expect(rpcLocal(db, coach, "paylink_invoice_reserve", {
+      coach, subscription: subId, client: clientId, order_no: orderNo(), total: 300,
+    })).rejects.toThrow(/permission denied/);
+    expect((await db.query("select id from public.paylink_invoices where subscription_id=$1", [subId])).rows).toHaveLength(0);
+  });
+});
+
 describe("paylink checkout context", () => {
   it("shows a trainee only their own subscription and what is still owed", async () => {
     const { traineeId, subId } = await setup(300);
@@ -59,6 +86,25 @@ describe("paylink checkout context", () => {
 });
 
 describe("paylink settlement", () => {
+  it("rolls the ledger back on a partial failure and safely retries", async () => {
+    const { clientId, subId } = await setup(300);
+    const order = orderNo();
+    await open(coach, subId, clientId, order, 300);
+    await attach(order, "9100000000099");
+    await db.exec(`create function private.qa_fail_settlement() returns trigger language plpgsql as $$
+      begin if new.transaction_no='9100000000099' and new.status='paid' then raise exception 'Synthetic settlement outage'; end if; return new; end $$;
+      create trigger qa_fail_settlement before update on public.paylink_invoices for each row execute function private.qa_fail_settlement();`);
+    try {
+      await expect(settle("9100000000099", 300)).rejects.toThrow(/Synthetic settlement outage/);
+      expect((await db.query("select id from public.payments where subscription_id=$1", [subId])).rows).toHaveLength(0);
+      expect((await db.query<{ status: string }>("select status from public.paylink_invoices where order_number=$1", [order])).rows[0].status).toBe("pending");
+    } finally {
+      await db.exec("drop trigger qa_fail_settlement on public.paylink_invoices; drop function private.qa_fail_settlement()");
+    }
+    expect((await settle("9100000000099", 300)).outcome).toBe("activated");
+    expect((await settle("9100000000099", 300)).outcome).toBe("duplicate");
+    expect((await db.query("select id from public.payments where subscription_id=$1", [subId])).rows).toHaveLength(1);
+  });
   it("records one paylink payment per transaction, however many times it is confirmed", async () => {
     const { clientId, subId } = await setup(300);
     const order = orderNo();
@@ -115,6 +161,16 @@ describe("paylink settlement", () => {
     await sql("select public.paylink_invoice_mark(transaction=>'9100000000005',next_status=>'canceled',errors=>'[]'::jsonb) as r");
     expect((await db.query<{ status: string }>("select status from public.paylink_invoices where transaction_no='9100000000005'")).rows[0].status).toBe("paid");
   });
+});
+
+it("applies and rolls back the additive reservation migration with existing invoices intact", async () => {
+  const { clientId, subId } = await setup();
+  const order = orderNo();
+  await open(coach, subId, clientId, order, 300);
+  const before = (await db.query("select * from public.paylink_invoices order by id")).rows;
+  await db.exec(await readFile("supabase/rollbacks/20261114100000_paylink_checkout_reservation.down.sql", "utf8"));
+  await db.exec(await readFile("supabase/migrations/20261114100000_paylink_checkout_reservation.sql", "utf8"));
+  expect((await db.query("select * from public.paylink_invoices order by id")).rows).toEqual(before);
 });
 
 describe("paylink and permanent client deletion", () => {

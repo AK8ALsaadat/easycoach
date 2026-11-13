@@ -30,7 +30,7 @@ export function SubscriptionRenewal({ client, subscriptions }: { client: Client;
     : end < period.start ? "تاريخ النهاية يجب أن يكون بعد البداية"
     : price.trim() === "" ? "أدخل قيمة الاشتراك"
     : !Number.isFinite(amount) || amount < 0 || amount > 1000000 ? "قيمة الاشتراك بين 0 و1,000,000 ر.س"
-    : !/^d+(.d{1,2})?$/.test(price.trim()) ? "القيمة رقم بحد أقصى منزلتين عشريتين"
+    : !/^\d+(\.\d{1,2})?$/.test(price.trim()) ? "القيمة رقم بحد أقصى منزلتين عشريتين"
     : "";
   return <>
     <button type="button" className="btn-soft subscription-renewal-trigger" onClick={() => { setResult(null); setMonths(1); setCustomEnd(""); setPrice(previous ? String(previous.price) : ""); setOpen(true); }}><CalendarDays size={16} />{tr(previous ? "تجديد الاشتراك" : "إضافة اشتراك")}</button>
