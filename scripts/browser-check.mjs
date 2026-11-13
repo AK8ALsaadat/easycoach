@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 const base = process.env.TEST_BASE_URL ?? "http://127.0.0.1:3200";
+assert(["localhost", "127.0.0.1"].includes(new URL(base).hostname), "Synthetic browser checks are local-only");
+const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+function shift(day, count) { const value = new Date(day + "T00:00:00Z"); value.setUTCDate(value.getUTCDate() + count); return value.toISOString().slice(0, 10); }
 const artifact = path.resolve("artifacts/screenshots");
 const temp = path.resolve("artifacts/browser-temp");
 await mkdir(artifact, { recursive: true });
@@ -21,6 +24,8 @@ async function login(email) {
     reducedMotion: "reduce",
   });
   contexts.push(context);
+  context.setDefaultTimeout(15000);
+  context.setDefaultNavigationTimeout(60000);
   const page = await context.newPage();
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(base + "/login");
@@ -47,12 +52,14 @@ async function until(check, message) {
 }
 try {
   const anonymous = await browser.newContext();
+  anonymous.setDefaultNavigationTimeout(60000);
   contexts.push(anonymous);
   const anonPage = await anonymous.newPage();
   await anonPage.goto(base + "/coach");
   await anonPage.waitForURL("**/login");
   assert(anonPage.url().includes("/login"));
   const page = await login("coach@example.test");
+  await page.getByText("معاينة محلية · بيانات اصطناعية محفوظة في قاعدة بيانات على جهازك · لا رسائل حقيقية", { exact: true }).waitFor();
   await page.locator("aside nav").waitFor();
   await page.screenshot({
     path: path.join(artifact, "today-desktop.png"),
@@ -68,10 +75,10 @@ try {
   await page.locator('main form button[type="submit"]').click();
   await page.waitForURL(/\/coach\/clients\/[a-f0-9-]+$/);
   const clientId = page.url().split("/").at(-1);
+  await page.goto(`${base}/coach/clients/${clientId}/edit`);
   await page.locator("#plan-name").fill("برنامج محفوظ من المتصفح");
-  await page
-    .getByRole("textbox", { name: "اسم التمرين 1", exact: true })
-    .fill("قرفصاء اصطناعية");
+  await page.locator("#custom-exercise-name").fill("قرفصاء اصطناعية");
+  await page.getByRole("button", { name: "إضافة التمرين", exact: true }).click();
   await until(async () => {
     const data = await snapshot(page);
     return data.programs.some(
@@ -90,19 +97,14 @@ try {
       (p) => p.client_id === clientId && p.published_at,
     );
   }, "Publish failed");
-  await page
-    .getByRole("button", { name: "الباقات والدفعات", exact: true })
-    .click();
-  await page
-    .locator("summary")
-    .filter({ hasText: "إضافة باقة أو تجديد" })
-    .click();
-  const subscription = page.locator('form:has(input[name="price"])');
-  await subscription.locator('input[name="name"]').fill("باقة متصفح");
-  await subscription.locator('input[name="price"]').fill("100");
-  await subscription.locator('input[name="start_date"]').fill("2026-11-01");
-  await subscription.locator('input[name="end_date"]').fill("2026-11-30");
-  await subscription.locator('button[type="submit"]').click();
+  await page.goto(`${base}/coach/clients/${clientId}?tab=finance`);
+  await page.getByRole("button", { name: "إضافة اشتراك", exact: true }).click();
+  const subscription = page.getByRole("dialog");
+  await subscription.locator("select").selectOption("0");
+  const end = shift(today, 30);
+  await subscription.getByLabel("نهاية الاشتراك", { exact: true }).fill(end);
+  await subscription.getByLabel("قيمة الاشتراك (ر.س)", { exact: true }).fill("100");
+  await subscription.getByRole("button", { name: "حفظ الاشتراك", exact: true }).click();
   await until(async () => {
     return (await snapshot(page)).subscriptions.some(
       (s) => s.client_id === clientId,
@@ -111,49 +113,34 @@ try {
   const sub = (await snapshot(page)).subscriptions.find(
     (s) => s.client_id === clientId,
   );
-  await page
-    .locator("summary")
-    .filter({ hasText: "تسجيل دفعة جزئية أو كاملة" })
-    .click();
-  const payment = page.locator('form:has(input[name="amount"])');
-  await payment.locator('input[name="amount"]').fill("40");
-  await payment.locator('input[name="paid_date"]').fill("2026-10-28");
-  await payment.locator('input[name="reference"]').fill(`UI-${marker}`);
-  await payment.locator('button[type="submit"]').click();
-  await until(async () => {
-    return (await snapshot(page)).payments.some(
-      (p) => p.reference === `UI-${marker}`,
-    );
-  }, "Payment failed");
   assert.equal(
     (await snapshot(page)).subscriptions.find((s) => s.id === sub.id)
       .start_date,
-    "2026-11-01",
+    today,
   );
   await page.locator("summary").filter({ hasText: "تجميد الباقة" }).click();
   const freeze = page.locator(
     'form:has(input[name="start_date"]):not(:has(input[name="price"]))',
   );
-  await freeze.locator('input[name="start_date"]').fill("2026-11-05");
-  await freeze.locator('input[name="end_date"]').fill("2026-11-07");
+  await freeze.locator('input[name="start_date"]').fill(today);
+  await freeze.locator('input[name="end_date"]').fill(shift(today, 2));
   await freeze.locator('button[type="submit"]').click();
   await until(async () => {
     return (
       (await snapshot(page)).subscriptions.find((s) => s.id === sub.id)
-        ?.end_date === "2026-12-03"
+        ?.end_date === shift(end, 3)
     );
   }, "Freeze failed");
   await freeze.locator('button[type="submit"]').click();
   await freeze.getByRole("alert").waitFor();
+  await until(async () => (await snapshot(page)).freezes.filter(f => f.subscription_id === sub.id).length === 1, "Freeze replay duplicated a record");
   assert.equal(
     (await snapshot(page)).subscriptions.find((s) => s.id === sub.id).end_date,
-    "2026-12-03",
+    shift(end, 3),
   );
+  await page.goto(`${base}/coach/clients/${clientId}?tab=profile`);
   await page
-    .getByRole("button", { name: "البيانات والدعوة", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "إنشاء دعوة آمنة", exact: true })
+    .getByRole("button", { name: /^(إنشاء دعوة آمنة|ربط حساب اختياري)$/ })
     .click();
   const inviteUrl = await page.locator("#generated-invite").inputValue();
   assert.match(inviteUrl, /\/invite\/[a-f0-9]{64}$/);
@@ -170,9 +157,9 @@ try {
     .getByRole("button", { name: "قراءة ومعاينة", exact: true })
     .click();
   await page.locator("#column-map-0-2").selectOption("phone");
-  await page.locator('input[type="checkbox"]').nth(1).check();
+  await page.getByLabel("تجاوز الصفوف غير الصالحة صراحة واستيراد الصفوف الصالحة فقط", { exact: true }).check();
   await page
-    .getByRole("button", { name: "استيراد 1 عميل", exact: true })
+    .getByTestId("apply-full-import")
     .click();
   await until(async () => {
     return (await snapshot(page)).clients.some((c) => c.email === importEmail);
@@ -210,7 +197,7 @@ try {
   });
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: real auth, coach isolation, browser import, durable draft reload, publication, package dates, partial payment, freeze replay, invite generation, trainee access, mobile layout.",
+    "PASS: local auth, coach isolation, browser import, durable draft reload, publication, subscription dates, freeze replay, account invite generation, trainee access, mobile layout. Payment ledger is covered by SQL tests, not this UI script.",
   );
 } finally {
   for (const context of contexts) await context.close();

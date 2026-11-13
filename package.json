@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "automation": "node automation/cli.mjs",
+    "automation:worker": "node --env-file=automation/.env automation/n8n-worker.mjs",
+    "test:automation": "node --test automation/test/*.node.mjs",
     "dev": "next dev -H 127.0.0.1 -p 3200",
     "build": "next build",
     "start": "next start -H 127.0.0.1 -p 3200",

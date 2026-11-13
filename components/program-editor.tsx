@@ -20,7 +20,10 @@ import {
   content as contentSchema,
   type Content,
   type Exercise,
+  blankContent,
 } from "@/lib/model";
+import { manage } from "@/app/management-actions";
+import type { TemplateMeta } from "@/lib/management";
 import { mutate, type Result } from "@/app/actions";
 import { Notice } from "./forms";
 import { ExerciseCatalog } from "./exercise-catalog";
@@ -28,6 +31,9 @@ import { useDialog } from "./use-dialog";
 import { useUnsavedChanges } from "./use-unsaved-changes";
 import { VideoUpload } from "./video-upload";
 import { MealEditor } from "./meal-editor";
+import { MacroTargets } from "./macro-targets";
+import { caloriesFromMacros, inferCaloriesMode } from "@/lib/macros";
+import { templateNameError } from "@/lib/template-names";
 import { ProgramDayNav } from "./program-day-nav";
 import { appendExercise, customExercise, isStarterExercise, transferExercise, repeatProgramDay, appendExercises } from "@/lib/program-builder";
 function withRowIds(value: Content): Content {
@@ -56,6 +62,8 @@ export function ProgramEditor({
   clientId,
   library = [],
   separateNutrition = false,
+  templateMeta,
+  siblingTemplates = [],
 }: {
   initial: Content;
   name: string;
@@ -64,11 +72,18 @@ export function ProgramEditor({
   clientId?: string;
   library?: Exercise[];
   separateNutrition?: boolean;
+  templateMeta?: TemplateMeta;
+  /** Other templates of this coach, for the "same name" check while renaming. */
+  siblingTemplates?: { id: string; name: string }[];
 }) {
   const { t: tr, language: locale } = useLocale();
 
   const router = useRouter();
   const [name, setName] = useState(initialName);
+  // A legacy template name is only re-checked once the coach edits it.
+  const nameError = clientId
+    ? name.trim().length < 2 ? "اكتب اسم البرنامج" : null
+    : name === initialName && name.trim().length >= 2 ? null : templateNameError(name, siblingTemplates, id);
   const [plan, setPlan] = useState<Content>(() =>
     withRowIds({ ...structuredClone(initial), days: initial.days.map(d => ({ ...structuredClone(d), exercises: d.exercises.length === 1 && isStarterExercise(d.exercises[0]) ? [] : structuredClone(d.exercises) })) }),
   );
@@ -76,7 +91,9 @@ export function ProgramEditor({
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [day, setDay] = useState(0);
-  const [tab, setTab] = useState<"training" | "nutrition">("training");
+  const [templateKind, setTemplateKind] = useState<TemplateMeta["kind"]>(templateMeta?.kind ?? "workout");
+  const [tab, setTab] = useState<"training" | "nutrition">(templateMeta?.kind && templateMeta.kind !== "workout" ? "nutrition" : "training");
+  const showTargets = Boolean(clientId) || templateKind === "nutrition_targets";
   const [hasSaved, setHasSaved] = useState(Boolean(id));
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [repeatSource,setRepeatSource]=useState<number|null>(null);
@@ -105,8 +122,12 @@ export function ProgramEditor({
   }
   const save = useCallback(async () => {
     if (lock.current) return null;
-    const check = contentSchema.safeParse(plan);
-    if (!check.success || name.trim().length < 2) {
+    const check = contentSchema.safeParse(!clientId && templateKind !== "workout" ? { ...plan, days: blankContent.days } : plan);
+    if (nameError) {
+      setResult({ ok: false, message: nameError });
+      return null;
+    }
+    if (!check.success) {
       setResult({
         ok: false,
         message: "أكمل اسم البرنامج وأسماء التمارين والمجموعات قبل الحفظ.",
@@ -117,12 +138,9 @@ export function ProgramEditor({
     setBusy(true);
     const rev = revision.current;
     try {
-      const response = await mutate(
-        clientId ? "program_save" : "template_save",
-        clientId
-          ? { client_id: clientId, name, content: check.data, expected_draft_id: savedId.current ?? null, expected_edit_revision: savedEditRevision.current }
-          : { id: savedId.current, name, content: check.data },
-      );
+      const response = clientId
+        ? await mutate("program_save", { client_id: clientId, name, content: check.data, expected_draft_id: savedId.current ?? null, expected_edit_revision: savedEditRevision.current })
+        : await manage("template_save_typed", { id: savedId.current, name, content: check.data, kind: templateKind, description: templateMeta?.description ?? "", archived: templateMeta?.archived ?? false });
       setResult(response);
       if (response.ok) {
         savedId.current = (response.data as { id: string }).id;
@@ -142,14 +160,14 @@ export function ProgramEditor({
       lock.current = false;
       setBusy(false);
     }
-  }, [plan, name, clientId]);
+  }, [plan, name, clientId, templateKind, templateMeta, nameError]);
   useEffect(() => {
-    if (!dirty || busy || result?.ok === false || !contentSchema.safeParse(plan).success || name.trim().length < 2) return;
+    if (!dirty || busy || result?.ok === false || nameError || !contentSchema.safeParse(!clientId && templateKind !== "workout" ? { ...plan, days: blankContent.days } : plan).success) return;
     const timer = setTimeout(() => {
       void save();
     }, 1200);
     return () => clearTimeout(timer);
-  }, [dirty, busy, save, result, plan, name]);
+  }, [dirty, busy, save, result, plan, name, clientId, templateKind, nameError]);
   useUnsavedChanges(dirty);
   const active = plan.days[day] ?? plan.days[0];
   function updateExercise(
@@ -223,11 +241,14 @@ export function ProgramEditor({
             className="field"
             value={name}
             maxLength={140}
+            aria-invalid={Boolean(nameError)}
+            aria-describedby={nameError ? "plan-name-error" : undefined}
             onChange={(e) => {
               setName(e.target.value);
               changed();
             }}
           />
+          {nameError && <p id="plan-name-error" className="field-error">{tr(nameError)}</p>}
         </div>
         <span role="status" className="badge">
           {busy
@@ -239,75 +260,46 @@ export function ProgramEditor({
                 : tr("مسودة جديدة")}
         </span>
       </div>
+      {!clientId && <div className="space-y-2"><label htmlFor="template-kind">{tr("نوع القالب")}</label><select id="template-kind" className="field" value={templateKind} onChange={event => { const kind = event.target.value as TemplateMeta["kind"]; setTemplateKind(kind); setTab(kind === "workout" ? "training" : "nutrition"); changed(); }}><option value="workout">{tr("تمارين عامة")}</option><option value="nutrition">{tr("تغذية عامة — دون تغيير أهداف المتدرب")}</option><option value="nutrition_targets">{tr("تغذية مع أهداف مقترحة — اختياري")}</option></select><p className="text-xs text-muted">{tr(templateKind === "nutrition_targets" ? "هذا القالب يتضمن أهدافًا مقترحة؛ راجعها وعدّلها لكل متدرب قبل التعيين." : "السعرات والماكروز والأوزان والإيقاع تُخصص لكل متدرب من ملفه. فيديو شرح التمرين متاح في القالب العام.")}</p></div>}
       <div className="flex flex-wrap gap-2 border-b pb-4">
-        <button
+        {(clientId || templateKind === "workout") && <button
           type="button"
           className={tab === "training" ? "btn" : "btn-secondary"}
           onClick={() => setTab("training")}
         >
           {tr("البرنامج التدريبي")}
-        </button>
-        {separateNutrition && clientId ? <Link className="btn-secondary" href={`/coach/clients/${clientId}/edit?tab=nutrition`}>{tr("تعديل السعرات")}</Link> : <button
+        </button>}
+        {separateNutrition && clientId ? <Link className="btn-secondary" href={`/coach/clients/${clientId}/edit?tab=nutrition`}>{tr("تعديل السعرات")}</Link> : (clientId || templateKind !== "workout") && <button
           type="button"
           className={tab === "nutrition" ? "btn" : "btn-secondary"}
           onClick={() => setTab("nutrition")}
         >
-          {tr("التغذية والأهداف")}
+          {tr(showTargets ? "التغذية والأهداف" : "التغذية")}
         </button>}
       </div>
       {tab === "nutrition" ? (
         <div className="space-y-5">
-          <div className="nutrition-heading">
+          {showTargets && <><div className="nutrition-heading">
             <div>
               <p className="eyebrow">{tr("التغذية · الأهداف اليومية")}</p>
               <h2>{tr("هدف اليوم، قبل تفاصيل الوجبات.")}</h2>
             </div>
             <span className="badge">
-              {tr("طاقة الماكروز")}{" "}
-              {plan.nutrition.protein * 4 +
-                plan.nutrition.carbs * 4 +
-                plan.nutrition.fat * 9}{" "}
-              kcal
+              {tr("طاقة الماكروز")} <bdi dir="ltr">{caloriesFromMacros(plan.nutrition)} kcal</bdi>
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {(
-              [
-                ["calories", tr("السعرات (kcal)")],
-                ["protein", tr("البروتين (غ)")],
-                ["carbs", tr("الكاربوهيدرات (غ)")],
-                ["fat", tr("الدهون (غ)")],
-              ] as const
-            ).map(([field, label]) => (
-              <div key={field}>
-                <label htmlFor={`nutrition-${field}`}>{tr(label)}</label>
-                <input
-                  id={`nutrition-${field}`}
-                  type="number"
-                  min={0}
-                  max={field === "calories" ? 10000 : 1000}
-                  className="field"
-                  value={plan.nutrition[field]}
-                  onChange={(e) =>
-                    edit((c) => ({
-                      ...c,
-                      nutrition: {
-                        ...c.nutrition,
-                        [field]: Number(e.target.value),
-                      },
-                    }))
-                  }
-                />
-              </div>
-            ))}
-          </div>
+          <MacroTargets
+            idPrefix="nutrition"
+            value={{ ...plan.nutrition, calories_mode: plan.nutrition.calories_mode ?? inferCaloriesMode(plan.nutrition) }}
+            onChange={(targets) => edit((c) => ({ ...c, nutrition: { ...c.nutrition, ...targets } }))}
+          /></>}
           <label htmlFor="nutrition-text">
             {tr("الخطة والملاحظات الغذائية")}
           </label>
           <textarea
             id="nutrition-text"
             className="field min-h-56"
-            maxLength={10000}
+            maxLength={clientId ? 10000 : 4000}
             value={plan.nutrition.text}
             onChange={(e) =>
               edit((c) => ({
@@ -317,7 +309,8 @@ export function ProgramEditor({
             }
           />
           <MealEditor
-            nutrition={plan.nutrition}
+            includeTargets={showTargets}
+            nutrition={showTargets ? { ...plan.nutrition, calories_mode: plan.nutrition.calories_mode ?? inferCaloriesMode(plan.nutrition) } : plan.nutrition}
             onChange={(nutrition) => edit((c) => ({ ...c, nutrition }))}
           />
         </div>
@@ -593,7 +586,7 @@ export function ProgramEditor({
                     </div>
                   ))}
                 </div>
-                <details className="program-exercise-more"><summary>{tr("الفيديو والأوزان المتقدمة")}</summary>
+                <details className="program-exercise-more"><summary>{tr(clientId ? "الفيديو والأوزان المتقدمة" : "فيديو شرح التمرين")}</summary>
                 <div className="mt-4 border-t pt-4">
                   <VideoUpload
                     onComplete={(mediaId) => {
@@ -648,7 +641,7 @@ export function ProgramEditor({
                     </div>
                   ) : null}
                 </div>
-                <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                {clientId && <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
                   {(
                     [
                       ["weight", tr("الوزن (كجم)"), 1500],
@@ -692,7 +685,7 @@ export function ProgramEditor({
                       }
                     />
                   </label>
-                </div>
+                </div>}
                 <div className="mt-4">
                   <label className="mt-3" htmlFor={`ex-video-${i}`}>
                     {tr("رابط فيديو اختياري (https)")}

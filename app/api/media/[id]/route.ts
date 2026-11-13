@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { resolvePortalMediaCredential } from "@/lib/portal-credentials";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { rpc, localMode } from "@/lib/server";
@@ -12,9 +12,7 @@ export async function GET(
     const { id } = await params;
     uuid.parse(id);
     const portal = new URL(request.url).searchParams.get("portal");
-    const proof = portal
-      ? (await cookies()).get("ec_portal_" + portal.slice(0, 12))?.value
-      : undefined;
+    const proof = portal ? (await resolvePortalMediaCredential(portal)).proof : undefined;
     const asset = await rpc<{ path: string; mime: string; status: string }>(
       "media_access",
       { asset: id, portal_hash: portal, proof: proof ?? null },

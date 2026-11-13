@@ -4,7 +4,7 @@ import { LanguageSwitch } from "./language-switch";
 import { useState, useEffect, useCallback } from "react";
 import { LockKeyhole, RefreshCw, Check } from "lucide-react";
 import Link from "next/link";
-import { accessPortal } from "@/app/studio-actions";
+import { accessPortal, optionalPortalAccount } from "@/app/studio-actions";
 import type { PortalData } from "@/lib/model";
 import { ProgramView } from "./program-view";
 import { WeightPanel } from "./weight-panel";
@@ -16,8 +16,31 @@ import { riyadhToday, formatDate } from "@/lib/dates";
 import { CoachIdentity } from "./coach-identity";
 import type { CoachBranding } from "@/lib/coach-branding";
 import { portalDataAfterResponse, requestPortal } from "@/lib/portal-request";
+import { useRouter } from "next/navigation";
+import { PhotoConsentDialog, useConsentPrompt } from "./photo-consent";
+import type { PhotoConsentState } from "@/lib/photo-consent";
+
+/** Personal-link users get the same one-time progress-photo notice as account users. */
+function PortalConsentPrompt({ clientId, state, coachName, token, onAccepted }: { clientId: string; state?: PhotoConsentState; coachName: string; token: string; onAccepted: () => Promise<unknown> }) {
+  const prompt = useConsentPrompt(state, clientId);
+  return (
+    <PhotoConsentDialog
+      open={prompt.open}
+      clientId={clientId}
+      coachName={coachName}
+      portalToken={token}
+      onLater={prompt.dismiss}
+      onAccepted={async () => {
+        prompt.close();
+        await onAccepted();
+      }}
+    />
+  );
+}
 export function ClientPortal({ token, branding }: { token: string; branding?: CoachBranding | null }) {
   const { t: tr } = useLocale();
+  const router = useRouter();
+  const session = token.startsWith("session:");
 
   const [data, setData] = useState<PortalData | null>(null),
     [pin, setPin] = useState(""),
@@ -58,6 +81,7 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
     }, 60000);
     return () => clearInterval(timer);
   }, [data, refresh]);
+  if (!data && session) return <main className="portal-gate"><Brand /><section className="card mx-auto w-full max-w-sm p-6"><CoachIdentity branding={branding} /><h1 className="mt-4 text-xl">{tr("بوابتك مع مدربك")}</h1><p role={error ? "alert" : "status"} className="my-4 text-sm leading-8">{error || tr("جارٍ تحميل برنامجك…")}</p>{error && <button className="btn" disabled={busy} onClick={async () => { setBusy(true); try { await refresh(); } finally { setBusy(false); } }}>{tr("إعادة المحاولة")}</button>}</section></main>;
   if (!data)
     return (
       <main className="portal-gate">
@@ -116,6 +140,7 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
         <Brand />
         <LanguageSwitch />
         <div className="w-full text-white sm:w-auto sm:max-w-sm"><CoachIdentity branding={data.coach_branding ?? branding} fallback={data.coach} /></div>
+        <button className="btn-secondary" disabled={busy} onClick={async () => { setBusy(true); try { const result = await optionalPortalAccount(token); if (result.ok && result.url) router.push(result.url); else setError(result.error ?? "تعذر فتح صفحة الحساب"); } catch { setError("تعذر الاتصال. يمكنك متابعة استخدام البوابة دون حساب."); } finally { setBusy(false); } }}>{tr("ربط حساب اختياري")}</button>
       </header>
       <main className="mx-auto max-w-6xl px-5 py-8">
         <div className="portal-welcome">
@@ -220,8 +245,18 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
               portalToken={token}
               portalHash={data.portalHash}
               onUpdate={refresh}
+              coachName={data.coach_branding?.name ?? branding?.name ?? data.coach}
             />
           </div>
+        )}
+        {data.client_id && data.management?.photo_consents && (
+          <PortalConsentPrompt
+            clientId={data.client_id}
+            state={data.management?.photo_consents?.find((state) => state.client_id === data.client_id)}
+            coachName={data.coach_branding?.name ?? branding?.name ?? data.coach}
+            token={token}
+            onAccepted={refresh}
+          />
         )}
         <footer className="mt-8 border-t py-5 text-xs text-muted">
           {tr("إيزي كوتش ·")} <Link href="/privacy">{tr("الخصوصية")}</Link>

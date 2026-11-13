@@ -101,6 +101,9 @@ try {
   await page
     .getByRole("button", { name: "التغذية والأهداف", exact: true })
     .click();
+  // Calories follow the macros by default; switch to manual to type them.
+  const caloriesSwitch = page.getByRole("switch", { name: "احسب السعرات تلقائيًا من الماكروز" });
+  if ((await caloriesSwitch.getAttribute("aria-checked")) === "true") await caloriesSwitch.click();
   await page.locator("#nutrition-calories").fill("2400");
   await page.locator("#nutrition-protein").fill("160");
   await page.locator("#nutrition-carbs").fill("260");

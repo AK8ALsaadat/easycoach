@@ -25,6 +25,7 @@ import { prepareImport } from "@/lib/import-batch";
 import { exportWorkbook } from "@/lib/export-workbook";
 import { coachingAlerts } from "@/lib/coaching-alerts";
 import { riyadhToday } from "@/lib/dates";
+import { availableTemplates } from "@/lib/template-availability";
 
 let db: PGlite;
 const coach = LOCAL_IDS.coach,
@@ -37,6 +38,9 @@ const call = <T = Record<string, unknown>>(
   name: string,
   args: Record<string, unknown> = {},
 ) => rpcLocal<T>(db, user, name, args);
+// Simulates the trusted worker acknowledgement; ordinary account RPC callers
+// cannot claim that physical bytes were removed.
+const acknowledgeCleanupAsService = (completed: string[]) => db.query("select public.photo_cleanup_batch($1::jsonb,false)", [JSON.stringify(completed)]);
 const old = <T = Record<string, unknown>>(
   user: string,
   command: string,
@@ -94,6 +98,8 @@ beforeAll(async () => {
     trainee,
     ids[0],
   ]);
+  // Photo uploads require the trainee's recorded consent (tests/photo-consent.test.ts covers the rules).
+  await call(trainee, "photo_consent", { command: "accept", target: ids[0], notice_version: 1 });
 });
 afterAll(async () => {
   await db?.close();
@@ -428,6 +434,8 @@ it("duplicates full template metadata, archives safely, and blocks silent draft 
   await expect(
     command(coach, "template_assign", { id: template.id, clients: [ids[20]] }),
   ).rejects.toThrow();
+  // Draft replacement applies to training; general nutrition never rewrites a workout.
+  await command(coach, "template_meta", { id: duplicate.id, description: "Copy this", archived: false, kind: "workout" });
   await old(coach, "program_save", {
     client_id: ids[20],
     name: "Existing draft",
@@ -446,7 +454,83 @@ it("duplicates full template metadata, archives safely, and blocks silent draft 
     ),
   ).toBe(false);
 });
-it("nutrition-only assignment keeps the client's training days", async () => {
+it("filters archived templates from new use, restores them, and preserves an assigned program", async () => {
+  const active = await old<{ id: string }>(coach, "template_save", {
+    name: "Active start template",
+    content: blankContent,
+  });
+  const archived = await old<{ id: string }>(coach, "template_save", {
+    name: "Restorable start template",
+    content: blankContent,
+  });
+  await command(coach, "template_meta", {
+    id: active.id,
+    description: "Available for new programs",
+    archived: false,
+    kind: "workout",
+  });
+  await command(coach, "template_meta", {
+    id: archived.id,
+    description: "Assigned before archival",
+    archived: false,
+    kind: "workout",
+  });
+  await command(coach, "template_assign", {
+    id: archived.id,
+    clients: [ids[24]],
+    replace_drafts: false,
+  });
+  let data = await snapshot();
+  const assignedBefore = structuredClone(
+    data.programs.find((program) => program.client_id === ids[24])!,
+  );
+
+  await command(coach, "template_meta", {
+    id: archived.id,
+    description: "Assigned before archival",
+    archived: true,
+    kind: "workout",
+  });
+  data = await snapshot();
+  expect(
+    availableTemplates(data.templates, data.management!.template_metadata).map(
+      (template) => template.id,
+    ),
+  ).toEqual(expect.arrayContaining([active.id]));
+  expect(
+    availableTemplates(data.templates, data.management!.template_metadata).map(
+      (template) => template.id,
+    ),
+  ).not.toContain(archived.id);
+  expect(data.templates.some((template) => template.id === archived.id)).toBe(
+    true,
+  );
+  expect(
+    data.management!.template_metadata.find(
+      (metadata) => metadata.template_id === archived.id,
+    ),
+  ).toMatchObject({ archived: true });
+  expect(
+    data.programs.find((program) => program.id === assignedBefore.id),
+  ).toEqual(assignedBefore);
+
+  await command(coach, "template_meta", {
+    id: archived.id,
+    description: "Assigned before archival",
+    archived: false,
+    kind: "workout",
+  });
+  data = await snapshot();
+  expect(
+    availableTemplates(data.templates, data.management!.template_metadata).map(
+      (template) => template.id,
+    ),
+  ).toEqual(expect.arrayContaining([active.id, archived.id]));
+  expect(
+    data.programs.find((program) => program.id === assignedBefore.id),
+  ).toEqual(assignedBefore);
+});
+it("general nutrition assignment keeps personal targets and training, and works without a workout", async () => {
   const base = structuredClone(blankContent);
   base.days[0].name = "Keep my training";
   await old(coach, "program_save", {
@@ -475,19 +559,18 @@ it("nutrition-only assignment keeps the client's training days", async () => {
     (program) => program.client_id === ids[22],
   )!;
   expect(program.content.days[0].name).toBe("Keep my training");
-  expect(program.content.nutrition.calories).toBe(2100);
+  expect(program.content.nutrition.calories).toBe(base.nutrition.calories);
   expect(program.name).toBe("Existing");
-  await expect(
-    command(coach, "template_assign", {
+  await command(coach, "template_assign", {
       id: t.id,
       clients: [ids[23]],
       replace_drafts: false,
       publish: true,
-    }),
-  ).rejects.toThrow();
+    });
   expect((await snapshot()).programs.some((p) => p.client_id === ids[23])).toBe(
     false,
   );
+  expect((await snapshot()).management!.records.some(record => record.client_id === ids[23] && record.kind === "nutrition_target" && record.payload.calories === 0)).toBe(true);
 });
 it("keeps trainer/client message authors and read state persistent", async () => {
   const a = record(ids[0], "message", { text: "رسالة من المتدرب" }),
@@ -558,7 +641,7 @@ it("supports PIN-based check-ins without exposing notes or another client's reco
     payload: { id: photo.id },
   });
   expect(await call(null, "photo_access", { asset: photo.id, portal_hash: token, proof })).toBeNull();
-  await call(coach, "photo_cleanup", { completed: [photo.id] });
+  await acknowledgeCleanupAsService([photo.id]);
   await expect(
     call(null, "portal_management", {
       token_hash: token,
@@ -1193,6 +1276,7 @@ it("updates only the caller display name and erases coaching data with retryable
     entry_date: today,
     weight: 80,
   });
+  await db.query("insert into public.client_consents(client_id,coach_id,consent_type,version) values($1,$2,'progress_photos',1)", [client.id, coach]);
   const photo = await command<{ id: string }>(coach, "photo_reserve", {
     id: randomUUID(),
     client_id: client.id,
@@ -1225,9 +1309,7 @@ it("updates only the caller display name and erases coaching data with retryable
     completed: [],
   });
   expect(jobs.some((j) => j.id === photo.id)).toBe(true);
-  expect(await call(other, "photo_cleanup", { completed: [photo.id] })).toEqual(
-    [],
-  );
+  await expect(call(other, "photo_cleanup", { completed: [photo.id] })).rejects.toThrow();
   expect(
     (
       await call<Array<{ id: string }>>(coach, "photo_cleanup", {
@@ -1235,7 +1317,8 @@ it("updates only the caller display name and erases coaching data with retryable
       })
     ).some((j) => j.id === photo.id),
   ).toBe(true);
-  await call(coach, "photo_cleanup", { completed: [photo.id] });
+  await expect(call(coach, "photo_cleanup", { completed: [photo.id] })).rejects.toThrow();
+  await acknowledgeCleanupAsService([photo.id]);
   expect(await call(coach, "photo_cleanup", { completed: [] })).toEqual([]);
 });
 
@@ -1348,7 +1431,7 @@ it("stores photo angle and consent, and makes photo reservation retries idempote
   expect(
     await call<Array<{ id: string }>>(coach, "photo_cleanup", { completed: [] }),
   ).toContainEqual(expect.objectContaining({ id: photoId }));
-  await call(coach, "photo_cleanup", { completed: [photoId] });
+  await acknowledgeCleanupAsService([photoId]);
 });
 
 it("validates the calf measurement in server-side record rules", async () => {
@@ -1405,7 +1488,7 @@ it("queues abandoned pending uploads for private storage cleanup after one day",
     expect.objectContaining({ id: photo.id, asset_path: expect.stringContaining(photo.id) }),
   );
   expect(await call(trainee, "photo_access", { asset: photo.id })).toBeNull();
-  await call(coach, "photo_cleanup", { completed: [photo.id] });
+  await acknowledgeCleanupAsService([photo.id]);
 });
 
 it("keeps historical nutrition targets from overriding a more recently published plan", async () => {
@@ -1441,4 +1524,25 @@ it("keeps historical nutrition targets from overriding a more recently published
   expect(
     effectiveNutrition([sameDay], older.client_id, "2026-02-01T10:00:00Z"),
   ).toBeTruthy();
+});
+
+it("keeps support tickets private to their submitting account", async () => {
+  const ticket = await call<{ id: string }>(coach, "support_ticket_create", {
+    p_kind: "bug",
+    p_title: "Broken save button",
+    p_description: "The program save button does not respond after editing.",
+    p_attachment_path: null,
+  });
+  const own = await call<Array<{ id: string }>>(coach, "support_ticket_list");
+  const otherTickets = await call<Array<{ id: string }>>(other, "support_ticket_list");
+  expect(own.some((row) => row.id === ticket.id)).toBe(true);
+  expect(otherTickets.some((row) => row.id === ticket.id)).toBe(false);
+  await expect(
+    call(other, "support_ticket_create", {
+      p_kind: "admin",
+      p_title: "Pretend this is admin",
+      p_description: "Should fail the constrained ticket category validation.",
+      p_attachment_path: null,
+    }),
+  ).rejects.toThrow();
 });

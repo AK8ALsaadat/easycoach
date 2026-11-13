@@ -1,7 +1,8 @@
 "use client";
 import { useLocale } from "./locale-provider";
 import { useState } from "react";
-import { ImageOff, Play } from "lucide-react";
+import { ImageOff, Maximize2, Play } from "lucide-react";
+import { Modal } from "./modal";
 import {
   exerciseImageUrl,
   exerciseMedia,
@@ -32,6 +33,7 @@ function ExerciseVisualContent({ exercise, className, playable, portalHash }: {
   const [playing, setPlaying] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [zoomed, setZoomed] = useState(false);
   const asset = Object.hasOwn(exerciseMedia, exercise.id)
     ? exerciseMedia[exercise.id]
     : undefined;
@@ -81,6 +83,11 @@ function ExerciseVisualContent({ exercise, className, playable, portalHash }: {
               height={536}
               onError={() => setFailed(true)}
             />
+            {playable && (
+              <button type="button" className="exercise-zoom" aria-label={tr("تكبير صورة {0}", String(exerciseName(exercise, locale)))} onClick={() => setZoomed(true)}>
+                <Maximize2 size={16} aria-hidden="true" />
+              </button>
+            )}
             {playable && asset && (
               <button
                 type="button"
@@ -104,6 +111,12 @@ function ExerciseVisualContent({ exercise, className, playable, portalHash }: {
           </span>
           {failed && playable && <button type="button" className="btn-secondary" onClick={() => { setFailed(false); setRetry(retry + 1); }}>{tr("إعادة تحميل الصورة")}</button>}
         </div>
+      )}
+      {playable && available && (
+        <Modal open={zoomed} onClose={() => setZoomed(false)} title={exerciseName(exercise, locale)} className="max-w-3xl">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={poster} alt={tr("صورة توضح أداء {0}", String(exerciseName(exercise, locale)))} className="max-h-[75dvh] w-full rounded-lg object-contain" />
+        </Modal>
       )}
     </div>
   );

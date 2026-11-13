@@ -1,0 +1,57 @@
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import path from 'node:path';
+import {expect,test} from '@playwright/test';
+
+test('date-only subscription supports month, year and custom renewal without payments',async({page,context},info)=>{
+  expect(process.env.EASYCOACH_EVIDENCE_LAB).toBe('1');
+  expect(process.env.TEST_BASE_URL).toBe('http://127.0.0.1:3210');
+  const lab=process.env.EASYCOACH_LAB_DIR;
+  const manifest=JSON.parse(await readFile(path.join(lab,'manifest.json'),'utf8'));
+  const persona=manifest.personas.find(p=>p.id==='personal');
+  const login=async(email)=>{await page.goto('/login');await page.locator('#auth-email').fill(email);await page.locator('#auth-password').fill('LocalEvidence!2026');await page.locator('button[type=submit]').click();};
+  await login(persona.email);await page.waitForURL('**/coach');
+  const snapshot=async()=>{const r=await context.request.get('/api/export');expect(r.status()).toBe(200);return r.json();};
+  const before=await snapshot();
+  await page.goto('/coach/finance');
+  const row=page.locator('tbody tr').filter({hasText:'personal Client 1'});
+  await row.getByRole('button',{name:'إضافة اشتراك',exact:true}).click();
+  let dialog=page.getByRole('dialog');
+  await expect(dialog.getByRole('spinbutton')).toHaveCount(0);
+  await dialog.getByRole('combobox').selectOption('1');
+  await dialog.getByRole('button',{name:'حفظ الاشتراك',exact:true}).click();
+  await expect(dialog).toHaveCount(0);
+  await expect.poll(async()=>((await snapshot()).subscriptions.filter(s=>s.client_id===persona.clientIds[0])).length).toBe(1);
+  const one=(await snapshot()).subscriptions.find(s=>s.client_id===persona.clientIds[0]);
+  expect(one.price).toBe(0);
+  await row.getByRole('button',{name:'تجديد الاشتراك',exact:true}).click();
+  dialog=page.getByRole('dialog');await dialog.getByRole('combobox').selectOption('12');
+  await dialog.getByRole('button',{name:'تأكيد التجديد',exact:true}).click();await expect(dialog).toHaveCount(0);
+  await expect.poll(async()=>((await snapshot()).subscriptions.filter(s=>s.client_id===persona.clientIds[0])).length).toBe(2);
+  const two=(await snapshot()).subscriptions.find(s=>s.previous_id===one.id);
+  expect(two.price).toBe(0);expect(two.start_date>one.end_date).toBe(true);
+  const difference=(Date.parse(two.end_date)-Date.parse(one.end_date))/86400000;
+  expect(difference).toBeGreaterThanOrEqual(365);expect(difference).toBeLessThanOrEqual(366);
+  await row.getByRole('button',{name:'تجديد الاشتراك',exact:true}).click();dialog=page.getByRole('dialog');
+  await dialog.getByRole('combobox').selectOption('0');
+  const custom=new Date(`${two.end_date}T12:00:00Z`);custom.setUTCDate(custom.getUTCDate()+45);const customEnd=custom.toISOString().slice(0,10);
+  await dialog.getByLabel('نهاية الاشتراك',{exact:true}).fill(customEnd);
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  const screenshot=info.outputPath('subscription-custom-renewal.png');await page.screenshot({path:screenshot,fullPage:true});
+  await dialog.getByRole('button',{name:'تأكيد التجديد',exact:true}).click();await expect(dialog).toHaveCount(0);
+  await expect.poll(async()=>((await snapshot()).subscriptions.filter(s=>s.client_id===persona.clientIds[0])).length).toBe(3);
+  const after=await snapshot();expect(after.subscriptions.find(s=>s.previous_id===two.id).end_date).toBe(customEnd);
+  expect(after.payments).toEqual(before.payments);
+  const formattedEnd=new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{timeZone:'Asia/Riyadh',day:'numeric',month:'short',year:'numeric'}).format(new Date(`${customEnd}T12:00:00Z`));
+  await expect(row).toContainText(formattedEnd);
+  for(const route of ['/coach','/coach/clients','/coach/finance',`/coach/clients/${persona.clientIds[0]}?tab=finance`]){
+    await page.goto(route);
+    for(const label of ['المتبقي','المدفوع','قيمة الباقة','مبالغ متبقية','المحصّل هذا الشهر','تسجيل دفعة جزئية أو كاملة'])await expect(page.getByText(label,{exact:true})).toHaveCount(0);
+  }
+  await context.clearCookies();await login('trainee@continuous.example.test');await page.waitForURL(/\/me(?:\?|$)/);
+  await page.goto(`/me?client=${persona.clientIds[0]}`);
+  await expect(page.locator('section').filter({has:page.getByRole('heading',{name:'اشتراكك',exact:true})})).toContainText(formattedEnd);
+  for(const label of ['المتبقي','المدفوع','قيمة الباقة'])await expect(page.getByText(label,{exact:true})).toHaveCount(0);
+  const dir=path.join(lab,'journey-evidence');await mkdir(dir,{recursive:true});
+  await writeFile(path.join(dir,'subscription-renewal.json'),JSON.stringify({id:'journey:subscription-date-only-renewal',status:'pass',detail:{month:true,year:true,customEnd,paymentsUnchanged:true,traineeHasNoAmounts:true,mobile:true,screenshot}}));
+});

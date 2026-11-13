@@ -1,12 +1,14 @@
 "use client";
 import { useLocale } from "./locale-provider";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, Send, Trash2 } from "lucide-react";
 import { manage } from "@/app/management-actions";
 import type { Result } from "@/app/actions";
 import type { Snapshot } from "@/lib/model";
 import { Notice } from "./forms";
+import { TemplateNameDialog } from "./template-name-dialog";
+import { isUnnamedTemplate, suggestCopyName } from "@/lib/template-names";
 
 export function TemplateTools({ data }: { data: Snapshot }) {
   const { t: tr } = useLocale();
@@ -19,7 +21,10 @@ export function TemplateTools({ data }: { data: Snapshot }) {
   const [publish, setPublish] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
+  const assignment = useRef<{ fingerprint: string; id: string } | null>(null);
+  const [copying, setCopying] = useState(0);
   const template = data.templates.find((t) => t.id === selected);
+  const unnamed = template ? isUnnamedTemplate(template.name) : false;
   const metadata = data.management?.template_metadata.find(
     (m) => m.template_id === selected,
   );
@@ -50,7 +55,11 @@ export function TemplateTools({ data }: { data: Snapshot }) {
     }
   }
   return (
-    <section className="card p-5 mb-5" data-testid="template-tools">
+    <section
+      id="template-management"
+      className="card p-5 mb-5"
+      data-testid="template-tools"
+    >
       <h2>{tr("إدارة القوالب والتعيين الجماعي")}</h2>
       <p className="text-sm text-muted mt-1">
         {tr(
@@ -72,6 +81,7 @@ export function TemplateTools({ data }: { data: Snapshot }) {
           {data.templates.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
+              {isUnnamedTemplate(t.name) ? tr(" · بدون اسم") : ""}
               {data.management?.template_metadata.some(
                 (m) => m.template_id === t.id && m.archived,
               )
@@ -115,10 +125,11 @@ export function TemplateTools({ data }: { data: Snapshot }) {
                   name="kind"
                   defaultValue={metadata?.kind ?? "workout"}
                 >
-                  <option value="workout">{tr("برنامج تدريب وتغذية")}</option>
+                  <option value="workout">{tr("تمارين عامة — يحافظ على تغذية المتدرب")}</option>
                   <option value="nutrition">
-                    {tr("تغذية فقط — يحافظ على أيام تدريب العميل")}
+                    {tr("تغذية عامة — دون تغيير أهداف المتدرب")}
                   </option>
+                  <option value="nutrition_targets">{tr("تغذية مع أهداف مقترحة — اختياري")}</option>
                 </select>
               </label>
               <label className="flex gap-2 items-center">
@@ -130,7 +141,9 @@ export function TemplateTools({ data }: { data: Snapshot }) {
                 {tr("أرشفة القالب دون حذف البرامج المعيّنة")}
               </label>
               <button className="btn-secondary" disabled={busy}>
-                {tr("حفظ بيانات القالب")}
+                {metadata?.archived
+                  ? tr("استعادة القالب")
+                  : tr("حفظ بيانات القالب")}
               </button>
             </div>
           </form>
@@ -138,11 +151,27 @@ export function TemplateTools({ data }: { data: Snapshot }) {
             <button
               className="btn-secondary"
               disabled={busy}
-              onClick={() => action("template_duplicate", { id: template.id })}
+              onClick={() => setCopying(Date.now())}
             >
               <Copy size={16} />
               {tr("نسخ القالب كاملًا")}
             </button>
+            {copying > 0 && (
+              <TemplateNameDialog
+                key={copying}
+                open
+                mode="copy"
+                showTags={false}
+                initial={{ name: unnamed ? "" : suggestCopyName(template.name, data.templates) }}
+                existing={data.templates}
+                onClose={() => setCopying(0)}
+                onSubmit={async ({ name }) => {
+                  const response = await action("template_duplicate", { id: template.id, name });
+                  if (response.ok) setCopying(0);
+                  return response;
+                }}
+              />
+            )}
             <button
               className="btn-secondary text-red-700"
               disabled={busy}
@@ -168,10 +197,11 @@ export function TemplateTools({ data }: { data: Snapshot }) {
             {metadata?.kind === "nutrition" && (
               <p className="text-sm text-muted mt-2">
                 {tr(
-                  "قالب التغذية يحافظ على اسم البرنامج وأيام التدريب؛ يحتاج العميل برنامجًا قائمًا. للأهداف المستقلة استخدم ملف العميل.",
+                  "ينسخ الأطعمة والملاحظات فقط، ويحافظ على السعرات والماكروز الخاصة بكل متدرب. يعمل حتى دون برنامج تمارين. الوجبات الجديدة تحتاج تخصيص مقاديرها من ملف المتدرب.",
                 )}
               </p>
             )}
+            {metadata?.kind === "nutrition_targets" && <p className="text-sm text-muted mt-2">{tr("هذا قالب جانبي يتضمن أهدافًا مقترحة. سيستبدل الأهداف الحالية للمتدربين المحددين؛ راجع مناسبتها لكل متدرب أولًا.")}</p>}
             <input
               aria-label={tr("بحث قائمة التعيين")}
               className="field my-3"
@@ -212,7 +242,7 @@ export function TemplateTools({ data }: { data: Snapshot }) {
                 </label>
               ))}
             </div>
-            <div className="space-y-2 my-4">
+            {(metadata?.kind ?? "workout") === "workout" && <div className="space-y-2 my-4">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -231,24 +261,29 @@ export function TemplateTools({ data }: { data: Snapshot }) {
                   "انشر النسخ الجديدة للمتدربين الآن؛ بدون هذا الخيار تُحفظ كمسودات",
                 )}
               </label>
-            </div>
+            </div>}
+            {unnamed && <p className="field-error mb-2">{tr("سمِّ القالب قبل استخدامه في برنامج متدرب.")}</p>}
             <button
               className="btn"
-              disabled={busy || !clients.length || metadata?.archived}
+              disabled={busy || !clients.length || metadata?.archived || unnamed}
               onClick={() => {
                 if (
-                  replace &&
+                  (metadata?.kind ?? "workout") === "workout" && replace &&
                   !window.confirm(
                     "ستستبدل المسودات الحالية للعملاء المحددين. النسخ المنشورة لا تتغير إلا إذا اخترت النشر. تتابع؟",
                   )
                 )
                   return;
-                void action("template_assign", {
+                if (metadata?.kind === "nutrition_targets" && !window.confirm("تعيين الأهداف المقترحة بدل الأهداف الحالية للمتدربين المحددين؟ راجع السعرات لكل متدرب.")) return;
+                const payload = {
                   id: template.id,
                   clients,
-                  replace_drafts: replace,
-                  publish,
-                });
+                  replace_drafts: (metadata?.kind ?? "workout") === "workout" && replace,
+                  publish: (metadata?.kind ?? "workout") === "workout" && publish,
+                };
+                const fingerprint = JSON.stringify(payload);
+                if (assignment.current?.fingerprint !== fingerprint) assignment.current = { fingerprint, id: crypto.randomUUID() };
+                void action("template_assign", { ...payload, operation_id: assignment.current.id }).then(response => { if (response.ok) assignment.current = null; });
               }}
             >
               <Send size={17} />

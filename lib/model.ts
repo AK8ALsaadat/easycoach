@@ -1,5 +1,33 @@
 import { z } from "zod";
 import type { ManagementData } from "./management";
+import { exactCaloriesFromMacros, hasOneDecimal, MACRO_LIMITS } from "./macros";
+import { templateName } from "./template-names";
+// Custom Arabic messages: browser/zod defaults are English and unclear.
+const amount = (max: number, unit: string) =>
+  z
+    .number({ error: "اكتب رقمًا صالحًا" })
+    .min(0, "القيمة لا تكون سالبة")
+    .max(max, `الحد الأعلى ${max} ${unit}`)
+    .refine(hasOneDecimal, "يُقبل رقم عشري واحد فقط بعد الفاصلة");
+export const kcal = amount(MACRO_LIMITS.calories, "سعرة");
+export const grams = amount(MACRO_LIMITS.grams, "غرام");
+export const caloriesMode = z.enum(["auto", "manual"]);
+/** In automatic mode the stored calories must equal the macro total (whole kcal). */
+export function autoCaloriesIssue(value: {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  calories_mode?: "auto" | "manual";
+}) {
+  if (value.calories_mode !== "auto") return null;
+  const computed = exactCaloriesFromMacros(value);
+  if (computed > MACRO_LIMITS.calories)
+    return "مجموع الماكروز يتجاوز 10,000 سعرة. راجع الجرامات";
+  return Math.abs(value.calories - computed) < 1
+    ? null
+    : "السعرات لا تطابق مجموع الماكروز في الوضع التلقائي";
+}
 export const id = z.string().uuid();
 export const date = z.iso.date();
 export const email = z
@@ -47,10 +75,11 @@ export const content = z
     nutrition: z
       .object({
         text: z.string().max(10000),
-        calories: z.number().min(0).max(10000),
-        protein: z.number().min(0).max(1000),
-        carbs: z.number().min(0).max(1000),
-        fat: z.number().min(0).max(1000),
+        calories: kcal,
+        protein: grams,
+        carbs: grams,
+        fat: grams,
+        calories_mode: caloriesMode.optional(),
         meals: z
           .array(
             z
@@ -58,17 +87,21 @@ export const content = z
                 name: z.string().min(1).max(100),
                 time: z.string().max(40),
                 foods: z.string().max(2000),
-                calories: z.number().min(0).max(10000),
-                protein: z.number().min(0).max(1000),
-                carbs: z.number().min(0).max(1000),
-                fat: z.number().min(0).max(1000),
+                calories: kcal,
+                protein: grams,
+                carbs: grams,
+                fat: grams,
               })
               .strict(),
           )
           .max(12)
           .optional(),
       })
-      .strict(),
+      .strict()
+      .superRefine((value, ctx) => {
+        const issue = autoCaloriesIssue(value);
+        if (issue) ctx.addIssue({ code: "custom", message: issue, path: ["calories"] });
+      }),
   })
   .strict();
 export type Content = z.infer<typeof content>;
@@ -108,11 +141,18 @@ export const commands = {
     description: z.string().max(2000),
     video: z.union([z.literal(""), z.url().startsWith("https://")]),
   }),
-  template_save: z.object({
-    id: id.optional(),
-    name: z.string().min(2).max(140),
-    content,
-  }),
+  // New templates need a real name; the database re-checks names whenever they change.
+  template_save: z
+    .object({
+      id: id.optional(),
+      name: z.string().trim().min(2).max(140),
+      content,
+    })
+    .superRefine((value, ctx) => {
+      if (value.id) return;
+      const checked = templateName.safeParse(value.name);
+      if (!checked.success) ctx.addIssue({ code: "custom", path: ["name"], message: checked.error.issues[0].message });
+    }),
   program_save: z.object({
     client_id: id,
     name: z.string().min(2).max(140),
@@ -181,6 +221,8 @@ export type Client = {
   phone: string;
   trainee_user_id: string | null;
   archived: boolean;
+  archived_at?: string | null;
+  archived_reason?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -255,6 +297,8 @@ export type PrivacyRequest = {
 };
 export type Snapshot = {
   coach_branding?: import("./coach-branding").CoachBranding[];
+  /** Trainee links whose coach archived them: access is paused, data is kept. */
+  paused_access?: { client_id: string; coach: string | null }[];
   demo?: boolean;
   management?: ManagementData;
   weights: WeightEntry[];
@@ -289,6 +333,7 @@ export type Snapshot = {
     action: string;
     created_at: string;
     entity_id: string | null;
+    detail?: string;
   }[];
 };
 export type WeightEntry = {

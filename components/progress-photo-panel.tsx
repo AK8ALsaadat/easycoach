@@ -3,7 +3,7 @@ import { uploadProgressPhoto } from "@/lib/upload-progress-photo";
 import { useLocale } from "./locale-provider";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ImagePlus, Maximize2, RotateCcw, Trash2, Upload, X } from "lucide-react";
+import { Check, ImagePlus, Maximize2, RotateCcw, ShieldCheck, Trash2, Upload, X } from "lucide-react";
 import { photoTicket, finishPhoto, deleteProgressPhoto } from "@/app/photo-actions";
 import { formatDate, riyadhToday } from "@/lib/dates";
 import type { ManagementData } from "@/lib/management";
@@ -11,6 +11,9 @@ import type { CoachingRecord } from "@/lib/management";
 import type { WeightEntry } from "@/lib/model";
 import { prepareProgressPhoto } from "@/lib/prepare-progress-photo";
 import { useDialog } from "./use-dialog";
+import { progressComparisonDates, progressMetricsForDate } from "@/lib/progress-comparison";
+import { canUploadPhotos, consentStatusLabel, type PhotoConsentState } from "@/lib/photo-consent";
+import { PhotoConsentDialog, RevokeConsentDialog } from "./photo-consent";
 
 type Angle = "front" | "back" | "side";
 type Slot = { file: File; preview: string; requestId: string };
@@ -31,6 +34,10 @@ export function ProgressPhotos({
   coach = false,
   measurements = [],
   weights = [],
+  entryDate,
+  onEntryDateChange,
+  consent: consentState,
+  coachName = "",
 }: {
   clientId: string;
   photos: ManagementData["progress_photos"];
@@ -40,22 +47,41 @@ export function ProgressPhotos({
   coach?: boolean;
   measurements?: CoachingRecord[];
   weights?: WeightEntry[];
+  entryDate?: string;
+  onEntryDateChange?: (date: string) => void;
+  /** The trainee's recorded consent; uploads stay locked without it (also enforced by the database). */
+  consent?: PhotoConsentState;
+  coachName?: string;
 }) {
   const { t: tr, language } = useLocale();
   const router = useRouter();
+  // Optimistic copy until the refreshed snapshot arrives.
+  const [localConsent, setLocalConsent] = useState<PhotoConsentState | null>(null);
+  const consentNow = localConsent && localConsent.client_id === clientId ? localConsent : consentState;
+  const allowed = canUploadPhotos(consentNow);
+  const [consentDialog, setConsentDialog] = useState<"accept" | "revoke" | null>(null);
+  const refreshAfterConsent = async (state: PhotoConsentState, note?: string) => {
+    setLocalConsent(state);
+    setConsentDialog(null);
+    if (note) setMessage(note);
+    if (onUpdate) await onUpdate();
+    else router.refresh();
+  };
   const [slots, setSlots] = useState<Partial<Record<Angle, Slot>>>({});
   const slotsRef = useRef(slots);
   useEffect(() => {
     slotsRef.current = slots;
   }, [slots]);
-  const [day, setDay] = useState(riyadhToday());
-  const [consent, setConsent] = useState(false);
+  const [ownDay, setOwnDay] = useState(riyadhToday());
+  const day = entryDate ?? ownDay;
+  const setDay = onEntryDateChange ?? setOwnDay;
   const [busy, setBusy] = useState(false);
   const [preparing, setPreparing] = useState<Angle | null>(null);
   const [message, setMessage] = useState("");
   const [zoom, setZoom] = useState<string | null>(null);
   const zoomDialog = useDialog<HTMLDivElement>(Boolean(zoom), () => setZoom(null), "button");
   const [deleting, setDeleting] = useState("");
+  const [timelinePage, setTimelinePage] = useState(0);
   const [compareAngle, setCompareAngle] = useState<Angle>("front");
   const [firstDate, setFirstDate] = useState<string | null>(null);
   const [secondDate, setSecondDate] = useState<string | null>(null);
@@ -70,37 +96,18 @@ export function ProgressPhotos({
     [photos, clientId],
   );
   const comparisonDates = useMemo(
-    () => [...new Set(clientPhotos.filter((photo) => photo.angle === compareAngle).map((photo) => photo.entry_date))].sort(),
-    [clientPhotos, compareAngle],
+    () => progressComparisonDates(clientId, clientPhotos, measurements, weights),
+    [clientId, clientPhotos, measurements, weights],
   );
-  const selectedFirstDate = firstDate ?? (comparisonDates.length > 1 ? comparisonDates.at(-2)! : comparisonDates[0] ?? "");
-  const selectedSecondDate = secondDate ?? (comparisonDates.length > 1 ? comparisonDates.at(-1)! : "");
+  const selectedFirstDate = firstDate && comparisonDates.includes(firstDate) ? firstDate : (comparisonDates.length > 1 ? comparisonDates.at(-2)! : comparisonDates[0] ?? "");
+  const selectedSecondDate = secondDate && comparisonDates.includes(secondDate) ? secondDate : (comparisonDates.length > 1 ? comparisonDates.at(-1)! : "");
   const firstPhoto = clientPhotos
     .filter((photo) => photo.angle === compareAngle && photo.entry_date === selectedFirstDate)
     .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
   const secondPhoto = clientPhotos
     .filter((photo) => photo.angle === compareAngle && photo.entry_date === selectedSecondDate)
     .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
-  const metricsFor = (date: string) => {
-    if (!date) return null;
-    const record = measurements
-      .filter((item) => item.entry_date === date && !item.payload.historical_only)
-      .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
-    const weight = weights
-      .filter((item) => item.entry_date === date)
-      .sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0];
-    const payload = record?.payload ?? {};
-    return {
-      weight: weight ? Number(weight.weight) : typeof payload.weight === "number" ? payload.weight : undefined,
-      body_fat: typeof payload.body_fat === "number" ? payload.body_fat : undefined,
-      waist: typeof payload.waist === "number" ? payload.waist : undefined,
-      chest: typeof payload.chest === "number" ? payload.chest : undefined,
-      hips: typeof payload.hips === "number" ? payload.hips : undefined,
-      arm: typeof payload.arm === "number" ? payload.arm : undefined,
-      thigh: typeof payload.thigh === "number" ? payload.thigh : undefined,
-      calf: typeof payload.calf === "number" ? payload.calf : undefined,
-    };
-  };
+  const metricsFor = (date: string) => progressMetricsForDate(clientId, date, measurements, weights);
   const firstMetrics = metricsFor(selectedFirstDate);
   const secondMetrics = metricsFor(selectedSecondDate);
   const photoTimeline = useMemo(() => {
@@ -124,7 +131,14 @@ export function ProgressPhotos({
     ["الفخذ", "thigh", "سم"],
     ["الساق", "calf", "سم"],
   ] as const;
-  const photoUrl = (id: string) => `/api/progress-photos/${id}${portalHash ? `?portal=${portalHash}` : ""}`;
+  const visibleTimelinePage = Math.min(timelinePage, Math.max(0, Math.ceil(photoTimeline.length / 5) - 1));
+  const attribution = (photo: ManagementData["progress_photos"][number]) => <p className="mt-2 text-xs text-muted">{tr(photo.consent_source === "coach_attestation" ? "أضافها المدرب" : photo.consent_source === "trainee" ? "أضافها المتدرب" : "مصدر الصورة القديمة غير موثق")} · {new Date(photo.created_at).toLocaleString(language === "ar" ? "ar-SA-u-ca-gregory" : "en-GB", { timeZone: "Asia/Riyadh" })}</p>;
+  const photoUrl = (id: string, variant: "thumbnail" | "comparison" | "full" = "thumbnail") => {
+    const params = new URLSearchParams();
+    if (portalHash) params.set("portal", portalHash);
+    if (variant !== "full") params.set("variant", variant);
+    return `/api/progress-photos/${id}${params.size ? "?" + params.toString() : ""}`;
+  };
 
   function photoFigure(photo: ManagementData["progress_photos"][number], label: string, date: string) {
     return (
@@ -132,13 +146,14 @@ export function ProgressPhotos({
         <button
           type="button"
           className="progress-photo-timeline-image"
-          onClick={() => setZoom(photoUrl(photo.id))}
+          onClick={() => setZoom(photoUrl(photo.id, "full"))}
           aria-label={tr("تكبير صورة ") + tr(label) + " " + formatDate(date, language)}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={photoUrl(photo.id)} alt={`${tr(label)} · ${formatDate(date, language)}`} loading="lazy" />
         </button>
         <figcaption className="flex justify-end p-2">
+          {attribution(photo)}
           <button type="button" className="btn-soft" disabled={Boolean(deleting)} onClick={() => void removePhoto(photo)}>
             <Trash2 size={14} />{tr(deleting === photo.id ? "جارٍ الحذف…" : "حذف")}
           </button>
@@ -155,7 +170,7 @@ export function ProgressPhotos({
       const result = await deleteProgressPhoto(photo.id, portalToken);
       if (!result.ok) setMessage(result.error ?? "تعذر حذف الصورة.");
       else {
-        setMessage("تم حذف الصورة من السجل.");
+        setMessage(result.cleanupPending ? "حُذف السجل وأُوقف الوصول للصورة. لا يزال حذف الملف قيد إعادة المحاولة." : "تم حذف الصورة وملفها.");
         if (onUpdate) await onUpdate();
         else router.refresh();
       }
@@ -194,8 +209,8 @@ export function ProgressPhotos({
   }
 
   async function upload() {
-    if (!consent) {
-      setMessage(coach ? "أكد حصولك على موافقة المتدرب قبل الرفع." : "أكد موافقتك قبل رفع الصور.");
+    if (!allowed) {
+      setMessage(coach ? "ما تقدر ترفع صورًا نيابة عن المتدرب قبل موافقته على إشعار صور التقدم." : "فعّل صور التقدم بعد قراءة الإشعار قبل الرفع.");
       return;
     }
     const pending = ANGLES.flatMap(({ key }) => slots[key] ? [{ angle: key, slot: slots[key]! }] : []);
@@ -242,7 +257,6 @@ export function ProgressPhotos({
     if (failures.length) setMessage(failures.join(" · "));
     else {
       setMessage("تم حفظ الصور. يمكنك إضافة زاوية أخرى أو العودة لاحقًا.");
-      setConsent(false);
       if (onUpdate) await onUpdate();
       else router.refresh();
     }
@@ -258,6 +272,50 @@ export function ProgressPhotos({
           {tr("رتب الصور بهذا التسلسل: أمام، خلف، جانب. اختر إضاءة ومسافة ثابتتين، وخذ وضعية مريحة بملابس تختارها.")}
         </p>
       </div>
+      <div className="consent-status" data-status={consentNow?.status ?? "none"} data-testid="photo-consent-status">
+        <ShieldCheck size={18} aria-hidden="true" />
+        <p>
+          <strong>{tr(coach ? "حالة موافقة الصور:" : "موافقتك على صور التقدم:")}</strong>{" "}
+          {tr(consentStatusLabel[consentNow?.status ?? "none"])}
+          {consentNow?.status === "accepted" && consentNow.accepted_at ? <small> · {formatDate(consentNow.accepted_at.slice(0, 10), language)}</small> : null}
+        </p>
+        {!coach && (allowed ? (
+          <button type="button" className="btn-secondary" onClick={() => setConsentDialog("revoke")}>{tr("إيقاف صور التقدم")}</button>
+        ) : (
+          <button type="button" className="btn" onClick={() => setConsentDialog("accept")}>{tr("تفعيل صور التقدم")}</button>
+        ))}
+      </div>
+      {!allowed && (
+        <p className="consent-locked" role="note">
+          {tr(coach
+            ? "رفع الصور مقفل: ما تقدر ترفع صورًا نيابة عن المتدرب قبل موافقته على إشعار صور التقدم من بوابته."
+            : consentNow?.status === "revoked"
+              ? "أوقفت صور التقدم. تقدر تفعّلها من جديد متى ما حبيت، والمنصة تشتغل كاملة بدونها."
+              : consentNow?.status === "outdated"
+                ? "تحدّث إشعار صور التقدم. اقرأه ووافق عليه قبل رفع صور جديدة."
+                : "صور التقدم اختيارية. فعّلها بعد قراءة الإشعار إذا حبيت تشارك تقدمك مع مدربك.")}
+        </p>
+      )}
+      {!coach && (
+        <>
+          <PhotoConsentDialog
+            open={consentDialog === "accept"}
+            clientId={clientId}
+            coachName={coachName || tr("مدربك")}
+            portalToken={portalToken}
+            onLater={() => setConsentDialog(null)}
+            onAccepted={(state) => refreshAfterConsent(state, "تم حفظ موافقتك. تقدر ترفع صور التقدم الآن.")}
+          />
+          <RevokeConsentDialog
+            open={consentDialog === "revoke"}
+            clientId={clientId}
+            portalToken={portalToken}
+            onClose={() => setConsentDialog(null)}
+            onDone={(state, note) => refreshAfterConsent(state, note)}
+          />
+        </>
+      )}
+      {allowed && <>
       <div className="grid gap-3 sm:grid-cols-2">
         <label>
           {tr("تاريخ الصور")}
@@ -289,24 +347,23 @@ export function ProgressPhotos({
                   </div>
                 </div>
               ) : (
-                <label className="mt-3 flex min-h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-line bg-canvas p-4 text-center text-sm">
+                <button type="button" disabled={preparing === key || busy} onClick={() => document.getElementById(`progress-photo-${clientId}-${key}`)?.click()} className="mt-3 flex min-h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-line bg-canvas p-4 text-center text-sm">
                   <ImagePlus size={21} />
-                  {tr(preparing === key ? "نجهز الصورة…" : "التقط صورة أو اختر من الجهاز")}
-                  <input id={`progress-photo-${clientId}-${key}`} aria-label={tr(key === "front" ? "صورة تقدم خاصة" : "صورة ") + (key === "front" ? "" : tr(label))} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" disabled={preparing === key || busy} onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) void selectFile(key, file); }} />
-                </label>
+                  {tr(preparing === key ? "نجهز الصورة…" : "اختيار من المعرض أو الملفات")}
+                </button>
               )}
+              <input id={`progress-photo-${clientId}-${key}`} aria-label={tr(key === "front" ? "صورة تقدم خاصة" : "صورة ") + (key === "front" ? "" : tr(label))} className="sr-only" tabIndex={-1} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" disabled={preparing === key || busy} onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) void selectFile(key, file); }} />
+              <button type="button" className="btn-secondary mt-3 w-full" disabled={preparing === key || busy} onClick={() => document.getElementById(`progress-camera-${clientId}-${key}`)?.click()}>{tr("التقاط بالكاميرا")}</button>
+              <input id={`progress-camera-${clientId}-${key}`} aria-label={tr("التقاط صورة ") + tr(label)} className="sr-only" tabIndex={-1} type="file" accept="image/*" capture="environment" disabled={preparing === key || busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) void selectFile(key, file); }} />
             </article>
           );
         })}
       </div>
 
-      <label className="flex items-start gap-3 rounded-xl bg-canvas p-4 text-sm leading-7">
-        <input type="checkbox" className="mt-1 size-4 accent-[var(--ui-primary)]" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
-        <span>{tr(coach ? "أؤكد أن المتدرب وافق على رفع صور التقدم، وأن مدربه يستطيع رؤيتها." : "أوافق على رفع صور التقدم، وأفهم أن مدربي يستطيع رؤيتها.")}</span>
-      </label>
       <button type="button" className="btn" onClick={() => void upload()} disabled={busy || preparing !== null}>
         <Upload size={17} /> {busy ? tr("جارٍ رفع الصور…") : tr(Object.keys(slots).length === 1 ? "رفع صورة" : "رفع الصور المختارة")}
       </button>
+      </>}
       {message && <p role="status" className="text-sm">{tr(message)}</p>}
 
       <section className="border-t pt-5">
@@ -335,9 +392,9 @@ export function ProgressPhotos({
           {[{ photo: firstPhoto, date: selectedFirstDate, label: "التاريخ الأول" }, { photo: secondPhoto, date: selectedSecondDate, label: "التاريخ الثاني" }].map(({ photo, date, label }) => (
             <figure className="overflow-hidden rounded-xl border border-line" key={label}>
               <figcaption className="flex items-center justify-between gap-3 px-3 py-2 text-sm"><strong>{tr(label)}</strong><span>{date || tr("لم يُحدد")}</span></figcaption>
-              {photo ? <button type="button" className="block w-full bg-canvas" onClick={() => setZoom(photoUrl(photo.id))} aria-label={tr("تكبير صورة ") + tr(label)}>
+              {photo ? <button type="button" className="block w-full bg-canvas" onClick={() => setZoom(photoUrl(photo.id, "full"))} aria-label={tr("تكبير صورة ") + tr(label)}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photoUrl(photo.id)} alt={`${tr(label)}، ${tr(labelFor(compareAngle, tr))}`} loading="lazy" className="h-72 w-full object-contain" />
+                <img src={photoUrl(photo.id, "comparison")} alt={`${tr(label)}، ${tr(labelFor(compareAngle, tr))}`} loading="lazy" className="h-72 w-full object-contain" />
                 <span className="flex items-center justify-center gap-2 p-2 text-xs text-muted"><Maximize2 size={14} />{tr("عرض مكبر")}</span>
               </button> : <div className="grid h-72 place-items-center bg-canvas p-4 text-center text-sm text-muted">{tr(date ? "لا توجد صورة بهذه الزاوية في هذا التاريخ." : "اختر تاريخين لعرض المقارنة.")}</div>}
             </figure>
@@ -363,7 +420,7 @@ export function ProgressPhotos({
         </div>
         {!photoTimeline.length ? <p className="mt-4 text-sm text-muted">{tr("لا توجد صور تقدم محفوظة بعد.")}</p> : (
           <ol className="progress-photo-timeline">
-            {photoTimeline.map(({ date, photos: datePhotos }) => (
+            {photoTimeline.slice(visibleTimelinePage * 5, visibleTimelinePage * 5 + 5).map(({ date, photos: datePhotos }) => (
               <li className="progress-photo-timeline-item" key={date}>
                 <div className="progress-photo-timeline-marker" aria-hidden="true"><Check size={13} /></div>
                 <article className="progress-photo-day-card">
@@ -375,10 +432,11 @@ export function ProgressPhotos({
                       return <section className={`progress-photo-angle-card ${photo ? "has-photo" : "is-missing"}`} key={key}>
                         <h5>{tr(label)}</h5>
                         {photo ? <>
-                          <button type="button" className="progress-photo-timeline-image" onClick={() => setZoom(photoUrl(photo.id))} aria-label={tr("تكبير صورة ") + tr(label) + " " + formatDate(date, language)}>
+                          <button type="button" className="progress-photo-timeline-image" onClick={() => setZoom(photoUrl(photo.id, "full"))} aria-label={tr("تكبير صورة ") + tr(label) + " " + formatDate(date, language)}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={photoUrl(photo.id)} alt={`${tr(label)} · ${formatDate(date, language)}`} loading="lazy" />
                           </button>
+                          {attribution(photo)}
                           <div className="progress-photo-angle-actions">
                             <button type="button" className="btn-soft" disabled={Boolean(deleting)} onClick={() => void removePhoto(photo)}><Trash2 size={14} />{tr(deleting === photo.id ? "جارٍ الحذف…" : "حذف")}</button>
                           </div>
@@ -393,6 +451,7 @@ export function ProgressPhotos({
             ))}
           </ol>
         )}
+        {photoTimeline.length > 5 && <nav className="mt-3 flex flex-wrap items-center gap-3" aria-label={tr("صفحات سجل الصور")}><button type="button" className="btn-secondary" disabled={visibleTimelinePage === 0} onClick={() => setTimelinePage(visibleTimelinePage - 1)}>{tr("السابق")}</button><span className="text-xs">{visibleTimelinePage + 1} / {Math.ceil(photoTimeline.length / 5)}</span><button type="button" className="btn-secondary" disabled={(visibleTimelinePage + 1) * 5 >= photoTimeline.length} onClick={() => setTimelinePage(visibleTimelinePage + 1)}>{tr("التالي")}</button></nav>}
       </section>
 
       {zoom && <div ref={zoomDialog} tabIndex={-1} className="fixed inset-0 z-50 grid place-items-center bg-black/90 p-3" role="dialog" aria-modal="true" aria-label={tr("عرض صورة التقدم")} onClick={() => setZoom(null)}>

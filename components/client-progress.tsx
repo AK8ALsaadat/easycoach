@@ -146,7 +146,7 @@ export function PortalControl({
           <Link2 size={22} />
         </div>
         <div>
-          <h3 className="font-bold">{tr("رابط العميل")}</h3>
+          <h3 className="font-bold">{tr("دخول المتدرب دون حساب")}</h3>
           <p className="text-xs text-muted">
             {tr("الجدول، الوجبات، والوزن · نفس الرابط لكل تحديث منشور")}
           </p>
@@ -181,8 +181,8 @@ export function PortalControl({
           {busy
             ? tr("نجهز الرابط…")
             : link && !link.revoked_at
-              ? tr("تغيير الرابط والرمز")
-              : tr("تفعيل رابط العميل")}
+              ? tr("تجديد رابط الدخول")
+              : tr("إنشاء رابط دخول للمتدرب")}
         </button>
         {link && !link.revoked_at ? (
           <button
@@ -214,10 +214,6 @@ export function PortalControl({
             onFocus={(e) => e.currentTarget.select()}
           />
           <div className="flex flex-wrap items-center gap-4">
-            <span className="text-xs">{tr("رمز دخول العميل")}</span>
-            <strong className="font-mono text-2xl tracking-[.2em]">
-              {result.pin}
-            </strong>
             <button
               className="btn-soft"
               onClick={async () => {
@@ -234,7 +230,7 @@ export function PortalControl({
           </div>
           <p className="text-xs text-muted">
             {tr(
-              "شارك الرمز مع العميل بشكل منفصل. احفظ الرابط والرمز الآن؛ لن نعرضهما مرة ثانية. صالح 180 يومًا، ويمكن إيقافه بأي وقت.",
+              "أي شخص يملك هذا الرابط يستطيع دخول بوابة المتدرب دون حساب. شاركه مع المتدرب فقط. احفظه الآن؛ لن نعرضه مرة ثانية. صالح 180 يومًا ويمكن إيقافه أو تجديده. الروابط السابقة تبقى صالحة حتى تجديدها.",
             )}
           </p>
         </div>

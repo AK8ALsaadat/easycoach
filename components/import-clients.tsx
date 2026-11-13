@@ -20,6 +20,32 @@ import { csvCell, type ImportFile } from "@/lib/import-preview";
 import type { ManagementData } from "@/lib/management";
 import { Notice } from "./forms";
 
+const hasPreviewValue = (value: string | undefined) =>
+  value !== undefined && value.trim() !== "";
+const previewValue = (value: string) => {
+  const trimmed = value.trim();
+  return trimmed.length > 40 ? `${trimmed.slice(0, 40)}…` : trimmed;
+};
+
+function mappedValueSummary(
+  category: Category,
+  values: Record<string, string>,
+) {
+  if (["measurements", "weights"].includes(category))
+    return hasPreviewValue(values.weight)
+      ? `الوزن: ${previewValue(values.weight)} كجم`
+      : "";
+  if (!["nutrition_targets", "nutrition_logs"].includes(category)) return "";
+  return [
+    hasPreviewValue(values.calories) && `${previewValue(values.calories)} kcal`,
+    hasPreviewValue(values.protein) && `P ${previewValue(values.protein)}`,
+    hasPreviewValue(values.carbs) && `C ${previewValue(values.carbs)}`,
+    hasPreviewValue(values.fat) && `F ${previewValue(values.fat)}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 function download(name: string, body: string, mime: string) {
   const url = URL.createObjectURL(new Blob([body], { type: mime }));
   const a = document.createElement("a");
@@ -49,6 +75,7 @@ export function ImportClients({
     [busy, setBusy] = useState(false),
     [result, setResult] = useState<Result | null>(null);
   const sheets = file ? workbookSheets(file) : [];
+  const totalRows = sheets.reduce((total, sheet) => total + sheet.rows.length, 0);
   const rows = useMemo(
     () => (file ? previewFullImport(file, mappings, emails, dateOrder) : []),
     [file, mappings, emails, dateOrder],
@@ -268,7 +295,36 @@ export function ImportClients({
             <span>
               {tr("أوراق الملف")} <strong>{sheets.length}</strong>
             </span>
+            <span data-testid="import-total-rows">
+              {tr("إجمالي الصفوف")} <strong>{totalRows}</strong>
+            </span>
           </div>
+          <ul
+            className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
+            data-testid="import-sheet-summary"
+          >
+            {sheets.map((sheet, index) => {
+              const mappedFields = Object.keys(mappings[index]?.fields ?? {});
+              return (
+                <li
+                  className="rounded-xl border bg-canvas p-3 text-sm"
+                  data-testid="import-sheet-summary-item"
+                  key={`${sheet.name}-${index}`}
+                >
+                  <strong>{sheet.name}</strong>
+                  <p className="mt-1 text-muted">
+                    <span data-testid="import-sheet-row-count">
+                      {sheet.rows.length}
+                    </span>{" "}
+                    {tr("صف")}
+                  </p>
+                  <p className="mt-1 text-xs text-muted" dir="ltr">
+                    {mappedFields.join(", ") || "—"}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
           <div className="overflow-x-auto card">
             <table>
               <thead>
@@ -282,8 +338,13 @@ export function ImportClients({
               <tbody>
                 {rows
                   .slice(currentPage * 50, currentPage * 50 + 50)
-                  .map((row, i) => (
-                    <tr key={i}>
+                  .map((row, i) => {
+                    const valueSummary = mappedValueSummary(
+                      row.category,
+                      row.values,
+                    );
+                    return (
+                      <tr key={i} data-testid="import-preview-row">
                       <td>
                         {row.sheet} · {row.row}
                       </td>
@@ -298,6 +359,15 @@ export function ImportClients({
                         </p>
                       </td>
                       <td>
+                        {valueSummary && (
+                          <p
+                            className="mb-1 max-w-full whitespace-normal break-words font-medium"
+                            data-testid="import-mapped-value-summary"
+                            dir="ltr"
+                          >
+                            {valueSummary}
+                          </p>
+                        )}
                         {row.errors.length ? (
                           <span className="text-red-700">
                             {row.errors.join("؛ ")}
@@ -317,8 +387,9 @@ export function ImportClients({
                           </p>
                         )}
                       </td>
-                    </tr>
-                  ))}
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
@@ -331,6 +402,7 @@ export function ImportClients({
             <div className="flex gap-2">
               <button
                 className="btn-secondary"
+                data-testid="import-preview-previous"
                 disabled={!currentPage}
                 onClick={() => setPage(currentPage - 1)}
               >
@@ -338,6 +410,7 @@ export function ImportClients({
               </button>
               <button
                 className="btn-secondary"
+                data-testid="import-preview-next"
                 disabled={(currentPage + 1) * 50 >= rows.length}
                 onClick={() => setPage(currentPage + 1)}
               >
@@ -376,6 +449,7 @@ export function ImportClients({
           <div className="flex flex-wrap gap-3">
             <button
               className="btn"
+              data-testid="apply-full-import"
               disabled={
                 busy ||
                 !valid.length ||

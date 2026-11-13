@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   asset: { id: "11111111-1111-4111-8111-111111111111", client_id: "22222222-2222-4222-8222-222222222222", coach_id: "33333333-3333-4333-8333-333333333333", size: 1, mime: "image/jpeg", status: "pending" },
   local: false, query: vi.fn(), download: vi.fn(), update: vi.fn(), sign: vi.fn(), finalize: vi.fn(), rpc: vi.fn(), access: vi.fn(),
 }));
+vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/photo-cleanup", () => ({ cleanPendingPhotos: vi.fn() }));
 vi.mock("@/lib/local-db", () => ({ getLocalDatabase: async () => ({ query: mocks.query }) }));

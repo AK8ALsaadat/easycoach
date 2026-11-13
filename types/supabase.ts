@@ -221,6 +221,9 @@ export type Database = {
       };
       coaching_records: {
         Row: {
+          updated_at: string;
+          revision: number;
+          modified_by_type: string | null;
           author_id: string | null;
           author_type: string;
           client_id: string;
@@ -236,6 +239,9 @@ export type Database = {
           source_key: string;
         };
         Insert: {
+          updated_at?: string;
+          revision?: number;
+          modified_by_type?: string | null;
           author_id?: string | null;
           author_type?: string;
           client_id: string;
@@ -251,6 +257,9 @@ export type Database = {
           source_key: string;
         };
         Update: {
+          updated_at?: string;
+          revision?: number;
+          modified_by_type?: string | null;
           author_id?: string | null;
           author_type?: string;
           client_id?: string;
@@ -646,6 +655,7 @@ export type Database = {
       };
       portal_links: {
         Row: {
+          access_mode: "pin" | "bearer";
           attempt_window: string;
           attempts: number;
           client_id: string;
@@ -658,6 +668,7 @@ export type Database = {
           token_hash: string;
         };
         Insert: {
+          access_mode?: "pin" | "bearer";
           attempt_window?: string;
           attempts?: number;
           client_id: string;
@@ -670,6 +681,7 @@ export type Database = {
           token_hash: string;
         };
         Update: {
+          access_mode?: "pin" | "bearer";
           attempt_window?: string;
           attempts?: number;
           client_id?: string;
@@ -1060,6 +1072,15 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      bearer_portal_create: { Args: { client_id: string; token_hash: string; proof_hash: string }; Returns: Json };
+      bearer_portal_exchange: { Args: { portal_id: string; token_hash: string; proof: string; session_hash: string }; Returns: boolean };
+      portal_session_context: { Args: { portal_id: string; session_hash: string }; Returns: Json };
+      portal_transport_info: { Args: { token_hash: string }; Returns: Json };
+      public_portal_branding: { Args: { portal_id: string }; Returns: Json };
+      portal_account_invite: { Args: { token_hash: string; proof: string; invitation_hash: string }; Returns: Json };
+      photo_cleanup_batch: { Args: { completed?: Json; prune_abandoned?: boolean }; Returns: Json };
+      photo_cleanup_authorized: { Args: { asset: string; portal_hash?: string | null; proof?: string | null }; Returns: Json };
+      progress_record_change: { Args: { command: string; target_client: string; record_id: string; expected_updated_at: string; entry_date?: string | null; value?: Json; portal_hash?: string | null; proof?: string | null }; Returns: Json };
       coach_branding_snapshot: { Args: Record<PropertyKey, never>; Returns: Json };
       coach_branding_save: { Args: { display_name: string; change_avatar: boolean; avatar_data: string | null; expected_version?: string | null }; Returns: Json };
       coach_branding_link: { Args: { token_hash: string; link_type: string }; Returns: Json };

@@ -1,21 +1,21 @@
 "use server";
 import { randomUUID } from "node:crypto";
-import { cookies } from "next/headers";
 import { readFile, writeFile, rename, unlink } from "node:fs/promises";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { id, date } from "@/lib/model";
-import { hash, localMode, readableError, rpc } from "@/lib/server";
+import { localMode, readableError, rpc } from "@/lib/server";
 import { adminClient } from "@/lib/supabase/admin";
 import { getLocalDatabase } from "@/lib/local-db";
-import { cleanPendingPhotos } from "@/lib/photo-cleanup";
+import { cleanDeletedPhoto } from "@/lib/deleted-photo-cleanup";
 import {
   accessPhoto,
   photoPath,
   type PhotoAsset,
 } from "@/lib/progress-photos";
 import { sanitizeProgressPhoto } from "@/lib/sanitize-progress-photo";
+import { resolvePortalCredential } from "@/lib/portal-credentials";
 
 const metadata = z
   .object({
@@ -39,10 +39,7 @@ export async function photoTicket(input: unknown, portalToken?: string) {
     const payload = { ...parsed, id: parsed.id ?? randomUUID() };
     let asset: PhotoAsset;
     if (portalToken) {
-      if (!/^[a-f0-9]{64}$/.test(portalToken)) throw Error("رابط غير صالح");
-      const key = hash(portalToken),
-        proof = (await cookies()).get("ec_portal_" + key.slice(0, 12))?.value;
-      if (!proof) throw Error("يلزم تسجيل الدخول");
+      const { key, proof } = await resolvePortalCredential(portalToken);
       asset = await rpc(
         "portal_management",
         { token_hash: key, proof, command: "photo_reserve", payload },
@@ -66,7 +63,7 @@ export async function photoTicket(input: unknown, portalToken?: string) {
       ok: true,
       id: asset.id,
       url: signed?.data.signedUrl ?? `/api/progress-photos/${asset.id}`,
-      portalHash: portalToken ? hash(portalToken) : undefined,
+      portalHash: portalToken ? (await resolvePortalCredential(portalToken)).key : undefined,
     };
   } catch (error) {
     return { ok: false, error: readableError(error) };
@@ -74,14 +71,7 @@ export async function photoTicket(input: unknown, portalToken?: string) {
 }
 export async function finishPhoto(assetId: string, portalToken?: string) {
   try {
-    const portalHash = portalToken
-      ? hash(
-          z
-            .string()
-            .regex(/^[a-f0-9]{64}$/)
-            .parse(portalToken),
-        )
-      : undefined;
+    const portalHash = portalToken ? (await resolvePortalCredential(portalToken)).key : undefined;
     const asset = await accessPhoto(assetId, portalHash);
     if (asset.status === "ready") return { ok: true, id: asset.id };
     if (asset.status !== "pending") throw Error("الصورة غير متاحة");
@@ -141,10 +131,15 @@ export async function finishPhoto(assetId: string, portalToken?: string) {
 export async function deleteProgressPhoto(assetId: string, portalToken?: string) {
   try {
     const photoId = id.parse(assetId);
+    const credential = portalToken ? await resolvePortalCredential(portalToken) : undefined;
+    // Lost-response retries can finish an authorized deletion whose row was
+    // already removed, without requiring the deleted row to reappear.
+    try {
+      const previous = await cleanDeletedPhoto(photoId, credential);
+      if (previous.found) { revalidatePath("/", "layout"); return { ok: true, cleanupPending: previous.pending }; }
+    } catch { /* The normal row deletion below remains authoritative. */ }
     if (portalToken) {
-      const key = hash(z.string().regex(/^[a-f0-9]{64}$/).parse(portalToken));
-      const proof = (await cookies()).get("ec_portal_" + key.slice(0, 12))?.value;
-      if (!proof) throw Error("يلزم فتح رابط المتدرب أولًا");
+      const { key, proof } = await resolvePortalCredential(portalToken);
       const result = await rpc<{ error?: string }>(
         "portal_management",
         { token_hash: key, proof, command: "photo_delete", payload: { id: photoId } },
@@ -157,14 +152,12 @@ export async function deleteProgressPhoto(assetId: string, portalToken?: string)
         payload: { id: photoId },
       });
       if (result.error) throw Error(result.error);
-      try {
-        await cleanPendingPhotos();
-      } catch {
-        // The private queue keeps failed object removals available for retry.
-      }
     }
+    let cleanupPending = true;
+    try { cleanupPending = (await cleanDeletedPhoto(photoId, credential)).pending; }
+    catch { /* A durable queue keeps the removal retryable. */ }
     revalidatePath("/", "layout");
-    return { ok: true };
+    return { ok: true, cleanupPending };
   } catch (error) {
     return { ok: false, error: readableError(error) };
   }

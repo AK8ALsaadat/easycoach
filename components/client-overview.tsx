@@ -6,6 +6,7 @@ import { clientInsights } from "@/lib/client-insights";
 import { useLocale } from "./locale-provider";
 import { ProgressChart } from "./progress-chart";
 import { ProgressPhotos } from "./progress-photo-panel";
+import { MacroSplitBar } from "./macro-targets";
 
 export function ClientOverview({data,client}:{data:Snapshot;client:Client}) {
   const {t:tr}=useLocale();const insight=clientInsights(data,client.id);
@@ -23,8 +24,8 @@ export function ClientOverview({data,client}:{data:Snapshot;client:Client}) {
       <ProgressChart title={tr("تطور الوزن")} points={insight.weights} target={insight.goal?.target_weight} defaultRange="all"/>
       <div><ProgressChart title={tr("السعرات الفعلية المسجلة")} points={insight.actualCalories} target={insight.nutrition?.calories} unit="kcal" defaultRange="all"/><p className="client-chart-note">{tr("الخط المتقطع يمثل هدف السعرات الحالي. الأيام غير المسجلة لا تُحسب صفرًا.")}</p></div>
       <ProgressChart title={tr("تاريخ تغير هدف السعرات")} points={insight.calorieTargets} unit="kcal" defaultRange="all"/>
-      <section className="card p-5 client-current-plan"><h2>{tr("الخطة الحالية")}</h2><h3>{insight.published?.name??tr("لا يوجد برنامج منشور بعد")}</h3><p>{insight.published?`${insight.published.content.days.length} ${tr("أيام تدريبية")}`:tr("جهّز الجدول من صفحة التعديل.")}</p><div className="client-macro-summary">{([['protein','البروتين (غ)'],['carbs','الكارب (غ)'],['fat','الدهون (غ)']] as const).map(([key,label])=><div key={key}><span>{tr(label)}</span><strong>{insight.nutrition?.[key]??"—"}</strong></div>)}</div><p>{tr("هدف المتدرب")}: {insight.goal?.goal||tr("لم يُحدد الهدف")}</p><Link className="btn-soft" href={edit}>{tr("فتح صفحة التعديل")}<ArrowUpLeft size={15}/></Link><Link className="text-sm text-teal" href={`/coach/clients/${client.id}?tab=progress`}>{tr("تسجيل الوزن وتعديل الهدف")}</Link></section>
+      <section className="card p-5 client-current-plan"><h2>{tr("الخطة الحالية")}</h2><h3>{insight.published?.name??tr("لا يوجد برنامج منشور بعد")}</h3><p>{insight.published?`${insight.published.content.days.length} ${tr("أيام تدريبية")}`:tr("جهّز الجدول من صفحة التعديل.")}</p><div className="client-macro-summary">{([['protein','البروتين (غ)'],['carbs','الكارب (غ)'],['fat','الدهون (غ)']] as const).map(([key,label])=><div key={key}><span>{tr(label)}</span><strong>{insight.nutrition?.[key]??"—"}</strong></div>)}</div>{insight.nutrition&&<MacroSplitBar value={insight.nutrition}/>}<p>{tr("هدف المتدرب")}: {insight.goal?.goal||tr("لم يُحدد الهدف")}</p><Link className="btn-soft" href={edit}>{tr("فتح صفحة التعديل")}<ArrowUpLeft size={15}/></Link><Link className="text-sm text-teal" href={`/coach/clients/${client.id}?tab=progress`}>{tr("تسجيل الوزن وتعديل الهدف")}</Link></section>
     </div>
-    <div id="client-progress-photos"><ProgressPhotos clientId={client.id} photos={insight.photos}/></div>
+    <div id="client-progress-photos"><ProgressPhotos clientId={client.id} photos={insight.photos} coach consent={data.management?.photo_consents?.find(state=>state.client_id===client.id)}/></div>
   </div>;
 }

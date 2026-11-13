@@ -22,9 +22,10 @@ export default async function CoachPage({
   const { path = [] } = await params;
   const search = await searchParams;
   const section = path[0] ?? "today";
+  const isSupportOwner = Boolean(process.env.SUPPORT_OWNER_USER_ID && process.env.SUPPORT_OWNER_USER_ID === data.profile?.id);
   const editing = section === "clients" && path.length === 3 && path[2] === "edit";
   if (
-    !["today", "clients", "library", "finance", "settings"].includes(section) ||
+    (!["today", "clients", "library", "finance", "settings"].includes(section) && !(section === "support" && isSupportOwner)) ||
     path.length > 3 ||
     (path.length === 3 && !editing) ||
     (path.length >= 2 && section !== "clients")
@@ -43,6 +44,7 @@ export default async function CoachPage({
       initialQuery={search.q ?? ""}
       appUrl={process.env.APP_URL ?? "http://127.0.0.1:3200"}
       local={localMode()}
+      supportOwner={isSupportOwner}
     />
   );
 }

@@ -2,30 +2,50 @@
 import { useLocale } from "./locale-provider";
 import { Plus, Trash2, Copy, Utensils } from "lucide-react";
 import type { Content } from "@/lib/model";
+import { caloriesFromMacros, MACRO_LIMITS, remainingAgainstTarget, sumMeals } from "@/lib/macros";
+import { formatNumber } from "@/lib/plural";
+import { DecimalInput } from "./decimal-input";
 type Nutrition = Content["nutrition"];
+type Meal = NonNullable<Nutrition["meals"]>[number];
+
+/** Remaining (+) or over (−) against the daily target, per macro. */
+function Balance({ label, unit, value }: { label: string; unit: string; value: number }) {
+  const { t: tr } = useLocale();
+  const state = Math.abs(value) < 0.05 ? "even" : value > 0 ? "left" : "over";
+  return (
+    <span className={`meal-balance meal-balance-${state}`}>
+      <span>{tr(label)}</span>
+      <strong>
+        {state === "even" ? tr("مطابق") : tr(state === "left" ? "متبقي {0}" : "زيادة {0}", "")}
+        {state !== "even" && <bdi dir="ltr"> {formatNumber(Math.abs(value))} {tr(unit)}</bdi>}
+      </strong>
+    </span>
+  );
+}
+
 export function MealEditor({
   nutrition,
   onChange,
+  includeTargets = true,
 }: {
   nutrition: Nutrition;
   onChange: (n: Nutrition) => void;
+  includeTargets?: boolean;
 }) {
   const { t: tr } = useLocale();
-
+  const auto = nutrition.calories_mode === "auto";
   const meals = nutrition.meals ?? [];
-  const total = meals.reduce(
-    (s, m) => ({
-      calories: s.calories + m.calories,
-      protein: s.protein + m.protein,
-      carbs: s.carbs + m.carbs,
-      fat: s.fat + m.fat,
-    }),
-    { calories: 0, protein: 0, carbs: 0, fat: 0 },
-  );
-  function update(i: number, k: string, v: string | number) {
+  const total = sumMeals(meals);
+  const remaining = remainingAgainstTarget(nutrition, total);
+  function update(i: number, k: keyof Meal, v: string | number) {
     onChange({
       ...nutrition,
-      meals: meals.map((m, j) => (i === j ? { ...m, [k]: v } : m)),
+      meals: meals.map((m, j) => {
+        if (i !== j) return m;
+        const next = { ...m, [k]: v };
+        // In auto mode each meal's calories follow its macros, like the daily target.
+        return auto && k !== "calories" ? { ...next, calories: caloriesFromMacros(next) } : next;
+      }),
     });
   }
   return (
@@ -45,9 +65,7 @@ export function MealEditor({
               meals: [
                 ...meals,
                 {
-                  name:
-                    ["الفطور", "الغداء", "العشاء", "سناك"][meals.length] ??
-                    `وجبة ${meals.length + 1}`,
+                  name: ["الفطور", "الغداء", "العشاء", "سناك"][meals.length] ?? `وجبة ${meals.length + 1}`,
                   time: "",
                   foods: "",
                   calories: 0,
@@ -65,10 +83,8 @@ export function MealEditor({
       </div>
       {meals.map((m, i) => (
         <article className="meal-card" key={i}>
-          <div className="mb-4 flex gap-3">
-            <span className="meal-number">
-              {String(i + 1).padStart(2, "0")}
-            </span>
+          <div className="meal-card-head mb-4 flex gap-3">
+            <span className="meal-number">{String(i + 1).padStart(2, "0")}</span>
             <input
               aria-label={tr("اسم الوجبة {0}", String(i + 1))}
               className="field"
@@ -89,12 +105,7 @@ export function MealEditor({
               type="button"
               className="btn-secondary"
               disabled={meals.length >= 12}
-              onClick={() =>
-                onChange({
-                  ...nutrition,
-                  meals: [...meals, { ...m, name: m.name + " · نسخة" }],
-                })
-              }
+              onClick={() => onChange({ ...nutrition, meals: [...meals, { ...m, name: m.name + " · نسخة" }] })}
             >
               <Copy size={15} />
             </button>
@@ -102,12 +113,7 @@ export function MealEditor({
               aria-label={tr("حذف الوجبة {0}", String(i + 1))}
               type="button"
               className="btn-secondary"
-              onClick={() =>
-                onChange({
-                  ...nutrition,
-                  meals: meals.filter((_, j) => j !== i),
-                })
-              }
+              onClick={() => onChange({ ...nutrition, meals: meals.filter((_, j) => j !== i) })}
             >
               <Trash2 size={15} />
             </button>
@@ -116,73 +122,74 @@ export function MealEditor({
             aria-label={tr("مكونات الوجبة {0}", String(i + 1))}
             className="field min-h-24"
             value={m.foods}
-            placeholder={tr(
-              "150غ دجاج مشوي، 180غ أرز مطبوخ، سلطة… وحدد البدائل والكميات بالطريقة اللي تناسب عميلك.",
-            )}
+            placeholder={tr("150غ دجاج مشوي، 180غ أرز مطبوخ، سلطة… وحدد البدائل والكميات بالطريقة اللي تناسب عميلك.")}
             maxLength={2000}
             onChange={(e) => update(i, "foods", e.target.value)}
           />
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {(
-              [
-                ["calories", tr("سعرات")],
-                ["protein", tr("بروتين (غ)")],
-                ["carbs", tr("كارب (غ)")],
-                ["fat", tr("دهون (غ)")],
-              ] as const
-            ).map(([k, label]) => (
-              <label key={k} className="text-xs text-muted">
-                {tr(label)}
-                <input
-                  aria-label={tr(
-                    "{0} الوجبة {1}",
-                    String(tr(label)),
-                    String(i + 1),
-                  )}
-                  className="field mt-1"
-                  type="number"
-                  min={0}
-                  max={k === "calories" ? 10000 : 1000}
-                  value={m[k]}
-                  onChange={(e) => update(i, k, Number(e.target.value))}
-                />
-              </label>
-            ))}
-          </div>
+          {includeTargets && (
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {(
+                [
+                  ["calories", "سعرات"],
+                  ["protein", "بروتين (غ)"],
+                  ["carbs", "كارب (غ)"],
+                  ["fat", "دهون (غ)"],
+                ] as const
+              ).map(([k, label]) => (
+                <label key={k} className="text-xs text-muted">
+                  {tr(label)}
+                  <DecimalInput
+                    aria-label={tr("{0} الوجبة {1}", String(tr(label)), String(i + 1))}
+                    className="field mt-1"
+                    max={k === "calories" ? MACRO_LIMITS.calories : MACRO_LIMITS.grams}
+                    readOnly={k === "calories" && auto}
+                    value={k === "calories" && auto ? caloriesFromMacros(m) : m[k]}
+                    onValue={(value) => update(i, k, value)}
+                  />
+                </label>
+              ))}
+            </div>
+          )}
         </article>
       ))}
-      {meals.length ? (
+      {meals.length && includeTargets ? (
         <div className="nutrition-reconcile">
           <div className="flex items-center gap-3">
             <Utensils size={20} />
             <div>
               <strong>
-                {tr("مجموع الوجبات:")} {total.calories} kcal
+                {tr("مجموع الوجبات:")} <bdi dir="ltr">{formatNumber(total.calories)} kcal</bdi>
               </strong>
-              <p className="text-xs">
-                P {total.protein}g · C {total.carbs}g · F {total.fat}g
+              <p className="text-xs" dir="ltr">
+                P {formatNumber(total.protein)}g · C {formatNumber(total.carbs)}g · F {formatNumber(total.fat)}g
               </p>
             </div>
           </div>
-          <div className="text-sm">
-            {total.calories === nutrition.calories
-              ? tr("يطابق هدف السعرات")
-              : tr(
-                  "فرق {0} kcal عن الهدف",
-                  String(total.calories - nutrition.calories),
-                )}
+          <div className="meal-balances" aria-label={tr("مقارنة الوجبات بالهدف اليومي")}>
+            <Balance label="السعرات" unit="kcal" value={remaining.calories} />
+            <Balance label="بروتين" unit="غ" value={remaining.protein} />
+            <Balance label="كارب" unit="غ" value={remaining.carbs} />
+            <Balance label="دهون" unit="غ" value={remaining.fat} />
           </div>
           <button
             type="button"
             className="btn-secondary"
-            onClick={() => onChange({ ...nutrition, ...total })}
+            onClick={() =>
+              onChange({
+                ...nutrition,
+                protein: total.protein,
+                carbs: total.carbs,
+                fat: total.fat,
+                calories: auto ? caloriesFromMacros(total) : Math.round(total.calories * 10) / 10,
+              })
+            }
           >
             {tr("اعتمد المجموع كأهداف")}
           </button>
         </div>
       ) : (
         <p className="py-5 text-sm text-muted">
-          {tr("إضافة الوجبات اختيارية. تقدر تكتفي بالأهداف والملاحظات.")}
+          {tr(includeTargets ? "إضافة الوجبات اختيارية. تقدر تكتفي بالأهداف والملاحظات." : "إضافة الوجبات اختيارية. الأهداف الغذائية تُخصص لاحقًا لكل متدرب من ملفه.")}
         </p>
       )}
     </section>

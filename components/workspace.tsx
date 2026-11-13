@@ -23,9 +23,12 @@ import {
   Plus,
   Search,
   Settings,
+  Headset,
+  Trash2,
   Users,
 } from "lucide-react";
 import { createLink, logoutAction, type Result } from "@/app/actions";
+import { manage } from "@/app/management-actions";
 import {
   blankContent,
   type Client,
@@ -60,6 +63,12 @@ import {
   availableTemplates,
   templateLibraryState,
 } from "@/lib/template-availability";
+import { SupportDesk } from "./support-desk";
+import { ToastHost } from "./toast";
+import { ClientActionsMenu } from "./client-lifecycle";
+import { TemplateNameDialog, TemplateTags, type TemplateDetails } from "./template-name-dialog";
+import { isUnnamedTemplate, suggestCopyName, templateNameError } from "@/lib/template-names";
+import { countLabel, nouns } from "@/lib/plural";
 
 const clientFields = (client?: Client): Field[] => [
   { name: "name", label: "اسم العميل", value: client?.name, required: true },
@@ -134,7 +143,7 @@ export function LinkBox({
         {busy
           ? tr("نجهّز الرابط…")
           : kind === "invite"
-            ? tr("إنشاء دعوة آمنة")
+            ? tr("ربط حساب اختياري")
             : tr("إنشاء رابط طلب انضمام")}
       </button>
       {result?.url ? (
@@ -201,6 +210,7 @@ const nav = [
     icon: Settings,
     key: "settings",
   },
+  { href: "/coach/support", label: "صندوق الدعم", icon: Headset, key: "support" },
 ];
 export function Workspace({
   data,
@@ -212,6 +222,7 @@ export function Workspace({
   tutorialDismissed = false,
   appUrl,
   local,
+  supportOwner = false,
 }: {
   data: Snapshot;
   section: string;
@@ -222,12 +233,14 @@ export function Workspace({
   tutorialDismissed?: boolean;
   appUrl: string;
   local: boolean;
+  supportOwner?: boolean;
 }) {
   const { t: tr, language: locale } = useLocale();
 
   const [mobile, setMobile] = useState(false);
   const sidebarRef = useDialog<HTMLElement>(mobile, () => setMobile(false));
   const client = data.clients.find((c) => c.id === clientId && !c.archived);
+  const visibleNav = nav.filter((item) => item.key !== "support" || supportOwner);
   return (
     <div className="portal-shell">
       <a className="skip-link" href="#portal-content">
@@ -254,7 +267,7 @@ export function Workspace({
           </button>
         </div>
         <nav aria-label={tr("القائمة الرئيسية")}>
-          {nav.map((item) => (
+          {visibleNav.map((item) => (
             <Link
               key={item.key}
               href={item.href}
@@ -317,7 +330,7 @@ export function Workspace({
             <div className="portal-breadcrumb">
               <span>{tr("إيزي كوتش")}</span>
               <ChevronLeft size={13} />
-              <strong>{tr(nav.find((n) => n.key === section)?.label)}</strong>
+              <strong>{tr(nav.find((n) => n.key === section)?.label ?? (section === "support" ? "صندوق الدعم" : ""))}</strong>
               {client && (
                 <>
                   <ChevronLeft size={13} />
@@ -379,7 +392,9 @@ export function Workspace({
               )}
             </p>
           )}
-          {section === "today" ? (
+          {section === "support" && supportOwner ? (
+            <SupportDesk owner />
+          ) : section === "today" ? (
             <CoachToday data={data} tutorialDismissed={tutorialDismissed} />
           ) : section === "clients" ? (
             clientId ? (
@@ -420,6 +435,8 @@ export function Workspace({
           </Link>
         </footer>
       </div>
+      <SupportDesk />
+      <ToastHost />
     </div>
   );
 }
@@ -574,6 +591,10 @@ function ClientDetail({
     data.management?.template_metadata,
   );
   const selectedTemplate = templates.find((t) => t.id === templateId);
+  // Most recently used first, then most recently edited.
+  const lastUsed = (id: string) => data.management?.template_metadata.find((m) => m.template_id === id)?.last_used_at ?? "";
+  const startTemplates = [...templates]
+    .sort((a, b) => lastUsed(b.id).localeCompare(lastUsed(a.id)) || b.updated_at.localeCompare(a.updated_at));
   const selected = loaded ?? draft ?? published;
   const insight = clientInsights(data, client.id);
   const subs = data.subscriptions.filter((s) => s.client_id === client.id);
@@ -611,7 +632,7 @@ function ClientDetail({
             }
           >
             <Copy size={14} />
-            {tr("رابط البرنامج")}
+            {tr("رابط الحساب المرتبط")}
           </button>
           {client.phone ? (
             <a
@@ -624,6 +645,7 @@ function ClientDetail({
               <ArrowUpLeft size={14} />
             </a>
           ) : null}
+          <ClientActionsMenu client={client} afterArchive="/coach/clients" />
         </div>
       </Heading>
       {tab === "profile" && <PortalControl
@@ -655,6 +677,7 @@ function ClientDetail({
       {tab === "overview" ? <ClientOverview data={data} client={client}/> : tab === "nutrition" ? <NutritionTargetEditor data={data} client={client}/> : tab === "tracking" ? (
         <ClientHub
           clientId={client.id}
+          client={client}
           management={data.management}
           weights={data.weights ?? []}
           program={published}
@@ -688,17 +711,22 @@ function ClientDetail({
                 onChange={(e) => setTemplateId(e.target.value)}
               >
                 <option value="">{tr("ابدأ من قالب…")}</option>
-                {templates.map((t) => (
-                  <option value={t.id} key={t.id}>
-                    {t.name}
-                  </option>
-                ))}
+                {startTemplates.map((t) => {
+                  const unnamed = isUnnamedTemplate(t.name);
+                  const exercises = t.content.days.reduce((sum, d) => sum + d.exercises.length, 0);
+                  return (
+                    <option value={t.id} key={t.id} disabled={unnamed}>
+                      {unnamed ? tr("{0} — بدون اسم، سمِّه من المكتبة أولًا", t.name) : `${t.name} · ${countLabel(locale, t.content.days.length, nouns.day)} · ${countLabel(locale, exercises, nouns.exercise)}`}
+                    </option>
+                  );
+                })}
               </select>
               <button
                 className="btn-secondary"
-                disabled={!selectedTemplate}
+                disabled={!selectedTemplate || isUnnamedTemplate(selectedTemplate.name)}
                 onClick={() => {
-                  if (!selectedTemplate) return;
+                  if (!selectedTemplate || isUnnamedTemplate(selectedTemplate.name)) return;
+                  void manage("template_touch", { id: selectedTemplate.id }).catch(() => undefined);
                   if (
                     draft &&
                     !window.confirm(
@@ -768,10 +796,10 @@ function ClientDetail({
             </p>
           </section>
           <section className="card space-y-5 p-6">
-            <h2>{tr("الوصول الآمن للمتدرب")}</h2>
+            <h2>{tr("حساب المتدرب — اختياري")}</h2>
             <p className="text-sm text-muted">
               {tr(
-                "لا يكفي امتلاك الرابط. لقبول الدعوة، يلزم الدخول بإيميل العميل وتأكيد هويته.",
+                "رابط الدخول أعلاه يعمل دون حساب. استخدم هذا الخيار فقط لربط حساب موثّق بنفس إيميل المتدرب، مع الاحتفاظ ببرنامجه وسجله.",
               )}
             </p>
             <LinkBox kind="invite" clientId={client.id} />
@@ -884,34 +912,87 @@ function SubscriptionCard({
 }
 function Library({ data }: { data: Snapshot }) {
   const { t: tr, language: locale } = useLocale();
+  const router = useRouter();
+  const [deletingTemplate, setDeletingTemplate] = useState("");
+  const [templateResult, setTemplateResult] = useState<Result | null>(null);
+  const templateKind = (id: string) => data.management?.template_metadata.find(meta => meta.template_id === id)?.kind ?? "workout";
 
   const [tab, setTab] = useState("catalog");
   const [template, setTemplate] = useState<Template | null>(null);
   const [editor, setEditor] = useState(false);
   const [exerciseId, setExerciseId] = useState("");
-  const [templateSeed, setTemplateSeed] = useState(blankContent);
-  const [templateSeedName, setTemplateSeedName] = useState("قالب جديد");
   const [templateRevision, setTemplateRevision] = useState(0);
+  const [nameDialog, setNameDialog] = useState<null | { key: number; mode: "create" | "copy" | "rename"; initial: Partial<TemplateDetails>; seed?: Template["content"]; source?: Template }>(null);
   const ex = data.exercises.find((e) => e.id === exerciseId);
   const templates = availableTemplates(
     data.templates,
     data.management?.template_metadata,
   );
   const templateState = templateLibraryState(data.templates, templates);
-  const createTemplate = () => {
-    setTemplate(null);
-    setTemplateSeed(structuredClone(blankContent));
-    setTemplateSeedName("قالب جديد");
+  const metaFor = (id: string) => data.management?.template_metadata.find((meta) => meta.template_id === id);
+  // Nothing is created until the coach names the template.
+  const createTemplate = (seed = blankContent, suggested = "") => {
+    setTab("templates");
+    setNameDialog({ key: Date.now(), mode: "create", initial: { name: suggested }, seed: structuredClone(seed) });
+  };
+  const openEditor = (next: Template) => {
+    setTemplate(next);
     setTemplateRevision((value) => value + 1);
     setEditor(true);
     setTab("templates");
   };
+  async function submitName(details: TemplateDetails): Promise<Result> {
+    if (!nameDialog) return { ok: false, message: "" };
+    const tags = { goal: details.goal, level: details.level, days_per_week: details.days_per_week };
+    if (nameDialog.mode === "create") {
+      const seed = nameDialog.seed ?? blankContent;
+      const response = await manage("template_save_typed", { name: details.name, content: seed, kind: "workout", description: "", archived: false, ...tags });
+      if (!response.ok) return response;
+      const saved = response.data as Template;
+      setNameDialog(null);
+      openEditor({ ...saved, content: seed });
+      router.refresh();
+      return response;
+    }
+    const source = nameDialog.source!;
+    const meta = metaFor(source.id);
+    if (nameDialog.mode === "copy") {
+      const response = await manage("template_duplicate", { id: source.id, name: details.name });
+      if (!response.ok) return response;
+      const saved = response.data as Template;
+      await manage("template_meta", { id: saved.id, description: meta?.description ?? "", archived: false, kind: meta?.kind ?? "workout", ...tags });
+      setNameDialog(null);
+      openEditor({ ...saved, content: source.content });
+      setTemplateResult({ ok: true, message: tr("تم إنشاء {0}", details.name) });
+      router.refresh();
+      return response;
+    }
+    const response = await manage("template_rename", { id: source.id, name: details.name });
+    if (!response.ok) return response;
+    await manage("template_meta", { id: source.id, description: meta?.description ?? "", archived: meta?.archived ?? false, kind: meta?.kind ?? "workout", ...tags });
+    setNameDialog(null);
+    setTemplateResult({ ok: true, message: tr("تم حفظ اسم القالب") });
+    router.refresh();
+    return response;
+  }
   return (
     <>
+      {nameDialog && (
+        <TemplateNameDialog
+          key={nameDialog.key}
+          open
+          mode={nameDialog.mode}
+          initial={nameDialog.initial}
+          existing={data.templates}
+          selfId={nameDialog.mode === "rename" ? nameDialog.source?.id : undefined}
+          onClose={() => setNameDialog(null)}
+          onSubmit={submitName}
+        />
+      )}
       <Heading title={tr("مكتبة التدريب")} text="">
         <button
           className="btn"
-          onClick={createTemplate}
+          onClick={() => createTemplate()}
         >
           <Plus size={16} />
           {tr("قالب جديد")}
@@ -993,14 +1074,8 @@ function Library({ data }: { data: Snapshot }) {
           onConfirm={(exercises) => {
             const seed = structuredClone(blankContent);
             seed.days[0].exercises = exercises.map(exercise=>({name:exerciseName(exercise,locale),catalogId:exercise.id,description:"",video:"",sets:3,reps:"10–12",rest:90}));
-            setTemplate(null);
-            setTemplateSeed(seed);
-            setTemplateRevision((value) => value + 1);
-            setTemplateSeedName(
-              ("برنامج " + exerciseName(exercises[0],locale)).slice(0, 140),
-            );
-            setEditor(true);
-            setTab("templates");
+            const suggested = ("برنامج " + exerciseName(exercises[0],locale)).slice(0, 60).trim();
+            createTemplate(seed, templateNameError(suggested, data.templates) ? "" : suggested);
           }}
         />
       </div>
@@ -1011,6 +1086,7 @@ function Library({ data }: { data: Snapshot }) {
         hidden={tab !== "templates"}
       >
         <TemplateTools data={data} />
+        <Notice result={templateResult} />
         {editor ? (
           <section className="card p-6">
             <button
@@ -1019,63 +1095,70 @@ function Library({ data }: { data: Snapshot }) {
             >
               {tr("رجوع للقوالب")}
             </button>
-            <ProgramEditor
-              key={(template?.id ?? "new") + ":" + templateRevision}
-              initial={template?.content ?? templateSeed}
-              name={template?.name ?? templateSeedName}
-              id={template?.id.startsWith("copy:") ? undefined : template?.id}
+            {template && <ProgramEditor
+              key={template.id + ":" + templateRevision}
+              initial={template.content}
+              name={template.name}
+              id={template.id}
+              templateMeta={metaFor(template.id)}
+              siblingTemplates={data.templates}
               library={data.exercises}
-            />
+            />}
           </section>
         ) : templateState.kind === "active" ? (
           <div
             className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3"
             data-testid="active-template-grid"
           >
-            {templateState.activeTemplates.map((t) => (
+            {templateState.activeTemplates.map((t) => {
+              const meta = metaFor(t.id);
+              const unnamed = isUnnamedTemplate(t.name);
+              return (
                 <article key={t.id} className="card p-6">
                   <span className="mb-5 flex size-12 items-center justify-center rounded-xl bg-accent/30 text-teal">
                     <ClipboardList size={23} />
                   </span>
-                  <h2>{t.name}</h2>
+                  <h2 className="flex flex-wrap items-center gap-2">{t.name}{unnamed && <span className="badge badge-warning">{tr("بدون اسم")}</span>}</h2>
                   <p className="mt-2 text-sm text-muted">
-                    {t.content.days.length} {tr("أيام ·")}{" "}
-                    {t.content.days.reduce(
-                      (sum, d) => sum + d.exercises.length,
-                      0,
-                    )}{" "}
-                    {tr("تمارين")}
+                    {templateKind(t.id) === "workout" ? <>{countLabel(locale, t.content.days.length, nouns.day)} · {countLabel(locale, t.content.days.reduce((sum, d) => sum + d.exercises.length, 0), nouns.exercise)}</> : tr(templateKind(t.id) === "nutrition_targets" ? "تغذية مع أهداف مقترحة" : "تغذية عامة دون أهداف مشتركة")}
                   </p>
+                  <TemplateTags goal={meta?.goal} level={meta?.level} days={meta?.days_per_week} />
+                  {unnamed && (
+                    <div className="mt-3 rounded-xl bg-canvas p-3 text-xs leading-6">
+                      <p>{tr("سمِّ القالب قبل استخدامه في برنامج متدرب.")}</p>
+                      <button type="button" className="btn-soft mt-2" onClick={() => setNameDialog({ key: Date.now(), mode: "rename", initial: { name: "", goal: meta?.goal ?? null, level: meta?.level ?? null, days_per_week: meta?.days_per_week ?? null }, source: t })}>
+                        {tr("سمِّ القالب")}
+                      </button>
+                    </div>
+                  )}
                   <p className="mt-2 text-xs text-muted">
                     {tr("آخر تعديل")} {formatDate(t.updated_at, locale)}
                   </p>
                   <div className="mt-6 flex gap-2">
+                    <button className="btn-secondary text-red-700" aria-label={tr("حذف القالب ") + t.name} disabled={Boolean(deletingTemplate)} onClick={async () => {
+                      if (!window.confirm("حذف القالب نهائيًا؟ برامج المتدربين المستقلة وسجل التغذية سيبقيان كما هما.")) return;
+                      setDeletingTemplate(t.id);
+                      try { const result = await manage("template_delete", { id: t.id }); setTemplateResult(result); if (result.ok) router.refresh(); }
+                      catch { setTemplateResult({ ok: false, message: "تعذر الاتصال. حدّث قائمة القوالب قبل إعادة المحاولة." }); }
+                      finally { setDeletingTemplate(""); }
+                    }}><Trash2 size={14} />{tr(deletingTemplate === t.id ? "جارٍ الحذف…" : "حذف")}</button>
                     <button
                       className="btn-secondary"
-                      onClick={() => {
-                        setTemplate(t);
-                        setEditor(true);
-                      }}
+                      onClick={() => openEditor(t)}
                     >
                       {tr("فتح وتعديل")}
                     </button>
                     <button
                       className="btn-soft"
-                      onClick={() => {
-                        setTemplate({
-                          ...structuredClone(t),
-                          id: "copy:" + t.id,
-                          name: t.name + " · نسخة",
-                        });
-                        setEditor(true);
-                      }}
+                      onClick={() => setNameDialog({ key: Date.now(), mode: "copy", initial: { name: unnamed ? "" : suggestCopyName(t.name, data.templates), goal: meta?.goal ?? null, level: meta?.level ?? null, days_per_week: meta?.days_per_week ?? null }, source: t })}
                     >
                       <Copy size={14} />
                       {tr("نسخ")}
                     </button>
                   </div>
                 </article>
-              ))}
+              );
+            })}
           </div>
         ) : templateState.kind === "all-archived" ? (
           <Empty
@@ -1095,7 +1178,7 @@ function Library({ data }: { data: Snapshot }) {
               >
                 {tr("إدارة القوالب واستعادة قالب")}
               </button>
-              <button className="btn" onClick={createTemplate}>
+              <button className="btn" onClick={() => createTemplate()}>
                 <Plus size={16} />
                 {tr("إنشاء قالب جديد")}
               </button>
@@ -1372,6 +1455,7 @@ function SettingsPage({ data }: { data: Snapshot }) {
               <tr>
                 <th>{tr("الوقت")}</th>
                 <th>{tr("العملية")}</th>
+                <th>{tr("التفاصيل")}</th>
                 <th>{tr("مرجع السجل")}</th>
               </tr>
             </thead>
@@ -1381,11 +1465,12 @@ function SettingsPage({ data }: { data: Snapshot }) {
                   <td className="text-xs">
                     {formatDate(a.created_at, locale)}
                   </td>
-                  <td className="text-xs" dir="ltr">
-                    {a.action}
+                  <td className="text-xs" dir={/[؀-ۿ]/.test(a.action) ? "rtl" : "ltr"}>
+                    {tr(a.action)}
                   </td>
+                  <td className="text-xs text-muted">{a.detail ? tr(a.detail) : "—"}</td>
                   <td className="font-mono text-xs text-muted">
-                    {a.entity_id?.slice(0, 12)}
+                    {a.entity_id?.slice(0, 12) ?? "—"}
                   </td>
                 </tr>
               ))}

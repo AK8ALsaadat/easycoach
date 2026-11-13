@@ -50,5 +50,5 @@ export function compareRoster(a:RosterRow,b:RosterRow,sort:string,language:strin
 
 export function rosterCounts(rows:RosterRow[]) {
   const live=rows.filter(r=>!r.client.archived);
-  return {all:live.length,attention:live.filter(r=>r.attention).length,program:live.filter(r=>r.needsProgram).length,renew:live.filter(r=>r.renew).length};
+  return {all:live.length,attention:live.filter(r=>r.attention).length,program:live.filter(r=>r.needsProgram).length,renew:live.filter(r=>r.renew).length,archived:rows.length-live.length};
 }

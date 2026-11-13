@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { resolvePortalMediaCredential } from "@/lib/portal-credentials";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { exerciseMedia } from "@/lib/exercise-media";
@@ -22,9 +22,7 @@ export async function GET(
     let allowed = false;
     const portal = query.get("portal");
     if (portal && /^[a-f0-9]{64}$/.test(portal)) {
-      const proof = (await cookies()).get(
-        "ec_portal_" + portal.slice(0, 12),
-      )?.value;
+      const { proof } = await resolvePortalMediaCredential(portal);
       if (proof) {
         const access = await rpc<PortalData & { error?: string }>(
           "portal_access",

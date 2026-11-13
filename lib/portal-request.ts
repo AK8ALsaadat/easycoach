@@ -15,6 +15,7 @@ export function portalFailure(error: string): PortalResponse {
     error,
     accessDenied: [
       "أدخل رمز الدخول من مدربك",
+      "انتهت جلسة الرابط. افتح رابط مدربك من جديد",
       "الرابط غير متاح. اطلب رابطًا جديدًا من مدربك",
       "الرابط غير متاح",
       "رمز الدخول غير صحيح",

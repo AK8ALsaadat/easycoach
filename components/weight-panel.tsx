@@ -37,10 +37,13 @@ export function WeightPanel({
     high = Math.max(...recent.map((e) => Number(e.weight))) + 1;
   const start = recent[0] ? Date.parse(recent[0].entry_date) : 0,
     end = recent.at(-1) ? Date.parse(recent.at(-1)!.entry_date) : 1;
+  // The plot leaves room on the left for labelled Y-axis values (kg).
+  const plotStart = 52, plotEnd = 492;
   const points = recent.map(
     (e) =>
-      `${20 + ((Date.parse(e.entry_date) - start) / Math.max(86400000, end - start)) * 460},${135 - ((Number(e.weight) - low) / (high - low)) * 110}`,
+      `${plotStart + ((Date.parse(e.entry_date) - start) / Math.max(86400000, end - start)) * (plotEnd - plotStart)},${135 - ((Number(e.weight) - low) / (high - low)) * 110}`,
   );
+  const yTicks = [35, 80, 125].map((y) => ({ y, value: low + ((135 - y) / 110) * (high - low) }));
   return (
     <section className={"weight-panel " + (compact ? "" : "card p-5")}>
       <div className="section-title">
@@ -69,10 +72,12 @@ export function WeightPanel({
         </div>
         <div>
           <p className="metric-number">
-            {last && first
-              ? (Number(last.weight) - Number(first.weight) > 0 ? "+" : "") +
-                (Number(last.weight) - Number(first.weight)).toFixed(1)
-              : "—"}
+            <bdi dir="ltr">
+              {last && first
+                ? (Number(last.weight) - Number(first.weight) > 0 ? "+" : "") +
+                  (Number(last.weight) - Number(first.weight)).toFixed(1)
+                : "—"}
+            </bdi>
           </p>
           <p className="text-xs text-muted">{tr("التغير منذ أول تسجيل")}</p>
         </div>
@@ -98,19 +103,23 @@ export function WeightPanel({
                 <stop offset="1" stopColor="#3677f2" stopOpacity="0" />
               </linearGradient>
             </defs>
-            {[35, 80, 125].map((y) => (
-              <line
-                key={y}
-                x1="20"
-                x2="480"
-                y1={y}
-                y2={y}
-                stroke="currentColor"
-                opacity=".08"
-              />
+            {yTicks.map(({ y, value }) => (
+              <g key={y}>
+                <line
+                  x1={plotStart}
+                  x2={plotEnd}
+                  y1={y}
+                  y2={y}
+                  stroke="currentColor"
+                  opacity=".12"
+                />
+                <text x={plotStart - 6} y={y + 4} textAnchor="end" direction="ltr" className="weight-axis-label">
+                  {value.toFixed(1)}
+                </text>
+              </g>
             ))}
             <path
-              d={`M ${points[0]} L ${points.join(" L ")} L 480,150 L 20,150 Z`}
+              d={`M ${points[0]} L ${points.join(" L ")} L ${plotEnd},150 L ${plotStart},150 Z`}
               fill="url(#weight-fill)"
             />
             <polyline
@@ -185,6 +194,8 @@ export function WeightPanel({
               disabled={busy}
               className="field mt-1"
               type="number"
+              inputMode="decimal"
+              dir="ltr"
               min={20}
               max={400}
               step="0.1"

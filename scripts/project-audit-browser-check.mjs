@@ -1,4 +1,5 @@
 // Synthetic local-only audit. Do not point this at a hosted environment.
+import { ensurePhotoConsent } from "./photo-consent-helper.mjs";
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
 import sharp from "sharp";
@@ -59,8 +60,8 @@ try {
   await trainee.getByRole("tab", { name: "صور التقدم", exact: true }).click();
   const existingPhotos = (await snapshot(coach)).management.progress_photos.filter(p => p.client_id === client.id).length;
   const bytes = await sharp({ create: { width: 80, height: 120, channels: 3, background: "#497cc2" } }).jpeg().withExif({ IFD0: { Artist: "Synthetic private metadata" } }).toBuffer();
+  await ensurePhotoConsent(trainee);
   await trainee.getByLabel("صورة تقدم خاصة", { exact: true }).setInputFiles({ name: "synthetic-front.jpg", mimeType: "image/jpeg", buffer: bytes });
-  await trainee.getByLabel("أوافق على رفع صور التقدم، وأفهم أن مدربي يستطيع رؤيتها.", { exact: true }).check();
   await trainee.route("**/api/progress-photos/*", async route => {
     if (route.request().method() !== "PUT") return route.continue();
     await route.fetch(); // Persist bytes, then deliberately lose the browser's acknowledgement.

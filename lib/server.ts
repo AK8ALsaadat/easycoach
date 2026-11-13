@@ -12,6 +12,7 @@ import { getLocalDatabase, rpcLocal } from "./local-db";
 import type { Snapshot } from "./model";
 import type { Database } from "@/types/supabase";
 import { DEMO_EMAIL, isDemoIdentity } from "./demo-config";
+import { ZodError } from "zod";
 
 export const localMode = () => process.env.APP_MODE === "local";
 export const hash = (v: string) => createHash("sha256").update(v).digest("hex");
@@ -118,6 +119,21 @@ export async function snapshot(): Promise<Snapshot> {
   } catch {
     if (data.management) data.management.schedules = [];
   }
+  if (data.management) {
+    try {
+      data.management.photo_consents = await rpc<NonNullable<NonNullable<Snapshot["management"]>["photo_consents"]>>("photo_consent_snapshot");
+    } catch {
+      // Unknown (e.g. migration not applied yet): uploads stay locked and no notice is shown.
+      data.management.photo_consents = undefined;
+    }
+  }
+  if (data.profile?.role !== "coach") {
+    try {
+      data.paused_access = await rpc<NonNullable<Snapshot["paused_access"]>>("trainee_access_status");
+    } catch {
+      data.paused_access = [];
+    }
+  }
   data.coach_branding = await rpc("coach_branding_snapshot");
   return { ...data, demo: user.demo };
 }
@@ -176,6 +192,11 @@ export async function loginLocal(email: string, password: string) {
 }
 export function readableError(error: unknown) {
   const e = error as { message?: string; code?: string };
+  // Zod errors carry a JSON message; show the first Arabic issue instead.
+  if (error instanceof ZodError) {
+    const message = error.issues.find((issue) => /[؀-ۿ]/.test(issue.message))?.message;
+    return message ?? "لم تكتمل العملية. راجع المدخلات وحاول مرة أخرى.";
+  }
   if (e.code === "23505")
     return "السجل مكرر أو العملية مطبقة سابقًا. راجع البيانات والمرجع.";
   if (e.code === "23503" || e.code === "42501")

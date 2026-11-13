@@ -8,16 +8,20 @@ import { Play, Timer, Utensils } from "lucide-react";
 import { useState } from "react";
 import { riyadhToday } from "@/lib/dates";
 import { resolveWorkoutDay } from "@/lib/trainee-workout-day";
+import { MacroSplitBar } from "./macro-targets";
 export function ProgramView({
   program,
   portalHash,
   nutrition,
   focusToday = false,
+  section = "all",
 }: {
   program: Program | undefined;
   portalHash?: string;
   nutrition?: Content["nutrition"];
   focusToday?: boolean;
+  /** Lets the trainee page place training and nutrition separately (mobile priority order). */
+  section?: "all" | "training" | "nutrition";
 }) {
   const { t: tr, language: locale } = useLocale();
   const weekday = new Date(riyadhToday() + "T12:00:00Z").getUTCDay();
@@ -25,10 +29,10 @@ export function ProgramView({
   const hasWeekdaySchedule = Boolean(program?.content.days.some((day) => day.weekday !== undefined));
   const [chosenDay, setSelectedDay] = useState<number | null>(null);
   const selectedDay = resolveWorkoutDay(chosenDay, program?.content.days ?? [], weekday);
-  const nutritionPlan = nutrition ?? program?.content.nutrition;
+  const nutritionPlan = section === "training" ? undefined : nutrition ?? program?.content.nutrition;
   return (
     <div className="space-y-6">
-      {!program ? (
+      {section === "nutrition" ? null : !program ? (
       <div className="empty card">
         <h2 className="text-ink">{tr("برنامجك قيد التجهيز")}</h2>
         <p>{tr("سيظهر هنا بعد أن ينشره مدربك. المسودات لا تظهر لك.")}</p>
@@ -45,6 +49,7 @@ export function ProgramView({
         </p>
       </div>
       {focusToday && program.content.days.length > 0 && <section className="card p-4" aria-label={tr("أيام البرنامج الأسبوعية")}>
+        {!hasWeekdaySchedule && <p className="mb-3 text-sm text-muted">{tr("لم يحدد المدرب مواعيد لأيام البرنامج؛ اختر اليوم الذي تريد عرضه.")}</p>}
         <div className="flex flex-wrap gap-2">{program.content.days.map((day, index) => <button type="button" key={index} className={selectedDay === index ? "btn" : "btn-secondary"} aria-pressed={selectedDay === index} onClick={() => setSelectedDay(index)}>{day.name}</button>)}</div>
         <p className="mt-3 text-sm text-muted">{selectedDay === -1 && hasWeekdaySchedule ? tr("لا توجد حصة مبرمجة اليوم؛ يوم راحة حسب جدولك.") : scheduledIndex === selectedDay ? tr("تم تحديد حصة اليوم حسب جدولك.") : tr("عرض يوم البرنامج: ") + (program.content.days[selectedDay]?.name ?? "")}</p>
       </section>}
@@ -160,12 +165,13 @@ export function ProgramView({
             <div key={String(name)} className="rounded-xl bg-canvas p-4">
               <p className="text-xs text-muted">{name}</p>
               <p className="mt-1 text-xl font-semibold">
-                {value || "—"}{" "}
+                <bdi dir="ltr">{value || "—"}</bdi>{" "}
                 <span className="text-xs font-normal text-muted">{unit}</span>
               </p>
             </div>
           ))}
         </div>
+        <MacroSplitBar value={nutritionPlan} className="mb-5" />
         <p className="whitespace-pre-wrap leading-9 text-muted">
           {nutritionPlan.text || tr("لم يضف المدرب خطة تغذية نصية بعد.")}
         </p>

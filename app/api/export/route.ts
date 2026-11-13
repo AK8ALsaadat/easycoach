@@ -2,9 +2,25 @@ import { NextResponse, type NextRequest } from "next/server";
 import { snapshot } from "@/lib/server";
 import { csvCell } from "@/lib/import-preview";
 import { exportWorkbook } from "@/lib/export-workbook";
+import { clientExport, clientExportCsv } from "@/lib/client-export";
 export async function GET(request: NextRequest) {
   const data = await snapshot();
   const type = request.nextUrl.searchParams.get("type");
+  // One trainee's data (offered before permanent deletion). The snapshot is
+  // already limited to the coach's own clients by RLS.
+  if ((type === "client-json" || type === "client-csv") && data.profile?.role === "coach") {
+    const clientId = request.nextUrl.searchParams.get("client") ?? "";
+    const exported = /^[0-9a-f-]{36}$/.test(clientId) ? clientExport(data, clientId) : null;
+    if (!exported) return new NextResponse(null, { status: 404, headers: { "Cache-Control": "private, no-store" } });
+    const name = `easycoach-client-${clientId.slice(0, 8)}`;
+    return type === "client-csv"
+      ? new NextResponse(clientExportCsv(exported), {
+          headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${name}.csv"`, "Cache-Control": "private, no-store" },
+        })
+      : NextResponse.json(exported, {
+          headers: { "Content-Disposition": `attachment; filename="${name}.json"`, "Cache-Control": "private, no-store" },
+        });
+  }
   if (type === "xlsx") {
     return new NextResponse(await exportWorkbook(data), {
       headers: {

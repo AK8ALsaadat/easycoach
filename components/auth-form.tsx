@@ -57,7 +57,7 @@ export function AuthForm({ next, local }: { next: string; local: boolean }) {
             </div>
             <div>
               <label htmlFor="auth-role">{tr("نوع الحساب")}</label>
-              <select className="field" id="auth-role" name="role">
+              <select className="field" id="auth-role" name="role" defaultValue={next.startsWith("/invite/") ? "trainee" : "coach"}>
                 <option value="coach">{tr("مدرب")}</option>
                 <option value="trainee">{tr("متدرب — بدعوة من مدربي")}</option>
               </select>

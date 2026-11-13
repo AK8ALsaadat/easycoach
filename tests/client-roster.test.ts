@@ -9,7 +9,7 @@ const program=(id:string,published=true)=>({id:`p-${id}`,client_id:id,published_
 function fixture(){return {clients:[client("a"),client("b"),client("inactive"),client("archived",true)],programs:[program("b")],subscriptions:[],weights:[],management:{details:[{client_id:"inactive",status:"inactive"}],records:[],preferences:{reminders:false},progress_photos:[]}} as unknown as Snapshot;}
 describe("actionable trainee roster",()=>{
   it("counts actual work without calling missing activity a success, excluding archived and inactive clients from queues",()=>{
-    const rows=clientRoster(fixture(),today);expect(rosterCounts(rows)).toEqual({all:3,attention:1,program:1,renew:0});
+    const rows=clientRoster(fixture(),today);expect(rosterCounts(rows)).toEqual({all:3,attention:1,program:1,renew:0,archived:1});
     expect(rows.find(r=>r.client.id==="b")).toMatchObject({priority:0,latestWeight:undefined,checkin:undefined});
     expect(rows.filter(r=>rosterMatches(r,"program","")).map(r=>r.client.id)).toEqual(["a"]);
     expect(rows.filter(r=>rosterMatches(r,"archived","")).map(r=>r.client.id)).toEqual(["archived"]);

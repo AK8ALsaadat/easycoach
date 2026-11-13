@@ -12,12 +12,18 @@ import {
   type ManagementData,
   type RecordKind,
 } from "@/lib/management";
-import { blankContent, type Program, type WeightEntry } from "@/lib/model";
-import { riyadhToday } from "@/lib/dates";
+import { blankContent, type Client, type Program, type WeightEntry } from "@/lib/model";
+import { ArchiveClientTrigger } from "./client-lifecycle";
+import { TemplateNameDialog } from "./template-name-dialog";
+import { formatDate, riyadhToday } from "@/lib/dates";
 import { Notice } from "./forms";
 import { ProgressChart } from "./progress-chart";
 import { ProgressPhotos } from "./progress-photo-panel";
 import { ManagementButton } from "./management-button";
+import { ProgressRecordControls } from "./progress-record-controls";
+import { MacroTargets, MacroSplitBar } from "./macro-targets";
+import { macroTargetErrors, type CaloriesMode } from "@/lib/macros";
+const emptyTargets = { calories: 0, protein: 0, carbs: 0, fat: 0, calories_mode: "auto" as CaloriesMode };
 const measurementLabels: Record<string, string> = {
   weight: "الوزن",
   body_fat: "نسبة الدهون",
@@ -33,6 +39,8 @@ const measurementLabels: Record<string, string> = {
 
 type HubProps = {
   clientId: string;
+  /** Coach view: enables the archive confirmation dialog. */
+  client?: Client;
   management?: ManagementData;
   weights: WeightEntry[];
   program?: Program;
@@ -42,6 +50,8 @@ type HubProps = {
   portalToken?: string;
   portalHash?: string;
   onUpdate?: () => Promise<unknown>;
+  /** Shown in the progress-photo notice ("ومدربك … فقط"). */
+  coachName?: string;
 };
 const labels: Record<RecordKind, string> = {
   measurement: "قياس",
@@ -56,6 +66,7 @@ const labels: Record<RecordKind, string> = {
 };
 export function ClientHub({
   clientId,
+  client,
   management,
   weights,
   program,
@@ -65,19 +76,31 @@ export function ClientHub({
   portalToken,
   portalHash,
   onUpdate,
+  coachName,
 }: HubProps) {
-  const { t: tr } = useLocale();
+  const { t: tr, language } = useLocale();
 
   const router = useRouter();
+  const consent = management?.photo_consents?.find((state) => state.client_id === clientId);
+  const tabList = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState("progress"),
     [metric, setMetric] = useState("weight"),
     [exerciseName, setExerciseName] = useState("");
+  // On narrow screens the tab strip scrolls sideways; keep the active tab visible.
+  useEffect(() => {
+    const active = tabList.current?.querySelector<HTMLElement>('[aria-selected="true"]');
+    const strip = tabList.current;
+    if (!active || !strip || strip.scrollWidth <= strip.clientWidth) return;
+    strip.scrollTo({ left: active.offsetLeft - (strip.clientWidth - active.clientWidth) / 2, behavior: "smooth" });
+  }, [tab]);
   const [result, setResult] = useState<Result | null>(null),
     [busy, setBusy] = useState(false),
     [renewalRequestedFor, setRenewalRequestedFor] = useState<string | null>(null),
     [recordPage, setRecordPage] = useState(0),
     [workoutPage, setWorkoutPage] = useState(0);
   const renewalRequested = renewalRequestedFor === clientId;
+  const [nutritionTemplate, setNutritionTemplate] = useState(0);
+  const [progressDay, setProgressDay] = useState(riyadhToday());
   const renewalRequest = useRef<{ clientId: string; id: string; day: string; text: string } | null>(null);
   const details = management?.details.find(
     (detail) => detail.client_id === clientId,
@@ -174,11 +197,11 @@ export function ClientHub({
             : record.payload[metric];
         if (typeof raw !== "number") continue;
         const old = days.get(record.entry_date);
-        if (!old || old.order <= record.created_at)
+        if (!old || old.order <= (record.updated_at ?? record.created_at))
           days.set(record.entry_date, {
             date: record.entry_date,
             value: raw,
-            order: record.created_at,
+            order: record.updated_at ?? record.created_at,
           });
       }
     return [...days.values()].sort((a, b) => a.date.localeCompare(b.date));
@@ -227,8 +250,17 @@ export function ClientHub({
   useEffect(() => {
     if (coach) return;
     const openMessages = () => setTab("messages");
+    // The trainee's bottom navigation opens a specific tab (progress or messages).
+    const openTab = (event: Event) => {
+      const detail = (event as CustomEvent<string>).detail;
+      if (["progress", "messages", "photos", "nutrition", "workouts", "checkins"].includes(detail)) setTab(detail);
+    };
     window.addEventListener("easycoach:open-messages", openMessages);
-    return () => window.removeEventListener("easycoach:open-messages", openMessages);
+    window.addEventListener("easycoach:open-hub-tab", openTab);
+    return () => {
+      window.removeEventListener("easycoach:open-messages", openMessages);
+      window.removeEventListener("easycoach:open-hub-tab", openTab);
+    };
   }, [coach]);
   const tabs = [
     ["progress", "القياسات والتقدم"],
@@ -251,6 +283,7 @@ export function ClientHub({
       data-testid="client-management-hub"
     >
       <div
+        ref={tabList}
         className="library-tabs"
         role="tablist"
         aria-label={tr("متابعة العميل")}
@@ -382,15 +415,19 @@ export function ClientHub({
             {tr("حفظ المعلومات الشخصية")}
           </button>
           <div className="mt-4">
-            <ManagementButton
-              command="client_archive"
-              payload={{ client_id: clientId, archived: true }}
-              confirmation={tr(
-                "أرشفة العميل وإيقاف وصوله؟ تبقى سجلاته محفوظة ويمكن استعادته من قائمة المؤرشفين.",
-              )}
-            >
-              {tr("أرشفة العميل")}
-            </ManagementButton>
+            {client ? (
+              <ArchiveClientTrigger client={client} afterArchive="/coach/clients" />
+            ) : (
+              <ManagementButton
+                command="client_archive"
+                payload={{ client_id: clientId, archived: true }}
+                confirmation={tr(
+                  "أرشفة العميل وإيقاف وصوله؟ تبقى سجلاته محفوظة ويمكن استعادته من قائمة المؤرشفين.",
+                )}
+              >
+                {tr("أرشفة العميل")}
+              </ManagementButton>
+            )}
           </div>
         </form>
       )}
@@ -413,6 +450,7 @@ export function ClientHub({
                   ["arm", tr("الذراع")],
                   ["thigh", tr("الفخذ")],
                   ["hips", tr("الحوض")],
+                  ["calf", tr("الساق")],
                   ["bmi", tr("BMI حسب الطول المحفوظ")],
                   ["strength", tr("تطور حمل التمرين")],
                 ].map(([key, label]) => (
@@ -454,10 +492,17 @@ export function ClientHub({
           <RecordForm
             clientId={clientId}
             kind="measurement"
+            entryDate={progressDay}
+            onEntryDateChange={setProgressDay}
             busy={busy}
             onSubmit={(payload) => action("record_save", payload)}
             photos={management?.progress_photos ?? []}
           />
+          <details className="card p-5">
+            <summary>{tr("إكمال تحديث التقدم بصور أمام وخلف وجانب (اختياري)")}</summary>
+            <p className="my-3 text-sm text-muted">{tr("الوزن والقياسات والصور اختيارية، وتشترك في التاريخ المحدد. تُحفظ القياسات والصور كلٌ على حدة؛ عند فشل صورة تبقى القياسات المحفوظة متاحة ويمكن إعادة محاولة الصورة.")}</p>
+            <ProgressPhotos clientId={clientId} photos={management?.progress_photos ?? []} measurements={measurements} weights={weights} portalToken={portalToken} portalHash={portalHash} coach={coach} onUpdate={refresh} entryDate={progressDay} onEntryDateChange={setProgressDay} consent={consent} coachName={coachName} />
+          </details>
           <section className="card p-5">
             <h3>{tr("السجل التاريخي للقياسات")}</h3>
             <p className="text-sm text-muted mt-1">
@@ -478,7 +523,7 @@ export function ClientHub({
                     .slice(recordPage * 20, recordPage * 20 + 20)
                     .map((record) => (
                       <tr key={record.id}>
-                        <td>{record.entry_date}</td>
+                        <td>{formatDate(record.entry_date, language)}</td>
                         <td className="text-sm">
                           {Object.entries(record.payload)
                             .filter(
@@ -492,9 +537,10 @@ export function ClientHub({
                                   )
                                     .map(([name, value]) => `${name}: ${value}`)
                                     .join(" · ")
-                                : `${tr(measurementLabels[key] ?? key)}: ${value}`,
+                                : `${tr(measurementLabels[key] ?? key)}: ${value}${key === "weight" ? " " + tr("كجم") : ["waist", "chest", "hips", "arm", "thigh", "calf"].includes(key) ? " " + tr("سم") : key === "body_fat" ? " %" : ""}`,
                             )
                             .join(" · ")}
+                          <ProgressRecordControls key={record.id + (record.updated_at ?? record.created_at)} record={record} coach={coach} portalReference={portalToken} onUpdate={refresh} />
                         </td>
                       </tr>
                     ))}
@@ -529,33 +575,29 @@ export function ClientHub({
                 <button
                   className="btn-secondary"
                   disabled={busy || !currentTarget}
-                  onClick={async () => {
-                    const name = window.prompt("اسم قالب التغذية");
-                    if (!name || !currentTarget) return;
-                    setBusy(true);
-                    const plan = structuredClone(blankContent);
-                    plan.nutrition = {
-                      ...plan.nutrition,
-                      ...currentTarget,
-                    } as typeof plan.nutrition;
-                    const saved = await mutate("template_save", {
-                      name,
-                      content: plan,
-                    });
-                    if (saved.ok)
-                      await action("template_meta", {
-                        id: (saved.data as { id: string }).id,
-                        description: "",
-                        archived: false,
-                        kind: "nutrition",
-                      });
-                    else setResult(saved);
-                    setBusy(false);
-                  }}
+                  onClick={() => setNutritionTemplate(Date.now())}
                 >
                   <Plus size={16} />
                   {tr("حفظ هدف التغذية كقالب")}
                 </button>
+              )}
+              {coach && nutritionTemplate > 0 && currentTarget && (
+                <TemplateNameDialog
+                  key={nutritionTemplate}
+                  open
+                  mode="create"
+                  showTags={false}
+                  onClose={() => setNutritionTemplate(0)}
+                  onSubmit={async ({ name }) => {
+                    const plan = structuredClone(blankContent);
+                    plan.nutrition = { ...plan.nutrition, ...currentTarget } as typeof plan.nutrition;
+                    const saved = await mutate("template_save", { name, content: plan });
+                    if (!saved.ok) return saved;
+                    await action("template_meta", { id: (saved.data as { id: string }).id, description: "", archived: false, kind: "nutrition" });
+                    setNutritionTemplate(0);
+                    return saved;
+                  }}
+                />
               )}
             </div>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -575,6 +617,7 @@ export function ClientHub({
                 </div>
               ))}
             </div>
+            {currentTarget && <MacroSplitBar value={currentTarget} className="mt-3" />}
             <div className="overflow-x-auto mt-4">
               <table>
                 <thead>
@@ -771,6 +814,7 @@ export function ClientHub({
             )}
             {checkins.map((record, index) => (
               <article key={record.id} className="border-b py-5">
+                <ProgressRecordControls key={record.id + (record.updated_at ?? record.created_at)} record={record} coach={coach} portalReference={portalToken} onUpdate={refresh} />
                 <div className="flex flex-wrap justify-between gap-3">
                   <strong>{record.entry_date}</strong>
                   <span className="badge">
@@ -961,6 +1005,8 @@ export function ClientHub({
           coach={coach}
           measurements={measurements}
           weights={weights.filter((weight) => weight.client_id === clientId)}
+          consent={consent}
+          coachName={coachName}
         />
       )}
       <Notice result={result} />
@@ -985,6 +1031,8 @@ function RecordForm({
   busy,
   program,
   photos = [],
+  entryDate,
+  onEntryDateChange,
 }: {
   clientId: string;
   kind: RecordKind;
@@ -992,10 +1040,13 @@ function RecordForm({
   busy: boolean;
   program?: Program;
   photos?: ManagementData["progress_photos"];
+  entryDate?: string;
+  onEntryDateChange?: (date: string) => void;
 }) {
   const { t: tr } = useLocale();
 
   const requestId = useRef<string | null>(null);
+  const [targets, setTargets] = useState(emptyTargets);
   const [dayIndex, setDayIndex] = useState(0);
   const [localError, setLocalError] = useState("");
   const exerciseRows = program?.content.days[dayIndex]?.exercises ?? [];
@@ -1021,7 +1072,7 @@ function RecordForm({
             ["training_adherence", "التزام التدريب %", 0, 100],
             ["nutrition_adherence", "التزام التغذية %", 0, 100],
           ]
-        : kind === "nutrition_log" || kind === "nutrition_target"
+        : kind === "nutrition_log"
           ? [
               ["calories", "السعرات", 0, 10000],
               ["protein", "البروتين (غ)", 0, 1000],
@@ -1070,6 +1121,8 @@ function RecordForm({
                 }))
               : [];
           } else if (kind === "nutrition_target") {
+            if (Object.keys(macroTargetErrors(targets)).length) throw Error("صحّح قيم السعرات والماكروز قبل الحفظ");
+            Object.assign(payload, targets);
             payload.text = String(values.get("text") ?? "");
           } else {
             payload.notes = String(values.get("notes") ?? "");
@@ -1108,6 +1161,7 @@ function RecordForm({
           if (result.ok) {
             requestId.current = null;
             form.reset();
+            if (kind === "nutrition_target") setTargets(emptyTargets);
           }
         } catch (error) {
           setLocalError(
@@ -1140,7 +1194,9 @@ function RecordForm({
             name="entry_date"
             type="date"
             className="field"
-            defaultValue={riyadhToday()}
+            defaultValue={entryDate === undefined ? riyadhToday() : undefined}
+            value={entryDate}
+            onChange={onEntryDateChange ? event => onEntryDateChange(event.target.value) : undefined}
             max={kind === "nutrition_target" ? undefined : riyadhToday()}
             required
           />
@@ -1153,6 +1209,7 @@ function RecordForm({
               name={String(key)}
               aria-label={tr(String(label))}
               type="number"
+              inputMode={["sleep", "energy", "hunger", "stress", "training_adherence", "nutrition_adherence"].includes(String(key)) ? "numeric" : "decimal"}
               step={
                 ["sleep", "energy", "hunger", "stress"].includes(String(key))
                   ? 1
@@ -1165,6 +1222,7 @@ function RecordForm({
           </label>
         ))}
       </div>
+      {kind === "nutrition_target" && <div className="mt-4"><MacroTargets value={targets} onChange={setTargets} disabled={busy} /></div>}
       {kind === "measurement" && (
         <label className="mt-3">
           {tr("قياسات إضافية — كل سطر: الاسم=القيمة")}

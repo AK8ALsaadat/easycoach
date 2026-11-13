@@ -1,5 +1,5 @@
 "use server";
-import { randomBytes, randomInt, randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -13,6 +13,7 @@ import {
   rpc,
 } from "@/lib/server";
 import { adminClient } from "@/lib/supabase/admin";
+import { bearerProof, resolvePortalCredential } from "@/lib/portal-credentials";
 
 const tokenSchema = z.string().regex(/^[a-f0-9]{64}$/);
 const metadata = z.object({
@@ -36,18 +37,14 @@ export async function createPortal(clientId: string) {
   try {
     const cid = id.parse(clientId);
     await requireCoach();
-    const token = randomBytes(32).toString("hex"),
-      pin = String(randomInt(100000, 1000000));
-    await rpc("app_command", {
-      command: "portal_create",
-      payload: {
-        client_id: cid,
-        token_hash: hash(token),
-        proof_hash: hash(token + ":" + pin),
-      },
+    const token = randomBytes(32).toString("hex");
+    const link = await rpc<{ id: string }>("bearer_portal_create", {
+      client_id: cid,
+      token_hash: hash(token),
+      proof_hash: bearerProof(token),
     });
     revalidatePath("/coach");
-    return { ok: true, url: `${process.env.APP_URL}/p/${token}`, pin };
+    return { ok: true, url: `${process.env.APP_URL ?? "http://127.0.0.1:3200"}/access/${link.id}#${token}` };
   } catch (e) {
     return { ok: false, error: readableError(e) };
   }
@@ -58,20 +55,8 @@ export async function accessPortal(
   entry?: { entry_date: string; weight?: number; remove?: boolean },
 ) {
   try {
-    tokenSchema.parse(token);
-    const key = hash(token),
-      jar = await cookies();
-    const proof = pin
-      ? hash(
-          token +
-            ":" +
-            z
-              .string()
-              .regex(/^\d{6}$/)
-              .parse(pin),
-        )
-      : jar.get("ec_portal_" + key.slice(0, 12))?.value;
-    if (!proof) return portalFailure("أدخل رمز الدخول من مدربك");
+    const { key, proof } = await resolvePortalCredential(token, pin);
+    const jar = await cookies();
     if (entry) {
       date.parse(entry.entry_date);
       if (!entry.remove) z.number().min(20).max(400).parse(entry.weight);
@@ -110,10 +95,24 @@ export async function accessPortal(
       path: "/",
     });
     const branding = await rpc<import("@/lib/coach-branding").CoachBranding | null>("coach_branding_link", { token_hash: key, link_type: "p" }, true);
+    try {
+      const consent = await rpc<import("@/lib/photo-consent").PhotoConsentState & { error?: string }>("portal_photo_consent", { token_hash: key, proof }, true);
+      if (result.management && !consent.error) result.management.photo_consents = [consent];
+    } catch {
+      // Unknown consent state: uploads stay locked and no notice is shown.
+    }
     return { ok: true, data: { ...result, coach_branding: branding, portalHash: key } };
   } catch (e) {
-    return { ok: false, error: readableError(e) };
+    return portalFailure(readableError(e));
   }
+}
+export async function optionalPortalAccount(reference: string) {
+  try {
+    const { key, proof } = await resolvePortalCredential(reference);
+    const token = randomBytes(32).toString("hex");
+    const result = await rpc<{ linked: boolean }>("portal_account_invite", { token_hash: key, proof, invitation_hash: hash(token) }, true);
+    return { ok: true, url: result.linked ? "/login?next=%2Fme" : "/invite/" + token };
+  } catch (error) { return { ok: false, error: readableError(error) }; }
 }
 export async function createPhoneUpload() {
   try {

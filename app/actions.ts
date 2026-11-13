@@ -134,7 +134,7 @@ export async function registerAction(form: FormData): Promise<Result> {
       email: input.email,
       password: input.password,
       options: {
-        emailRedirectTo: `${process.env.APP_URL}/auth/callback`,
+        emailRedirectTo: `${process.env.APP_URL}/auth/callback?next=${encodeURIComponent(safeNext(form.get("next")))}`,
         data: { display_name: input.name, role: input.role },
       },
     });

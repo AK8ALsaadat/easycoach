@@ -1,10 +1,10 @@
 "use server";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { managementCommands, recordInput } from "@/lib/management";
-import { rpc, hash, readableError } from "@/lib/server";
+import { rpc, readableError } from "@/lib/server";
 import type { Result } from "./actions";
 import { z } from "zod";
+import { resolvePortalCredential } from "@/lib/portal-credentials";
 
 export async function saveClientSchedule(payload: unknown): Promise<Result> {
   try {
@@ -39,10 +39,7 @@ export async function portalManage(
   payload: unknown,
 ): Promise<Result> {
   try {
-    if (!/^[a-f0-9]{64}$/.test(token)) throw Error("رابط غير صالح");
-    const key = hash(token),
-      proof = (await cookies()).get("ec_portal_" + key.slice(0, 12))?.value;
-    if (!proof) throw Error("يلزم رمز دخول العميل");
+    const { key, proof } = await resolvePortalCredential(token);
     const parsed = command === "record_save" ? recordInput.parse(payload) : {};
     if (!["record_save", "messages_read"].includes(command))
       throw Error("عملية غير صالحة");

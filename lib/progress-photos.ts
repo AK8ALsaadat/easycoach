@@ -1,5 +1,5 @@
 import "server-only";
-import { cookies } from "next/headers";
+import { resolvePortalMediaCredential } from "./portal-credentials";
 import { rpc } from "./server";
 import { id } from "./model";
 
@@ -19,9 +19,7 @@ export async function accessPhoto(assetId: string, portalHash?: string | null) {
   id.parse(assetId);
   if (portalHash && !/^[a-f0-9]{64}$/.test(portalHash))
     throw Error("رابط غير صالح");
-  const proof = portalHash
-    ? (await cookies()).get("ec_portal_" + portalHash.slice(0, 12))?.value
-    : null;
+  const proof = portalHash ? (await resolvePortalMediaCredential(portalHash)).proof : null;
   const asset = await rpc<PhotoAsset | null>(
     "photo_access",
     { asset: assetId, portal_hash: portalHash ?? null, proof: proof ?? null },

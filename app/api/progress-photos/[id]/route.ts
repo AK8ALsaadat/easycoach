@@ -3,6 +3,7 @@ import path from "node:path";
 import { accessPhoto, photoPath, validPhoto } from "@/lib/progress-photos";
 import { localMode } from "@/lib/server";
 import { adminClient } from "@/lib/supabase/admin";
+import { progressPhotoPreview } from "@/lib/progress-photo-thumbnail";
 
 export async function GET(
   request: Request,
@@ -14,6 +15,19 @@ export async function GET(
       new URL(request.url).searchParams.get("portal"),
     );
     if (asset.status !== "ready") throw Error("pending");
+    const variant = new URL(request.url).searchParams.get("variant");
+    if (variant && !["thumbnail", "comparison"].includes(variant)) throw Error("variant");
+    if (variant) {
+      const bytes = localMode()
+        ? await readFile(path.join(process.cwd(), "data/progress-photos", asset.id))
+        : await (async () => {
+          const result = await adminClient().storage.from("progress-photos").download(photoPath(asset));
+          if (result.error) throw result.error;
+          return new Uint8Array(await result.data.arrayBuffer());
+        })();
+      const preview = await progressPhotoPreview(bytes, variant as "thumbnail" | "comparison");
+      return new Response(preview, { headers: { "Content-Type": "image/webp", "Content-Length": String(preview.length), "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer" } });
+    }
     if (!localMode()) {
       const result = await adminClient()
         .storage.from("progress-photos")

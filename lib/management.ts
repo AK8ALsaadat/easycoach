@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { content, id, date } from "./model";
+import { autoCaloriesIssue, caloriesMode, content, id, date, grams, kcal } from "./model";
 import { riyadhToday } from "./dates";
+import { templateName, templateTags } from "./template-names";
 
 export const detailsSchema = z
   .object({
@@ -40,9 +41,21 @@ export const recordSchemas = {
     })
     .strict(),
   nutrition_log: macrosSchema.extend({ notes: text }).strict(),
-  nutrition_target: macrosSchema
-    .extend({ text, meals: content.shape.nutrition.shape.meals })
-    .strict(),
+  nutrition_target: z
+    .object({
+      calories: kcal,
+      protein: grams,
+      carbs: grams,
+      fat: grams,
+      calories_mode: caloriesMode.optional(),
+      text,
+      meals: content.shape.nutrition.shape.meals,
+    })
+    .strict()
+    .superRefine((value, ctx) => {
+      const issue = autoCaloriesIssue(value);
+      if (issue) ctx.addIssue({ code: "custom", message: issue, path: ["calories"] });
+    }),
   workout_log: z
     .object({
       day_name: z.string().min(1).max(100),
@@ -118,8 +131,20 @@ export const recordInput = z
     return { ...row, payload: checked.data };
   });
 export const managementCommands = {
+  // Updates keep a legacy name until it changes; the database re-checks any changed name.
+  template_save_typed: z
+    .object({ id: id.optional(), name: z.string().trim().min(2).max(140), content, kind: z.enum(["workout", "nutrition", "nutrition_targets"]), description: z.string().max(2000).default(""), archived: z.boolean().default(false), ...templateTags })
+    .superRefine((value, ctx) => {
+      if (value.id) return;
+      const checked = templateName.safeParse(value.name);
+      if (!checked.success) ctx.addIssue({ code: "custom", path: ["name"], message: checked.error.issues[0].message });
+    }),
   details_save: z.object({ client_id: id, details: detailsSchema }),
-  client_archive: z.object({ client_id: id, archived: z.boolean() }),
+  client_archive: z.object({
+    client_id: id,
+    archived: z.boolean(),
+    reason: z.string().trim().max(500, "اختصر السبب إلى 500 حرف").optional(),
+  }),
   record_save: recordInput,
   record_review: z.object({
     id,
@@ -131,14 +156,18 @@ export const managementCommands = {
     id,
     description: z.string().max(2000),
     archived: z.boolean(),
-    kind: z.enum(["workout", "nutrition"]),
+    kind: z.enum(["workout", "nutrition", "nutrition_targets"]),
+    ...templateTags,
   }),
   template_delete: z.object({ id }),
   template_duplicate: z.object({
     id,
-    name: z.string().min(2).max(140).optional(),
+    name: templateName.optional(),
   }),
+  template_rename: z.object({ id, name: templateName }),
+  template_touch: z.object({ id }),
   template_assign: z.object({
+    operation_id: id.optional(),
     id,
     clients: z.array(id).min(1).max(100),
     replace_drafts: z.boolean().default(false),
@@ -158,6 +187,9 @@ export type Details = z.infer<typeof detailsSchema> & {
   coach_id: string;
 };
 export type CoachingRecord = {
+  updated_at?: string;
+  modified_by_type?: "coach" | "client" | null;
+  revision?: number;
   id: string;
   client_id: string;
   coach_id: string;
@@ -176,7 +208,11 @@ export type TemplateMeta = {
   template_id: string;
   description: string;
   archived: boolean;
-  kind: "workout" | "nutrition";
+  kind: "workout" | "nutrition" | "nutrition_targets";
+  goal?: string | null;
+  level?: string | null;
+  days_per_week?: number | null;
+  last_used_at?: string | null;
 };
 export type Preferences = {
   language: "ar" | "en";
@@ -204,9 +240,11 @@ export type ManagementData = {
     status: string;
     angle: "front" | "back" | "side" | "unspecified";
     consented_at: string | null;
+    consent_source?: "trainee" | "coach_attestation" | null;
     created_at: string;
   }[];
   schedules?: { client_id: string; weight_days: number; measurement_days: number; photo_days: number }[];
+  photo_consents?: import("./photo-consent").PhotoConsentState[];
 };
 export const defaultPreferences: Preferences = {
   language: "ar",
@@ -250,12 +288,27 @@ export function effectiveNutrition(
   if (
     latest &&
     publishedDate &&
-    (latest.entry_date < publishedDate ||
-      (latest.entry_date === publishedDate &&
-        Date.parse(latest.created_at) < Date.parse(publishedAt!)))
+    latest.entry_date < publishedDate
   )
     return undefined;
-  return latest
-    ? recordSchemas.nutrition_target.parse(latest.payload)
-    : undefined;
+  return latest ? readNutritionTarget(latest.payload) : undefined;
+}
+export type NutritionTarget = z.infer<typeof recordSchemas.nutrition_target>;
+/**
+ * Reading must never fail on a stored target that predates a stricter write rule
+ * (e.g. two decimals). Writes still go through the strict schema.
+ */
+export function readNutritionTarget(payload: Record<string, unknown>): NutritionTarget {
+  const checked = recordSchemas.nutrition_target.safeParse(payload);
+  if (checked.success) return checked.data;
+  const number = (key: string) => (typeof payload[key] === "number" && Number.isFinite(payload[key]) ? (payload[key] as number) : 0);
+  return {
+    calories: number("calories"),
+    protein: number("protein"),
+    carbs: number("carbs"),
+    fat: number("fat"),
+    calories_mode: payload.calories_mode === "auto" || payload.calories_mode === "manual" ? payload.calories_mode : undefined,
+    text: typeof payload.text === "string" ? payload.text : "",
+    meals: Array.isArray(payload.meals) ? (payload.meals as NutritionTarget["meals"]) : undefined,
+  };
 }
