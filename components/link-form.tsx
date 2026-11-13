@@ -8,10 +8,12 @@ export function LinkForm({
   token,
   kind,
   loggedIn,
+  currentEmail,
 }: {
   token: string;
   kind: "join" | "invite";
   loggedIn: boolean;
+  currentEmail?: string;
 }) {
   const { t: tr } = useLocale();
 
@@ -72,6 +74,9 @@ export function LinkForm({
     </form>
   ) : (
     <div>
+      {loggedIn && currentEmail ? (
+        <p className="mb-3 text-sm text-muted">{tr("أنت مسجّل الدخول بإيميل")} <bdi dir="ltr">{currentEmail}</bdi></p>
+      ) : null}
       {loggedIn ? (
         <button
           disabled={busy || result?.ok}
@@ -96,11 +101,24 @@ export function LinkForm({
         </a>
       )}
       <Notice result={result} />
+      {loggedIn && result && !result.ok ? (
+        <SwitchAccount next={`/invite/${token}`} label={tr("تسجيل الخروج والدخول بحساب آخر")} />
+      ) : null}
       {result?.ok ? (
         <Link href="/me" className="btn-soft mt-5 w-full">
           {tr("افتح برنامجك")}
         </Link>
       ) : null}
     </div>
+  );
+}
+
+/** Signs out (POST, origin-checked) and returns to the invitation for another account. */
+export function SwitchAccount({ next, label }: { next?: string; label: string }) {
+  return (
+    <form method="post" action="/logout" className="mt-4">
+      {next ? <input type="hidden" name="next" value={next} /> : null}
+      <button type="submit" className="btn-secondary w-full">{label}</button>
+    </form>
   );
 }

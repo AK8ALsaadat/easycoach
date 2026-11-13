@@ -1,5 +1,6 @@
 "use client";
 import { useLocale } from "./locale-provider";
+import { formatNumber, formatSigned } from "@/lib/plural";
 import { useState } from "react";
 import { addDays, riyadhToday } from "@/lib/dates";
 
@@ -89,24 +90,24 @@ export function ProgressChart({
             <span>
               {tr("أول قيمة")}{" "}
               <strong>
-                {first.value.toFixed(1)} {unit}
+                <bdi dir="ltr">{formatNumber(first.value)}</bdi> {tr(unit)}
               </strong>
             </span>
             <span>
               {tr("آخر قيمة")}{" "}
               <strong>
-                {last!.value.toFixed(1)} {unit}
+                <bdi dir="ltr">{formatNumber(last!.value)}</bdi> {tr(unit)}
               </strong>
             </span>
             <span>
               {tr("التغير")}{" "}
               <strong dir="ltr">
-                {(last!.value - first.value).toFixed(1)} {unit}
+                <bdi dir="ltr">{formatSigned(last!.value - first.value)}</bdi> {tr(unit)}
               </strong>
             </span>
             {target != null && (
               <span>
-                {tr("الهدف")} {target} {unit}
+                {tr("الهدف")} <bdi dir="ltr">{formatNumber(target)}</bdi> {tr(unit)}
               </span>
             )}
           </div>
@@ -145,9 +146,7 @@ export function ProgressChart({
                 fill="#2463eb"
                 tabIndex={0}
               >
-                <title>
-                  {point.date}: {point.value} {unit}
-                </title>
+                <title>{`${point.date}: ${formatNumber(point.value)} ${tr(unit)}`}</title>
               </circle>
             ))}
           </svg>

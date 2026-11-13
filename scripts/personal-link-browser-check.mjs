@@ -1,5 +1,5 @@
 // Isolated local-only checks; fragments/cookies are never included in reports.
-import { ensurePhotoConsent } from "./photo-consent-helper.mjs";
+import { dismissPhotoConsent, ensurePhotoConsent } from "./photo-consent-helper.mjs";
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -28,7 +28,7 @@ async function createClient(name, index) {
 async function linkFor(id) {
   await coach.goto(base + `/coach/clients/${id}?tab=profile`);
   await coach.getByRole("button", { name: /إنشاء رابط دخول للمتدرب|تجديد رابط الدخول/ }).click();
-  return coach.getByLabel("رابط العميل الخاص").inputValue();
+  return coach.getByLabel("رابط المتدرب الخاص").inputValue();
 }
 async function openLink(link) {
   const c = await context(); const page = await c.newPage();
@@ -38,9 +38,11 @@ async function openLink(link) {
   await page.goto(link); await page.waitForURL(/\/trainee\/[a-f0-9-]+$/); await page.locator(".client-portal").waitFor();
   assert(!page.url().includes(raw)); assert(!page.url().includes("#"));
   assert(requests.every(url => !url.includes(raw)));
-  assert.equal(await page.getByLabel("رمز دخول العميل").count(), 0);
+  assert.equal(await page.getByLabel("رمز دخول المتدرب").count(), 0);
   assert.equal(await page.locator("#auth-password").count(), 0);
   assert((await c.cookies()).filter(cookie => cookie.name.startsWith("ec_trainee_")).every(cookie => cookie.httpOnly && cookie.sameSite === "Strict"));
+  await page.getByRole("dialog", { name: "قبل ما ترفع صور التقدم" }).waitFor({ timeout: 2000 }).catch(() => {});
+  await dismissPhotoConsent(page);
   return { c, page };
 }
 try {
@@ -87,8 +89,11 @@ try {
   await a2.c.setOffline(true); await a2.page.getByRole("button", { name: "تحديث الجدول", exact: true }).click();
   await a2.page.getByText("تعذر الاتصال. بياناتك المدخلة ما زالت هنا", { exact: false }).waitFor();
   assert.equal(await a2.page.locator(".client-portal").count(), 1); await a2.c.setOffline(false);
+  pass("offline refresh retains the open portal and reports a recoverable connection failure");
   await coach.goto(base + `/coach/clients/${aId}?tab=profile`); await coach.getByRole("button", { name: "إيقاف الرابط", exact: true }).click();
-  await a2.page.getByRole("button", { name: "تحديث الجدول", exact: true }).click(); await a2.page.locator(".portal-gate").waitFor();
+  if (await a2.page.getByRole("button", { name: "تحديث الجدول", exact: true }).isVisible())
+    await a2.page.getByRole("button", { name: "تحديث الجدول", exact: true }).click();
+  await a2.page.locator(".portal-gate").waitFor();
   assert(!(await a2.page.locator("main").innerText()).includes(aName));
   assert.equal((await a2.page.request.get(base + src)).status(), 404);
   pass("offline updates retain the open portal; revocation invalidates derived sessions and direct private media access");

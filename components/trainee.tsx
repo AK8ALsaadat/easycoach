@@ -273,7 +273,7 @@ export function Trainee({
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div><p className="eyebrow">{tr("اليوم")}</p><h2 id="linked-today-title" className="mt-2 text-xl">{publishedProgram ? tr("خطتك لهذا اليوم") : tr("لا توجد خطة منشورة حاليًا")}</h2><p className="mt-2 text-sm text-muted">{clientWeights[0] ? <>{tr("آخر وزن")}: <bdi dir="ltr">{clientWeights[0].weight}</bdi> {tr("كجم")} · {formatDate(clientWeights[0].entry_date, locale)}</> : tr("لا يوجد وزن مسجل بعد. سجّل تحديثًا سريعًا عندما يناسبك.")}</p><p className="mt-1 text-xs text-muted">{formatDate(today, locale)}</p></div>
                 <TraineeCheckinStatus clientId={clientId} today={today} weights={clientWeights} records={data.management?.records ?? []} management={data.management} />
-                <div className="flex flex-wrap gap-2"><a className="btn" href="#weight">{tr("تسجيل الوزن")}</a><a className="btn-secondary" href="#client-management-hub">{tr("إرسال تحديث للمدرب")}</a></div>
+                <div className="flex flex-wrap gap-2"><a className="btn" href="#weight">{tr("تسجيل الوزن")}</a><a className="btn-secondary" href="#client-management-hub" onClick={() => window.dispatchEvent(new CustomEvent("easycoach:open-hub-tab", { detail: "progress" }))}>{tr("إرسال تحديث للمدرب")}</a></div>
               </div>
             </section>
             <div className="trainee-layout">
@@ -347,7 +347,7 @@ export function Trainee({
                             >
                               {tr("تجميد")} {formatDate(f.start_date, locale)} —{" "}
                               {formatDate(f.end_date, locale)}
-                              {tr(". طُبّق تمديد")} {f.days} {tr("يومًا.")}
+                              {tr(". طُبّق تمديد {0}.", countLabel(locale, f.days, nouns.day))}
                             </p>
                           ))}
                         <p className="mt-5 text-xs text-muted">{tr("للتجديد أو تعديل الباقة، أرسل طلبًا لمدربك. الدفع يتم بالاتفاق معه.")}</p>

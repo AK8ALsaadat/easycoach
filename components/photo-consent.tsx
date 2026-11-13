@@ -148,6 +148,9 @@ export function RevokeConsentDialog({
             <button type="button" className="btn-secondary justify-start text-danger" disabled={busy} onClick={() => setStep("confirm-delete")}>
               <Trash2 size={16} aria-hidden="true" />{tr("حذف كل الصور السابقة")}
             </button>
+            <button type="button" className="btn-secondary justify-start" disabled={busy} onClick={close}>
+              {tr("إلغاء")}
+            </button>
           </div>
         </>
       ) : (
@@ -158,6 +161,7 @@ export function RevokeConsentDialog({
               <Trash2 size={16} aria-hidden="true" />{tr(busy ? "جارٍ الحذف…" : "نعم، احذف الكل")}
             </button>
             <button type="button" className="btn-secondary" disabled={busy} onClick={() => setStep("choose")}>{tr("رجوع")}</button>
+            <button type="button" className="btn-secondary" disabled={busy} onClick={close}>{tr("إلغاء")}</button>
           </div>
         </>
       )}

@@ -32,7 +32,7 @@ export default async function Login({
             {tr("نتائج تُتابَع.")}
           </h1>
           <p className="mt-3 mb-8 text-muted">
-            {tr("كل عملائك وبرامجهم واشتراكاتهم، بوضوح وفي مكان واحد.")}
+            {tr("كل متدربيك وبرامجهم واشتراكاتهم، بوضوح وفي مكان واحد.")}
           </p>
           {params.error ? (
             <p role="alert" className="mb-4 text-red-700">

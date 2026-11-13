@@ -1,4 +1,6 @@
 "use client";
+import { countLabel, nouns } from "@/lib/plural";
+import { displayDayName } from "@/lib/program-builder";
 import { useLocale } from "./locale-provider";
 import { ExerciseVisual } from "./exercise-visual";
 import { catalogById, exerciseName } from "@/lib/catalog";
@@ -48,10 +50,10 @@ export function ProgramView({
           {tr("· النسخة")} {program.version}
         </p>
       </div>
-      {focusToday && program.content.days.length > 0 && <section className="card p-4" aria-label={tr("أيام البرنامج الأسبوعية")}>
+      {focusToday && <section className="card p-4" aria-label={tr("أيام البرنامج الأسبوعية")}>
         {!hasWeekdaySchedule && <p className="mb-3 text-sm text-muted">{tr("لم يحدد المدرب مواعيد لأيام البرنامج؛ اختر اليوم الذي تريد عرضه.")}</p>}
-        <div className="flex flex-wrap gap-2">{program.content.days.map((day, index) => <button type="button" key={index} className={selectedDay === index ? "btn" : "btn-secondary"} aria-pressed={selectedDay === index} onClick={() => setSelectedDay(index)}>{day.name}</button>)}</div>
-        <p className="mt-3 text-sm text-muted">{selectedDay === -1 && hasWeekdaySchedule ? tr("لا توجد حصة مبرمجة اليوم؛ يوم راحة حسب جدولك.") : scheduledIndex === selectedDay ? tr("تم تحديد حصة اليوم حسب جدولك.") : tr("عرض يوم البرنامج: ") + (program.content.days[selectedDay]?.name ?? "")}</p>
+        {(program.content.days.length > 1 || selectedDay === -1) && <div className="flex flex-wrap gap-2">{program.content.days.map((day, index) => <button type="button" key={index} className={selectedDay === index ? "btn" : "btn-secondary"} aria-pressed={selectedDay === index} onClick={() => setSelectedDay(index)}>{displayDayName(day.name, locale)}</button>)}</div>}
+        <p className="mt-3 text-sm text-muted">{selectedDay === -1 && hasWeekdaySchedule ? tr("لا توجد حصة مبرمجة اليوم؛ يوم راحة حسب جدولك.") : scheduledIndex === selectedDay ? tr("تم تحديد حصة اليوم حسب جدولك.") : tr("عرض يوم البرنامج: ") + displayDayName(program.content.days[selectedDay]?.name ?? "", locale)}</p>
       </section>}
       {program.content.days.map((day, index) => (!focusToday || selectedDay === index) && (
         <section className="card overflow-hidden" key={index}>
@@ -59,7 +61,7 @@ export function ProgramView({
             <span className="flex size-8 items-center justify-center rounded-lg bg-accent/40 text-sm font-bold text-teal">
               {index + 1}
             </span>
-            <h2>{day.name}</h2>
+            <h2>{displayDayName(day.name, locale)}</h2>
           </div>
           <div className="divide-y divide-line">
             {day.exercises.map((e, i) => (
@@ -103,6 +105,7 @@ export function ProgramView({
                     </a>
                   ) : null}
                 </div>
+                {e.coachNotes && <p className="mt-3 whitespace-pre-wrap text-sm leading-8 text-muted">{e.coachNotes}</p>}
                 {e.mediaId ? (
                   <video
                     controls
@@ -118,10 +121,10 @@ export function ProgramView({
                 ) : null}
                 <div className="mt-4 flex flex-wrap gap-3">
                   <span className="badge">
-                    {e.sets} {tr("مجموعات")}
+                    {countLabel(locale, e.sets, nouns.set)}
                   </span>
                   <span className="badge">
-                    {e.reps} {tr("عدات")}
+                    <bdi dir="ltr">{e.reps}</bdi> {tr("تكرار")}
                   </span>
                   {e.weight !== undefined && (
                     <span className="badge">

@@ -137,7 +137,7 @@ export function MealEditor({
             aria-label={tr("مكونات الوجبة {0}", String(i + 1))}
             className="field min-h-24"
             value={m.foods}
-            placeholder={tr("150غ دجاج مشوي، 180غ أرز مطبوخ، سلطة… وحدد البدائل والكميات بالطريقة اللي تناسب عميلك.")}
+            placeholder={tr("150غ دجاج مشوي، 180غ أرز مطبوخ، سلطة… وحدد البدائل والكميات بالطريقة اللي تناسب متدربك.")}
             maxLength={2000}
             onChange={(e) => update(i, "foods", e.target.value)}
           />

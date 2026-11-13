@@ -515,7 +515,7 @@ export function previewFullImport(
                 !values.exercise_name
               )
                 throw Error(
-                  "اسم اليوم والتمرين والمجموعات والعدات والراحة مطلوبة",
+                  "اسم اليوم والتمرين والمجموعات والتكرارات والراحة مطلوبة",
                 );
               plan.days = [
                 {

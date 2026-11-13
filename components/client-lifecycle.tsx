@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Archive, Download, MoreHorizontal, RotateCcw, Trash2, TriangleAlert } from "lucide-react";
 import type { Client } from "@/lib/model";
@@ -180,23 +181,95 @@ export function PurgeDialog({ client, open, onClose }: { client: Client; open: b
 }
 
 /** "⋯" actions for a trainee: archive when active; restore or delete when archived. */
+/**
+ * "⋯" menu rendered in a portal so table overflow never clips it. Opens below the
+ * button, or above it when there is not enough room underneath.
+ */
 export function ClientActionsMenu({ client, afterArchive, compact = false }: { client: Client; afterArchive?: string; compact?: boolean }) {
-  const { t: tr } = useLocale();
+  const { t: tr, language } = useLocale();
   const { restore } = useLifecycle(client);
-  const menu = useRef<HTMLDetailsElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const list = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
   const [dialog, setDialog] = useState<"archive" | "purge" | null>(null);
   const [busy, setBusy] = useState(false);
+  const menuId = useId();
+  const close = (focusTrigger = false) => {
+    setOpen(false);
+    if (focusTrigger) trigger.current?.focus();
+  };
+  const place = useCallback(() => {
+    const button = trigger.current?.getBoundingClientRect();
+    const menu = list.current;
+    if (!button || !menu) return;
+    const width = menu.offsetWidth, height = menu.offsetHeight, gap = 6, margin = 8;
+    const below = button.bottom + gap + height <= window.innerHeight - margin;
+    const top = below ? button.bottom + gap : Math.max(margin, button.top - gap - height);
+    // Align the menu with the button edge that faces the page content.
+    const rtl = document.documentElement.dir !== "ltr";
+    const preferred = rtl ? button.left : button.right - width;
+    const left = Math.min(Math.max(margin, preferred), window.innerWidth - width - margin);
+    setPosition({ top, left });
+  }, []);
+  useLayoutEffect(() => {
+    if (!open) return;
+    place();
+    list.current?.querySelector<HTMLButtonElement>("[role=menuitem]:not([disabled])")?.focus();
+    const onPointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!list.current?.contains(target) && !trigger.current?.contains(target)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); close(true); }
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        const items = [...(list.current?.querySelectorAll<HTMLButtonElement>("[role=menuitem]:not([disabled])") ?? [])];
+        const index = items.indexOf(document.activeElement as HTMLButtonElement);
+        items[(index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+        event.preventDefault();
+      }
+    };
+    window.addEventListener("pointerdown", onPointer, true);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("pointerdown", onPointer, true);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open, place]);
   const pick = (next: "archive" | "purge") => {
-    menu.current?.removeAttribute("open");
+    setOpen(false);
     setDialog(next);
   };
   return (
     <>
-      <details ref={menu} className={`actions-menu ${compact ? "actions-menu-compact" : ""}`} onKeyDown={(event) => { if (event.key === "Escape") menu.current?.removeAttribute("open"); }}>
-        <summary className="btn-secondary" aria-label={tr("إجراءات {0}", client.name)} title={tr("إجراءات")}>
+      <span className={`actions-menu ${compact ? "actions-menu-compact" : ""}`}>
+        <button
+          ref={trigger}
+          type="button"
+          className="btn-secondary actions-menu-trigger"
+          aria-label={tr("إجراءات {0}", client.name)}
+          title={tr("إجراءات")}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-controls={open ? menuId : undefined}
+          onClick={() => { setPosition(null); setOpen((value) => !value); }}
+        >
           <MoreHorizontal size={18} aria-hidden="true" />
-        </summary>
-        <div className="actions-menu-list" role="menu">
+        </button>
+      </span>
+      {open && typeof document !== "undefined" && createPortal(
+        <div
+          ref={list}
+          id={menuId}
+          className="actions-menu-list actions-menu-floating"
+          role="menu"
+          dir={language === "en" ? "ltr" : "rtl"}
+          style={position ? { top: position.top, left: position.left } : { visibility: "hidden", top: 0, left: 0 }}
+        >
           {client.archived ? (
             <>
               <button
@@ -204,7 +277,7 @@ export function ClientActionsMenu({ client, afterArchive, compact = false }: { c
                 role="menuitem"
                 disabled={busy}
                 onClick={async () => {
-                  menu.current?.removeAttribute("open");
+                  close(true);
                   setBusy(true);
                   try { await restore(); } finally { setBusy(false); }
                 }}
@@ -220,8 +293,9 @@ export function ClientActionsMenu({ client, afterArchive, compact = false }: { c
               <Archive size={16} aria-hidden="true" />{tr("أرشفة المتدرب")}
             </button>
           )}
-        </div>
-      </details>
+        </div>,
+        document.body,
+      )}
       {!client.archived && <ArchiveDialog client={client} open={dialog === "archive"} onClose={() => setDialog(null)} afterArchive={afterArchive} />}
       {client.archived && <PurgeDialog client={client} open={dialog === "purge"} onClose={() => setDialog(null)} />}
     </>
@@ -235,7 +309,7 @@ export function ArchiveClientTrigger({ client, afterArchive }: { client: Client;
   return (
     <>
       <button type="button" className="btn-secondary" onClick={() => setOpen(true)}>
-        <Archive size={15} aria-hidden="true" />{tr("أرشفة العميل")}
+        <Archive size={15} aria-hidden="true" />{tr("أرشفة المتدرب")}
       </button>
       <ArchiveDialog client={client} open={open} onClose={() => setOpen(false)} afterArchive={afterArchive} />
     </>

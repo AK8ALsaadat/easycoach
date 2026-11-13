@@ -16,6 +16,8 @@ import { blankContent, type Client, type Program, type WeightEntry } from "@/lib
 import { ArchiveClientTrigger } from "./client-lifecycle";
 import { TemplateNameDialog } from "./template-name-dialog";
 import { formatDate, riyadhToday } from "@/lib/dates";
+import { formatNumber, formatSigned } from "@/lib/plural";
+import { displayDayName } from "@/lib/program-builder";
 import { Notice } from "./forms";
 import { ProgressChart } from "./progress-chart";
 import { ProgressPhotos } from "./progress-photo-panel";
@@ -290,7 +292,7 @@ export function ClientHub({
         ref={tabList}
         className="library-tabs"
         role="tablist"
-        aria-label={tr("متابعة العميل")}
+        aria-label={tr("متابعة المتدرب")}
       >
         {tabs.map(([key, label]) => (
           <button
@@ -426,10 +428,10 @@ export function ClientHub({
                 command="client_archive"
                 payload={{ client_id: clientId, archived: true }}
                 confirmation={tr(
-                  "أرشفة العميل وإيقاف وصوله؟ تبقى سجلاته محفوظة ويمكن استعادته من قائمة المؤرشفين.",
+                  "أرشفة المتدرب وإيقاف وصوله؟ تبقى سجلاته محفوظة ويمكن استعادته من قائمة المؤرشفين.",
                 )}
               >
-                {tr("أرشفة العميل")}
+                {tr("أرشفة المتدرب")}
               </ManagementButton>
             )}
           </div>
@@ -693,9 +695,7 @@ export function ClientHub({
             <h3>{tr("تاريخ تغييرات الأهداف")}</h3>
             {targets.map((record) => (
               <p className="text-sm border-b py-3" key={record.id}>
-                {record.entry_date} · {String(record.payload.calories)}{" "}
-                {tr("سعرة · P")} {String(record.payload.protein)} · C{" "}
-                {String(record.payload.carbs)} · F {String(record.payload.fat)}
+                {formatDate(record.entry_date, language)} · {tr("{0} سعرة · بروتين {1}غ · كارب {2}غ · دهون {3}غ", formatNumber(Number(record.payload.calories)), formatNumber(Number(record.payload.protein)), formatNumber(Number(record.payload.carbs)), formatNumber(Number(record.payload.fat)))}
               </p>
             ))}
           </section>
@@ -847,10 +847,7 @@ export function ClientHub({
                   typeof checkins[index + 1]?.payload.weight === "number" && (
                     <p className="text-sm mt-2">
                       {tr("التغير عن المراجعة السابقة:")}{" "}
-                      {(
-                        record.payload.weight -
-                        Number(checkins[index + 1].payload.weight)
-                      ).toFixed(1)}{" "}
+                      <bdi dir="ltr">{formatSigned(record.payload.weight - Number(checkins[index + 1].payload.weight))}</bdi>{" "}
                       {tr("كجم")}
                     </p>
                   )}
@@ -960,7 +957,7 @@ export function ClientHub({
                 ))}
               {!records.some((record) => record.kind === "message") && (
                 <p className="text-sm text-muted">
-                  {tr("ابدأ محادثة مع مدربك أو عميلك.")}
+                  {tr("ابدأ محادثة مع مدربك أو متدربك.")}
                 </p>
               )}
             </div>
@@ -1047,7 +1044,7 @@ function RecordForm({
   entryDate?: string;
   onEntryDateChange?: (date: string) => void;
 }) {
-  const { t: tr } = useLocale();
+  const { t: tr, language } = useLocale();
 
   const requestId = useRef<string | null>(null);
   const [targets, setTargets] = useState(emptyTargets);
@@ -1191,7 +1188,10 @@ function RecordForm({
                     : tr("رسالة جديدة")}
       </h2>
       <div className="grid gap-3 mt-4 sm:grid-cols-2 lg:grid-cols-3">
-        <label>
+        {kind === "message" ? (
+          // Messages are dated automatically with today's date.
+          <input type="hidden" name="entry_date" value={riyadhToday()} />
+        ) : <label>
           {tr("تاريخ السجل")}
           <input
             aria-label={tr("تاريخ ") + tr(labels[kind])}
@@ -1204,7 +1204,7 @@ function RecordForm({
             max={kind === "nutrition_target" ? undefined : riyadhToday()}
             required
           />
-        </label>
+        </label>}
         {fields.map(([key, label, min, max]) => (
           <label key={String(key)}>
             {tr(label)}
@@ -1252,7 +1252,7 @@ function RecordForm({
                 >
                   {program.content.days.map((day, index) => (
                     <option key={index} value={index}>
-                      {day.name}
+                      {displayDayName(day.name, language)}
                     </option>
                   ))}
                 </select>
@@ -1276,7 +1276,7 @@ function RecordForm({
               <div className="grid grid-cols-2 gap-2 mt-2 lg:grid-cols-4">
                 {[
                   ["sets", tr("المجموعات"), exercise.sets],
-                  ["reps", tr("العدات"), exercise.reps],
+                  ["reps", tr("التكرارات"), exercise.reps],
                   ["weight", tr("الوزن (كجم)"), ""],
                   ["rpe", "RPE", ""],
                 ].map(([key, label, value]) => (

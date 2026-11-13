@@ -17,6 +17,7 @@ import {
   supabase,
 } from "@/lib/server";
 import { getLocalDatabase } from "@/lib/local-db";
+import { arabicIssues } from "@/lib/form-errors";
 import { cleanPendingPhotos } from "@/lib/photo-cleanup";
 
 export type Result = {
@@ -35,10 +36,7 @@ export async function mutate(
     if (!parsed.success)
       return {
         ok: false,
-        message: parsed.error.issues
-          .map((i) => `${i.path.join(".")}: ${i.message}`)
-          .join(" · ")
-          .slice(0, 300),
+        message: arabicIssues(parsed.error).slice(0, 300),
       };
     // Reject duplicate emails inside an import even if the request bypasses the preview UI.
     if (command === "import_clients") {

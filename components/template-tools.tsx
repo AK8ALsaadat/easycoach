@@ -1,4 +1,5 @@
 "use client";
+import { countLabel, nouns } from "@/lib/plural";
 import { useLocale } from "./locale-provider";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -11,7 +12,7 @@ import { TemplateNameDialog } from "./template-name-dialog";
 import { isUnnamedTemplate, suggestCopyName } from "@/lib/template-names";
 
 export function TemplateTools({ data }: { data: Snapshot }) {
-  const { t: tr } = useLocale();
+  const { t: tr, language } = useLocale();
 
   const router = useRouter();
   const [selected, setSelected] = useState("");
@@ -63,7 +64,7 @@ export function TemplateTools({ data }: { data: Snapshot }) {
       <h2>{tr("إدارة القوالب والتعيين الجماعي")}</h2>
       <p className="text-sm text-muted mt-1">
         {tr(
-          "كل تعيين ينشئ نسخة مستقلة. تعديل القالب لاحقًا لا يغيّر نسخ العملاء.",
+          "كل تعيين ينشئ نسخة مستقلة. تعديل القالب لاحقًا لا يغيّر نسخ المتدربين.",
         )}
       </p>
       <label className="mt-4">
@@ -178,7 +179,7 @@ export function TemplateTools({ data }: { data: Snapshot }) {
               onClick={async () => {
                 if (
                   !window.confirm(
-                    "حذف القالب نهائيًا؟ برامج العملاء المستقلة ستبقى كما هي.",
+                    "حذف القالب نهائيًا؟ برامج المتدربين المستقلة ستبقى كما هي.",
                   )
                 )
                   return;
@@ -193,7 +194,7 @@ export function TemplateTools({ data }: { data: Snapshot }) {
             </button>
           </div>
           <div className="border-t mt-5 pt-5">
-            <h3>{tr("تعيين لعميل أو مجموعة")}</h3>
+            <h3>{tr("تعيين لمتدرب أو مجموعة")}</h3>
             {metadata?.kind === "nutrition" && (
               <p className="text-sm text-muted mt-2">
                 {tr(
@@ -249,7 +250,7 @@ export function TemplateTools({ data }: { data: Snapshot }) {
                   checked={replace}
                   onChange={(e) => setReplace(e.target.checked)}
                 />
-                {tr("أوافق على استبدال المسودات الحالية للعملاء المحددين")}
+                {tr("أوافق على استبدال المسودات الحالية للمتدربين المحددين")}
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -270,7 +271,7 @@ export function TemplateTools({ data }: { data: Snapshot }) {
                 if (
                   (metadata?.kind ?? "workout") === "workout" && replace &&
                   !window.confirm(
-                    "ستستبدل المسودات الحالية للعملاء المحددين. النسخ المنشورة لا تتغير إلا إذا اخترت النشر. تتابع؟",
+                    "ستستبدل المسودات الحالية للمتدربين المحددين. النسخ المنشورة لا تتغير إلا إذا اخترت النشر. تتابع؟",
                   )
                 )
                   return;
@@ -287,7 +288,7 @@ export function TemplateTools({ data }: { data: Snapshot }) {
               }}
             >
               <Send size={17} />
-              {tr("تعيين")} {clients.length} {tr("نسخة مستقلة")}
+              {tr("تعيين {0}", countLabel(language, clients.length, nouns.copy))}
             </button>
           </div>
         </>

@@ -78,6 +78,7 @@ export type Database = {
         Row: {
           action: string
           actor_id: string
+          client_id: string | null
           coach_id: string
           created_at: string
           detail: string
@@ -87,6 +88,7 @@ export type Database = {
         Insert: {
           action: string
           actor_id: string
+          client_id?: string | null
           coach_id: string
           created_at?: string
           detail?: string
@@ -96,6 +98,7 @@ export type Database = {
         Update: {
           action?: string
           actor_id?: string
+          client_id?: string | null
           coach_id?: string
           created_at?: string
           detail?: string
@@ -1384,6 +1387,10 @@ export type Database = {
       portal_account_invite: {
         Args: { invitation_hash: string; proof: string; token_hash: string }
         Returns: Json
+      }
+      portal_exchange_rate_limit: {
+        Args: { key_hash: string }
+        Returns: number
       }
       portal_management: {
         Args: {

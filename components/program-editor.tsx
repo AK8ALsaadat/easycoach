@@ -1,5 +1,6 @@
 "use client";
 import { useLocale } from "./locale-provider";
+import { countLabel, formatNumber, nouns } from "@/lib/plural";
 import { ExerciseVisual } from "./exercise-visual";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -38,7 +39,7 @@ import { MacroTargets } from "./macro-targets";
 import { caloriesFromMacros, inferCaloriesMode } from "@/lib/macros";
 import { templateNameError } from "@/lib/template-names";
 import { ProgramDayNav } from "./program-day-nav";
-import { appendExercise, customExercise, dayName, isStarterExercise, transferExercise, repeatProgramDay, appendExercises } from "@/lib/program-builder";
+import { appendExercise, customExercise, dayName, displayDayName, isStarterExercise, transferExercise, repeatProgramDay, appendExercises } from "@/lib/program-builder";
 function withRowIds(value: Content): Content {
   return {
     ...value,
@@ -302,7 +303,7 @@ export function ProgramEditor({
               <h2>{tr("هدف اليوم، قبل تفاصيل الوجبات.")}</h2>
             </div>
             <span className="badge">
-              {tr("طاقة الماكروز")} <bdi dir="ltr">{caloriesFromMacros(plan.nutrition)} kcal</bdi>
+              {tr("طاقة الماكروز")} <bdi>{formatNumber(caloriesFromMacros(plan.nutrition))}</bdi> {tr("سعرة")}
             </span>
           </div>
           <MacroTargets
@@ -339,9 +340,9 @@ export function ProgramEditor({
             <div>
               <p className="eyebrow">{tr("بناء الحصة التدريبية")}</p>
               <h2>
-                {active.name} · {active.exercises.length} {tr("حركات")}{" "}
+                {displayDayName(active.name, locale)} · {countLabel(locale, active.exercises.length, nouns.movement)}{" "}
                 <span className="text-muted">/</span>{" "}
-                {active.exercises.reduce((n, e) => n + e.sets, 0)} {tr("جولة")}
+                {countLabel(locale, active.exercises.reduce((n, e) => n + e.sets, 0), nouns.round)}
               </h2>
             </div>
             <div className="program-session-actions"><button type="button" className="btn-secondary" disabled={plan.days.length>=14} onClick={()=>openRepeat(day)}><Copy size={16}/>{tr("تكرار اليوم")}</button><button
@@ -358,7 +359,7 @@ export function ProgramEditor({
             <p>{tr("اكتب أي اسم تمرين، أو اختر من المكتبة. لا تحتاج صورة أو فيديو.")}</p>
             <div><input ref={customInput} id="custom-exercise-name" className="field" placeholder={tr("مثال: سكوات بالدمبل مع توقف")} value={customName} maxLength={140} onChange={event=>setCustomName(event.target.value)} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();addCustom();}}}/>
             <button type="button" className="btn" disabled={customName.trim().length<2 || active.exercises.length>=40} onClick={addCustom}><Plus size={16}/>{tr("إضافة التمرين")}</button></div>
-            <p role="status">{feedback || tr("الافتراضي: 3 مجموعات · 10–12 عدة · 90 ثانية راحة. عدّلها بعد الإضافة.")}</p>
+            <p role="status">{feedback || tr("الافتراضي: 3 مجموعات · 10–12 تكرار · 90 ثانية راحة. عدّلها بعد الإضافة.")}</p>
           </div>
           {undo && <div className="program-undo" role="status"><span>{tr("تم تعديل الجدول. يمكنك التراجع.")}</span><button type="button" className="btn-soft" onClick={()=>{edit(()=>undo.plan);setDay(undo.day);}}>{tr("تراجع")}</button></div>}
           <details className="program-day-settings"><summary>{tr("اسم اليوم، موعده والتقسيمة الأسبوعية")}</summary>
@@ -510,7 +511,7 @@ export function ProgramEditor({
                     />
                     <div>
                       <span className="eyebrow">
-                        {tr("الحركة")} {String(i + 1).padStart(2, "0")}
+                        {tr("الحركة")} {i + 1}
                       </span>
                       <p className="text-xs text-muted">
                         {exerciseName(catalogById.get(e.catalogId)!, locale)}
@@ -593,6 +594,10 @@ export function ProgramEditor({
                     />
                   ))}
                 </div>
+                <label className="mt-3 block">
+                  {tr("توجيهات المدرب لهذا التمرين (تظهر للمتدرب)")}
+                  <textarea className="field mt-1" maxLength={2000} value={e.coachNotes ?? ""} onChange={(event) => updateExercise(i, "coachNotes", event.target.value)} />
+                </label>
                 <details className="program-exercise-more"><summary>{tr(clientId ? "الفيديو والأوزان المتقدمة" : "فيديو شرح التمرين")}</summary>
                 <div className="mt-4 border-t pt-4">
                   <VideoUpload
@@ -752,7 +757,7 @@ export function ProgramEditor({
       <div className="program-savebar sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white/95 p-4 shadow-lg backdrop-blur">
         <p className="max-w-md text-xs text-muted">
           {clientId
-            ? tr("جاهز؟ انشر التحديث على رابط العميل.")
+            ? tr("جاهز؟ انشر التحديث على رابط المتدرب.")
             : tr("احفظه في مكتبتك للبرامج القادمة.")}
         </p>
         <div className="flex gap-2">

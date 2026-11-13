@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Scale, TrendingDown, Plus, Trash2 } from "lucide-react";
 import type { WeightEntry } from "@/lib/model";
 import { riyadhToday, formatDate } from "@/lib/dates";
-import { formatNumber } from "@/lib/plural";
+import { formatNumber, formatSigned, lastEntries } from "@/lib/plural";
 import { ConfirmDialog } from "./modal";
 export function WeightPanel({
   entries,
@@ -83,7 +83,7 @@ export function WeightPanel({
       <div className="grid grid-cols-3 gap-3">
         <div>
           <p className="metric-number">
-            {last ? Number(last.weight).toFixed(1) : "—"}
+            {last ? formatNumber(Number(last.weight)) : "—"}
           </p>
           <p className="text-xs text-muted">
             {tr("آخر وزن ·")}{" "}
@@ -94,8 +94,7 @@ export function WeightPanel({
           <p className="metric-number">
             <bdi dir="ltr">
               {last && first
-                ? (Number(last.weight) - Number(first.weight) > 0 ? "+" : "") +
-                  (Number(last.weight) - Number(first.weight)).toFixed(1)
+                ? formatSigned(Number(last.weight) - Number(first.weight))
                 : "—"}
             </bdi>
           </p>
@@ -103,10 +102,10 @@ export function WeightPanel({
         </div>
         <div>
           <p className="metric-number">
-            {ordered.length ? average.toFixed(1) : "—"}
+            {ordered.length ? formatNumber(average) : "—"}
           </p>
           <p className="text-xs text-muted">
-            {tr("متوسط آخر")} {Math.min(7, ordered.length)} {tr("تسجيلات")}
+            {tr("متوسط {0}", lastEntries(locale, Math.min(7, ordered.length)))}
           </p>
         </div>
       </div>
@@ -134,7 +133,7 @@ export function WeightPanel({
                   opacity=".12"
                 />
                 <text x={plotStart - 6} y={y + 4} textAnchor="end" direction="ltr" className="weight-axis-label">
-                  {value.toFixed(1)}
+                  {formatNumber(value)}
                 </text>
               </g>
             ))}

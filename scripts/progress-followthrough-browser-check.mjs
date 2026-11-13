@@ -1,5 +1,5 @@
 // Synthetic, local-only progress acceptance checks. Never use a hosted target.
-import { ensurePhotoConsent } from "./photo-consent-helper.mjs";
+import { dismissPhotoConsent, ensurePhotoConsent } from "./photo-consent-helper.mjs";
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
 import sharp from "sharp";
@@ -45,7 +45,7 @@ try {
   const clientId = coach.url().split("/").at(-1);
   await coach.goto(`${base}/coach/clients/${clientId}?tab=profile`);
   await coach.getByRole("button", { name: "إنشاء رابط دخول للمتدرب", exact: true }).click();
-  const shared = await coach.getByLabel("رابط العميل الخاص").inputValue();
+  const shared = await coach.getByLabel("رابط المتدرب الخاص").inputValue();
   assert(/\/access\/[a-f0-9-]+#[a-f0-9]{64}$/.test(shared));
   const visitorContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   visitorContext.setDefaultTimeout(20000); visitorContext.setDefaultNavigationTimeout(60000);
@@ -53,6 +53,8 @@ try {
   visitor.on("pageerror", error => errors.push(error.message)); visitor.on("dialog", dialog => dialog.accept());
   await visitor.goto(shared); await visitor.waitForURL(/\/trainee\/[a-f0-9-]+$/);
   assert.equal(new URL(visitor.url()).hash, "");
+  await visitor.getByRole("dialog", { name: "قبل ما ترفع صور التقدم" }).waitFor({ timeout: 2000 }).catch(() => {});
+  await dismissPhotoConsent(visitor);
   const form = visitor.locator('form[data-record-kind="measurement"]');
   const notes = ["measurement-a-", "measurement-b-", "measurement-c-"].map(prefix => prefix + marker);
   async function addMeasurement(date, values, note) {
@@ -80,6 +82,9 @@ try {
   await row.locator('input[name="waist"]').fill("87");
   await row.getByRole("button", { name: "حفظ التصحيح", exact: true }).click();
   await until(async () => (await snapshot(coach)).management.records.find(record => record.id === correctedId)?.payload.waist === 87, "Measurement correction failed");
+  // A creation may already have a modification timestamp. Wait for the actual
+  // corrected value, so a pending refresh cannot replace the reopened editor.
+  await until(async () => (await visitor.getByRole("row").filter({ hasText: notes[2] }).innerText()).includes("الخصر: 87 سم"), "Corrected measurement did not appear in the timeline");
   await visitor.getByRole("row").filter({ hasText: notes[2] }).getByText("آخر تعديل", { exact: false }).waitFor();
   state = await snapshot(coach); assert.equal(state.management.records.find(record => record.id === correctedId).author_type, "client");
   row = visitor.getByRole("row").filter({ hasText: notes[2] });
@@ -93,15 +98,18 @@ try {
   const coachRow = coach.getByRole("row").filter({ hasText: notes[0] });
   const measurementFeedback = "Coach measurement feedback " + marker;
   await coachRow.locator('textarea[name="coach_feedback"]').fill(measurementFeedback);
+  assert.equal(await coachRow.locator('textarea[name="coach_feedback"]').evaluate(element => new FormData(element.form).get("coach_feedback")), measurementFeedback);
   await coachRow.getByRole("button", { name: "حفظ الرد على التحديث", exact: true }).click();
-  await until(async () => recordByNote(await snapshot(coach), notes[0])?.coach_feedback === measurementFeedback, "Measurement feedback not saved");
+  await until(async () => recordByNote(await snapshot(coach), notes[0])?.coach_feedback === measurementFeedback, "Measurement feedback not saved").catch(async error => { await coach.screenshot({ path: output + "/coach-feedback-failure.png", fullPage: true }); throw Error(error.message + " · " + await coachRow.innerText()); });
   await visitor.getByRole("button", { name: "تحديث الجدول", exact: true }).click();
   await visitor.getByText(measurementFeedback, { exact: true }).waitFor();
   passed.push("coach feedback on a measurement persists and is visible to its trainee"); console.log(passed.at(-1));
   await form.locator('[name="entry_date"]').fill(firstDate);
+  if (!(await visitor.getByRole("heading", { name: "مقارنة صورتين", exact: true }).isVisible()))
+    await visitor.getByText("إكمال تحديث التقدم بصور أمام وخلف وجانب (اختياري)", { exact: true }).click();
+  await ensurePhotoConsent(visitor);
   assert.equal(await visitor.getByLabel("تاريخ الصور", { exact: true }).inputValue(), firstDate);
   const image = await sharp({ create: { width: 1200, height: 1800, channels: 3, background: "#4679bc" } }).jpeg().toBuffer();
-  await ensurePhotoConsent(visitor);
   for (const [label, angle] of [["صورة تقدم خاصة", "أمام"], ["صورة خلف", "خلف"], ["صورة جانب", "جانب"]]) {
     await visitor.getByLabel(label, { exact: true }).setInputFiles({ name: "synthetic.jpg", mimeType: "image/jpeg", buffer: image });
     await visitor.getByRole("button", { name: "إزالة صورة " + angle, exact: true }).waitFor();
@@ -137,11 +145,14 @@ try {
   await article.locator("summary").filter({ hasText: "تصحيح التحديث أو حذفه" }).click();
   await article.locator('input[name="weight"]').fill("78.8"); await article.getByRole("button", { name: "حفظ التصحيح", exact: true }).click();
   await until(async () => (await snapshot(coach)).management.records.find(record => record.id === checkinId)?.payload.weight === 78.8, "Check-in correction not saved");
-  await coach.goto(`${base}/coach/clients/${clientId}?tab=tracking`); await coach.getByRole("tab", { name: "المراجعات الأسبوعية", exact: true }).click();
+  lastPage = coach;
+  // The coach's tab includes a pending-review count in its accessible name.
+  await coach.goto(`${base}/coach/clients/${clientId}?tab=tracking`); await coach.getByRole("tab", { name: /^المراجعات الأسبوعية/ }).click();
   const coachArticle = coach.locator("article").filter({ hasText: checkinNote }).first(), weeklyFeedback = "Coach weekly feedback " + marker;
   await coachArticle.locator('textarea[name="feedback"]:visible').fill(weeklyFeedback);
   await coachArticle.getByRole("button", { name: "حفظ الرد ووضع تمت المراجعة", exact: true }).click();
   await until(async () => (await snapshot(coach)).management.records.find(record => record.id === checkinId)?.coach_feedback === weeklyFeedback, "Weekly review not saved");
+  lastPage = visitor;
   await visitor.getByRole("button", { name: "تحديث الجدول", exact: true }).click(); await visitor.getByText(weeklyFeedback, { exact: true }).waitFor();
   article = visitor.locator("article").filter({ hasText: checkinNote }).first(); await article.locator("summary").click();
   await article.getByRole("button", { name: "حذف التحديث", exact: true }).click();

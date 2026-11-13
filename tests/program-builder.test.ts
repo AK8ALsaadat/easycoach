@@ -39,6 +39,7 @@ describe("program builder",()=>{
   it("replaces only an untouched starter and preserves edited exercises",()=>{
     expect(isStarterExercise(blankContent.days[0].exercises[0])).toBe(true);
     expect(isStarterExercise({...blankContent.days[0].exercises[0],sets:5})).toBe(false);
+    expect(isStarterExercise({...blankContent.days[0].exercises[0],coachNotes:"توجيه خاص"})).toBe(false);
     expect(appendExercise(structuredClone(blankContent),0,customExercise("جديد مخصص")).days[0].exercises).toHaveLength(1);
   });
   it("duplicates rows with a new identity and preserves their full prescription",()=>{

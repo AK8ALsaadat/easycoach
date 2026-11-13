@@ -12,6 +12,7 @@ import { getLocalDatabase, rpcLocal } from "./local-db";
 import type { Snapshot } from "./model";
 import type { Database } from "@/types/supabase";
 import { ZodError } from "zod";
+import { traineeTerms } from "./terms";
 
 export { localPreview as localMode } from "./runtime";
 import { localPreview as localMode } from "./runtime";
@@ -193,13 +194,14 @@ export function readableError(error: unknown) {
   // Zod errors carry a JSON message; show the first Arabic issue instead.
   if (error instanceof ZodError) {
     const message = error.issues.find((issue) => /[؀-ۿ]/.test(issue.message))?.message;
-    return message ?? "لم تكتمل العملية. راجع المدخلات وحاول مرة أخرى.";
+    // Only the Arabic message, never a field path such as "phone:".
+    return message ? traineeTerms(message) : "تحقق من البيانات المدخلة وحاول مرة أخرى.";
   }
   if (e.code === "23505")
     return "السجل مكرر أو العملية مطبقة سابقًا. راجع البيانات والمرجع.";
   if (e.code === "23503" || e.code === "42501")
     return "السجل غير متاح لهذا الحساب.";
   if (e.message && /[\u0600-\u06ff]/.test(e.message))
-    return e.message.slice(0, 250);
+    return traineeTerms(e.message).slice(0, 250);
   return "لم تكتمل العملية. راجع المدخلات وحاول مرة أخرى.";
 }

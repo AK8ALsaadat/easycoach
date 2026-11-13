@@ -1,4 +1,5 @@
 ﻿"use client";
+import { countLabel, nouns } from "@/lib/plural";
 import Link from "next/link";
 import { useLocale } from "./locale-provider";
 import { useMemo, useState } from "react";
@@ -37,7 +38,7 @@ function mappedValueSummary(
       : "";
   if (!["nutrition_targets", "nutrition_logs"].includes(category)) return "";
   return [
-    hasPreviewValue(values.calories) && `${previewValue(values.calories)} kcal`,
+    hasPreviewValue(values.calories) && `${previewValue(values.calories)} سعرة`,
     hasPreviewValue(values.protein) && `P ${previewValue(values.protein)}`,
     hasPreviewValue(values.carbs) && `C ${previewValue(values.carbs)}`,
     hasPreviewValue(values.fat) && `F ${previewValue(values.fat)}`,
@@ -61,7 +62,7 @@ export function ImportClients({
   emails: string[];
   batches?: ManagementData["import_batches"];
 }) {
-  const { t: tr } = useLocale();
+  const { t: tr, language } = useLocale();
 
   const router = useRouter();
   const [file, setFile] = useState<ImportFile | null>(null),
@@ -114,7 +115,7 @@ export function ImportClients({
         <div>
           <h2 className="flex items-center gap-2">
             <FileSpreadsheet size={22} />
-            {tr("استيراد بيانات العملاء")}
+            {tr("استيراد بيانات المتدربين")}
           </h2>
           <p className="text-sm text-muted mt-2">
             {tr(
@@ -190,7 +191,7 @@ export function ImportClients({
               >
                 {sheets.map((sheet, i) => (
                   <option key={i} value={i}>
-                    {sheet.name} · {sheet.rows.length} {tr("صف")}
+                    {sheet.name} · {countLabel(language, sheet.rows.length, nouns.row)}
                   </option>
                 ))}
               </select>
@@ -330,7 +331,7 @@ export function ImportClients({
               <thead>
                 <tr>
                   <th>{tr("الورقة / الصف")}</th>
-                  <th>{tr("العميل")}</th>
+                  <th>{tr("المتدرب")}</th>
                   <th>{tr("البيانات")}</th>
                   <th>{tr("المراجعة")}</th>
                 </tr>
@@ -426,7 +427,7 @@ export function ImportClients({
                 onChange={(e) => setMode(e.target.checked ? "merge" : "skip")}
               />
               {tr(
-                "تحديث معلومات العملاء الموجودة بالحقول المربوطة فقط. السجلات التاريخية تضاف ولا تستبدل.",
+                "تحديث معلومات المتدربين الموجودة بالحقول المربوطة فقط. السجلات التاريخية تضاف ولا تستبدل.",
               )}
             </label>
             <label className="flex items-center gap-2">
@@ -479,7 +480,7 @@ export function ImportClients({
                 : tr(
                     "استيراد {0} {1}",
                     String(valid.length),
-                    String(allClients ? tr("عميل") : tr("سجل")),
+                    String(allClients ? tr("متدرب") : tr("سجل")),
                   )}
             </button>
             <button
@@ -524,8 +525,8 @@ export function ImportClients({
           <h3>{tr("تقرير الدفعة")}</h3>
           <div className="grid grid-cols-2 gap-3 my-4">
             {Object.entries({
-              clients_created: "عملاء جدد",
-              clients_updated: "عملاء تم تحديثهم",
+              clients_created: "متدربون جدد",
+              clients_updated: "متدربون تم تحديثهم",
               records_inserted: "سجلات تاريخية",
               skipped: "صفوف متخطاة",
             }).map(([key, label]) => (

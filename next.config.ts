@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
+  // Development action logs include arguments (credentials and private records).
+  logging: false,
   distDir: process.env.EASYCOACH_EVIDENCE_DIST_DIR || ".next",
   serverExternalPackages: ["@electric-sql/pglite", "exceljs"],
   experimental: { serverActions: { bodySizeLimit: "6mb" } },

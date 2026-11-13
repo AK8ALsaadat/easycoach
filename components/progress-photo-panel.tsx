@@ -76,6 +76,7 @@ export function ProgressPhotos({
   const day = entryDate ?? ownDay;
   const setDay = onEntryDateChange ?? setOwnDay;
   const [busy, setBusy] = useState(false);
+  const [uploadState, setUploadState] = useState<{ angle: Angle; percent: number; finalizing: boolean } | null>(null);
   const [preparing, setPreparing] = useState<Angle | null>(null);
   const [message, setMessage] = useState("");
   const [zoom, setZoom] = useState<string | null>(null);
@@ -222,6 +223,7 @@ export function ProgressPhotos({
     setMessage("");
     const failures: string[] = [];
     for (const { angle, slot } of pending) {
+      setUploadState({ angle, percent: 0, finalizing: false });
       try {
         const ticket = await photoTicket(
           {
@@ -242,7 +244,10 @@ export function ProgressPhotos({
           await uploadProgressPhoto(ticket.url!, slot.file, {
               "Content-Type": slot.file.type,
               ...(ticket.portalHash ? { "x-portal-hash": ticket.portalHash } : {}),
-            }, () => finishPhoto(ticket.id!, portalToken));
+            }, () => {
+              setUploadState({ angle, percent: 100, finalizing: true });
+              return finishPhoto(ticket.id!, portalToken);
+            }, fetch, (percent) => setUploadState({ angle, percent, finalizing: false }));
         }
         URL.revokeObjectURL(slot.preview);
         setSlots((current) => {
@@ -254,14 +259,17 @@ export function ProgressPhotos({
         failures.push(`${labelFor(angle, tr)}: ${error instanceof Error ? error.message : "تعذر الرفع"}`);
       }
     }
+    setUploadState(null);
     if (failures.length) setMessage(failures.join(" · "));
-    else {
-      setMessage("تم حفظ الصور. يمكنك إضافة زاوية أخرى أو العودة لاحقًا.");
+    else setMessage("تم حفظ الصور. يمكنك إضافة زاوية أخرى أو العودة لاحقًا.");
+    try {
       if (onUpdate) await onUpdate();
       else router.refresh();
+    } catch {
+      setMessage(failures.length ? failures.join(" · ") : "حُفظت الصور. تعذر تحديث العرض؛ حدّث الصفحة لرؤيتها.");
+    } finally {
+      setBusy(false);
     }
-    if (failures.length && onUpdate) await onUpdate();
-    setBusy(false);
   }
 
   return (
@@ -319,7 +327,7 @@ export function ProgressPhotos({
       <div className="grid gap-3 sm:grid-cols-2">
         <label>
           {tr("تاريخ الصور")}
-          <input className="field" type="date" value={day} max={riyadhToday()} onChange={(event) => setDay(event.target.value)} />
+          <input className="field" type="date" value={day} disabled={busy} max={riyadhToday()} onChange={(event) => setDay(event.target.value)} />
         </label>
         <p className="self-end text-xs leading-6 text-muted">
           {tr("حافظ على الإضاءة والمسافة والوقفة نفسها قدر الإمكان. لا تحتاج إلى ملابس كاشفة.")}
@@ -333,7 +341,7 @@ export function ProgressPhotos({
             <article key={key} className="rounded-xl border border-line p-3">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="font-semibold">{tr(label)}</h3>
-                {slot && <button type="button" className="btn-soft" onClick={() => void selectFile(key)} aria-label={tr("إزالة صورة ") + tr(label)}><Trash2 size={15} />{tr("إزالة")}</button>}
+                {slot && <button type="button" className="btn-soft" disabled={busy} onClick={() => void selectFile(key)} aria-label={tr("إزالة صورة ") + tr(label)}><Trash2 size={15} />{tr("إزالة")}</button>}
               </div>
               <p className="mt-1 text-xs text-muted">{tr(hint)}</p>
               {slot ? (
@@ -343,7 +351,7 @@ export function ProgressPhotos({
                   <img src={slot.preview} alt={tr("معاينة زاوية ") + tr(label)} className="h-56 w-full object-contain" />
                   <div className="flex items-center justify-between gap-2 p-2 text-xs">
                     <span className="truncate">{slot.file.name}</span>
-                    <button type="button" className="btn-soft" onClick={() => document.getElementById(`progress-photo-${clientId}-${key}`)?.click()}><RotateCcw size={14} />{tr("استبدال")}</button>
+                    <button type="button" className="btn-soft" disabled={busy} onClick={() => document.getElementById(`progress-photo-${clientId}-${key}`)?.click()}><RotateCcw size={14} />{tr("استبدال")}</button>
                   </div>
                 </div>
               ) : (
@@ -363,6 +371,12 @@ export function ProgressPhotos({
       <button type="button" className="btn" onClick={() => void upload()} disabled={busy || preparing !== null}>
         <Upload size={17} /> {busy ? tr("جارٍ رفع الصور…") : tr(Object.keys(slots).length === 1 ? "رفع صورة" : "رفع الصور المختارة")}
       </button>
+      {uploadState && (
+        <div role="status" className="space-y-2 text-sm">
+          <p>{labelFor(uploadState.angle, tr)} · {tr(uploadState.finalizing ? "جارٍ التحقق من الصورة وحفظها…" : "جارٍ رفع الصورة…")} {!uploadState.finalizing && `${uploadState.percent}%`}</p>
+          <progress className="w-full" max={100} value={uploadState.finalizing ? undefined : uploadState.percent} aria-label={tr("تقدم رفع الصورة")} />
+        </div>
+      )}
       </>}
       {message && <p role="status" className="text-sm">{tr(message)}</p>}
 

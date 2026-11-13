@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { actor, hash, rpc } from "@/lib/server";
 import { Brand } from "@/components/brand";
-import { LinkForm } from "@/components/link-form";
+import { LinkForm, SwitchAccount } from "@/components/link-form";
 import { linkBranding } from "@/lib/coach-branding-server";
 import { brandingPreview } from "@/lib/coach-branding";
 import { CoachIdentity } from "@/components/coach-identity";
@@ -28,6 +28,7 @@ export default async function PublicLink({
     { token: hash(token), link_type: kind },
     true,
   );
+  const user = await actor();
   if (!info)
     return (
       <main className="empty min-h-screen">
@@ -37,9 +38,16 @@ export default async function PublicLink({
             "اطلب من المدرب دعوة جديدة. لا يمكن إعادة استخدام دعوة سبق قبولها.",
           )}
         </p>
-        <Link className="btn" href="/login">
-          {tr("الدخول")}
-        </Link>
+        {user ? (
+          <>
+            <p className="text-sm text-muted">{tr("أنت مسجّل الدخول بإيميل")} <bdi dir="ltr">{user.email}</bdi></p>
+            <SwitchAccount next={kind === "invite" ? `/invite/${token}` : undefined} label={tr("تسجيل الخروج والدخول بحساب آخر")} />
+          </>
+        ) : (
+          <Link className="btn" href="/login">
+            {tr("الدخول")}
+          </Link>
+        )}
       </main>
     );
   return (
@@ -63,7 +71,8 @@ export default async function PublicLink({
         <LinkForm
           token={token}
           kind={kind as "join" | "invite"}
-          loggedIn={Boolean(await actor())}
+          loggedIn={Boolean(user)}
+          currentEmail={user?.email}
         />
       </section>
     </main>

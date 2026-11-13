@@ -37,7 +37,9 @@ export async function prepareProgressPhoto(file: File): Promise<File> {
   if (file.size > 40 * 1024 * 1024)
     throw new Error("حجم الصورة كبير جدًا. اختر صورة أصغر من 40 ميجابايت.");
 
-  const decoded = await imageFromFile(file);
+  const decoded = await imageFromFile(file).catch(() => {
+    throw new Error("تعذر فتح الصورة على هذا الجهاز. اختر صورة بصيغة JPG أو PNG أو WebP، أو صدّر صورة HEIC إلى JPG من المعرض.");
+  });
   try {
     if (!decoded.width || !decoded.height)
       throw new Error("تعذر قراءة أبعاد الصورة.");

@@ -33,7 +33,7 @@ export default function Upload({
             <h1 className="my-4">
               {tr("من تصويرك،")}
               <br />
-              {tr("لجدول عميلك.")}
+              {tr("لجدول متدربك.")}
             </h1>
             <p className="mb-6 text-sm text-muted">
               {tr(

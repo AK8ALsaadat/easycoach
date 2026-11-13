@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { LocaleProvider } from "@/components/locale-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PwaManager } from "@/components/pwa-manager";
+import { FormValidation } from "@/components/form-validation";
 import { PWA_THEME } from "@/lib/pwa";
 const font = IBM_Plex_Sans_Arabic({
   subsets: ["arabic", "latin"],
@@ -14,7 +15,7 @@ const font = IBM_Plex_Sans_Arabic({
 export const metadata: Metadata = {
   title: { default: "إيزي كوتش", template: "%s | إيزي كوتش" },
   description:
-    "مساحة عربية لإدارة العملاء والبرامج والاشتراكات للمدربين الشخصيين.",
+    "مساحة عربية لإدارة المتدربين والبرامج والاشتراكات للمدربين الشخصيين.",
   robots: { index: false, follow: false },
   applicationName: "إيزي كوتش",
   appleWebApp: { capable: true, title: "إيزي كوتش", statusBarStyle: "black-translucent" },
@@ -40,7 +41,7 @@ export default async function RootLayout({
   return (
     <html lang={language} dir={language === "en" ? "ltr" : "rtl"} data-theme={theme}>
       <body className={font.className}>
-        <LocaleProvider language={language}><ThemeProvider initialTheme={theme}>{children}<PwaManager /></ThemeProvider></LocaleProvider>
+        <LocaleProvider language={language}><ThemeProvider initialTheme={theme}>{children}<PwaManager /><FormValidation /></ThemeProvider></LocaleProvider>
       </body>
     </html>
   );

@@ -31,6 +31,7 @@ export function DataForm({
   fields,
   label = "حفظ",
   idempotent = false,
+  refreshOnSuccess = true,
   onDone,
   children,
 }: {
@@ -39,6 +40,8 @@ export function DataForm({
   fields: Field[];
   label?: string;
   idempotent?: boolean;
+  /** Navigation callbacks must not race a refresh of the page being left. */
+  refreshOnSuccess?: boolean;
   onDone?: (result: Result) => void;
   children?: ReactNode;
 }) {
@@ -70,7 +73,7 @@ export function DataForm({
           if (response.ok) {
             requestId.current = null;
             onDone?.(response);
-            router.refresh();
+            if (refreshOnSuccess) router.refresh();
           }
         } catch {
           setResult({

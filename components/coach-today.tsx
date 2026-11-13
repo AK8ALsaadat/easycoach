@@ -1,5 +1,6 @@
 "use client";
 import { useLocale } from "./locale-provider";
+import { countLabel, nouns } from "@/lib/plural";
 import { useState } from "react";
 import Link from "next/link";
 import {
@@ -80,15 +81,6 @@ export function CoachToday({
     );
   });
   const drafts = data.programs.filter((p) => !p.published_at);
-  const noWeight = clients.filter((c) => {
-    const ws = (data.weights ?? [])
-      .filter((w) => w.client_id === c.id)
-      .sort((a, b) => b.entry_date.localeCompare(a.entry_date));
-    return (
-      data.client_goals?.some((g) => g.client_id === c.id && g.target_weight) &&
-      (!ws[0] || daysBetween(ws[0].entry_date, today) > 7)
-    );
-  });
   const taskMap = new Map<
     string,
     { client: Client; items: string[]; urgent: boolean }
@@ -118,7 +110,6 @@ export function CoachToday({
   needs.forEach((c) => task(c, "برنامج أول"));
   renew.forEach((c) => task(c, "تجديد", current(c.id)!.end_date < today));
   stale.forEach((c) => task(c, "مراجعة برنامج"));
-  noWeight.forEach((c) => task(c, "متابعة وزن"));
   const tasks = [...taskMap.values()].sort(
     (a, b) => Number(b.urgent) - Number(a.urgent),
   );
@@ -233,7 +224,7 @@ export function CoachToday({
           >
             <s.icon size={19} />
             <span>{tr(s.label)}</span>
-            <strong>{String(s.value).padStart(2, "0")}</strong>
+            <strong>{s.value}</strong>
           </button>
         ))}
       </div>
@@ -244,7 +235,7 @@ export function CoachToday({
               <h2>{tr("جاهزية البرامج")}</h2>
               <p>
                 {needs.length
-                  ? tr("{0} متدرب بانتظار برنامج", String(needs.length))
+                  ? tr("بانتظار برنامج: {0}", countLabel(locale, needs.length, nouns.trainee))
                   : tr("كل البرامج جاهزة للمتابعة")}
               </p>
             </div>
@@ -260,8 +251,7 @@ export function CoachToday({
           />
           <div className="readiness-footer">
             <span>
-              {active.length} {tr("اشتراك نشط ·")} {data.templates.length}{" "}
-              {tr("قوالب")}
+              {countLabel(locale, active.length, nouns.activeSubscription)} · {countLabel(locale, data.templates.length, nouns.template)}
             </span>
             <Link
               href={
@@ -288,7 +278,7 @@ export function CoachToday({
               <h2>{tr("متابعات اليوم")}</h2>
             </div>
             <span className="badge">
-              {tasks.length} {tr("متدرب")}
+              {countLabel(locale, tasks.length, nouns.trainee)}
             </span>
           </div>
           {!tasks.length ? (
@@ -308,7 +298,7 @@ export function CoachToday({
                   className="task-row"
                 >
                   <span className="task-index">
-                    {String(i + 1).padStart(2, "0")}
+                    {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
                     <strong className="text-sm">{c.name}</strong>
@@ -372,7 +362,7 @@ export function CoachToday({
               ))}
             {!data.management?.records.length && (
               <p className="text-sm text-muted py-6">
-                {tr("سيظهر هنا نشاط العملاء بعد تسجيله.")}
+                {tr("سيظهر هنا نشاط المتدربين بعد تسجيله.")}
               </p>
             )}
           </div>
@@ -457,7 +447,7 @@ export function CoachToday({
                       {p ? (
                         <>
                           <strong className="text-xs">
-                            {p.content.days.length} {tr("أيام /")} {p.name}
+                            {countLabel(locale, p.content.days.length, nouns.trainingDay)} · {p.name}
                           </strong>
                           <p className="text-xs text-muted">
                             {formatDate(p.published_at!, locale)}
@@ -471,11 +461,11 @@ export function CoachToday({
                     </td>
                     <td className="whitespace-nowrap text-xs">
                       {p?.content.nutrition.calories
-                        ? tr("{0} سعرة", String(p.content.nutrition.calories))
+                        ? countLabel(locale, p.content.nutrition.calories, nouns.calorie)
                         : "—"}
                       {p?.content.nutrition.meals?.length ? (
                         <p className="text-xs text-muted">
-                          {p.content.nutrition.meals.length} {tr("وجبات")}
+                          {countLabel(locale, p.content.nutrition.meals.length, nouns.meal)}
                         </p>
                       ) : null}
                     </td>

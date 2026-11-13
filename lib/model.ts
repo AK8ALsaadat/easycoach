@@ -46,6 +46,7 @@ export const exercise = z
   .object({
     name: z.string().trim().min(2).max(140),
     description: z.string().max(2000),
+    coachNotes: z.string().max(2000).optional(),
     video: z.union([z.literal(""), z.url().startsWith("https://")]),
     sets: z.number({ error: SETS_ERROR }).int(SETS_ERROR).min(1, SETS_ERROR).max(20, SETS_ERROR),
     reps: z.string().max(60).refine(validReps, REPS_ERROR),
@@ -333,6 +334,7 @@ export type Snapshot = {
     action: string;
     created_at: string;
     entity_id: string | null;
+    client_id?: string | null;
     detail?: string;
   }[];
 };

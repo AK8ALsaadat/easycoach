@@ -113,7 +113,7 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
             {tr("أدخل رمز الدخول اللي أرسله لك مدربك.")}
           </p>
           <input
-            aria-label={tr("رمز دخول العميل")}
+            aria-label={tr("رمز دخول المتدرب")}
             className="field text-center font-mono text-2xl tracking-[.4em]"
             inputMode="numeric"
             autoComplete="one-time-code"
@@ -192,7 +192,7 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div><p className="eyebrow">{tr("اليوم")}</p><h2 id="portal-today-title" className="mt-2 text-xl">{data.program ? tr("خطتك لهذا اليوم") : tr("لا توجد خطة منشورة حاليًا")}</h2><p className="mt-2 text-sm text-muted">{data.weights.at(-1) ? `${tr("آخر وزن")}: ${data.weights.at(-1)!.weight} ${tr("كجم")} · ${formatDate(data.weights.at(-1)!.entry_date)}` : tr("لا يوجد وزن مسجل بعد. سجّل تحديثًا سريعًا عندما يناسبك.")}</p><p className="mt-1 text-xs text-muted">{formatDate(riyadhToday())}</p></div>
             <TraineeCheckinStatus clientId={data.client_id ?? ""} today={riyadhToday()} weights={data.weights} records={data.management?.records ?? []} management={data.management} />
-            <div className="flex flex-wrap gap-2"><a className="btn" href="#weight-panel">{tr("تسجيل الوزن")}</a><a className="btn-secondary" href="#client-management-hub">{tr("إرسال تحديث للمدرب")}</a></div>
+            <div className="flex flex-wrap gap-2"><a className="btn" href="#weight-panel">{tr("تسجيل الوزن")}</a><a className="btn-secondary" href="#client-management-hub" onClick={() => window.dispatchEvent(new CustomEvent("easycoach:open-hub-tab", { detail: "progress" }))}>{tr("إرسال تحديث للمدرب")}</a></div>
           </div>
         </section>
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">

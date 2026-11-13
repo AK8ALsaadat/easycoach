@@ -189,7 +189,7 @@ export function PortalControl({
             className="btn-secondary"
             disabled={busy}
             onClick={async () => {
-              if (!window.confirm("إيقاف وصول العميل من الرابط الحالي؟"))
+              if (!window.confirm("إيقاف وصول المتدرب من الرابط الحالي؟"))
                 return;
               const r = await mutate("portal_revoke", { client_id: clientId });
               if (!r.ok) setResult({ error: r.message });
@@ -206,7 +206,7 @@ export function PortalControl({
       {result?.url ? (
         <div className="portal-share">
           <input
-            aria-label={tr("رابط العميل الخاص")}
+            aria-label={tr("رابط المتدرب الخاص")}
             readOnly
             value={result.url}
             className="field"

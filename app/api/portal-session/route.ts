@@ -3,10 +3,18 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { hash, localMode, readableError, rpc } from "@/lib/server";
 import { bearerProof, sessionCookieName } from "@/lib/portal-credentials";
+import { portalExchangeRetryAfter } from "@/lib/portal-exchange-limit";
 const privateHeaders = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", "X-Robots-Tag": "noindex, nofollow" };
 export async function POST(request: Request) {
   if (request.headers.get("origin") !== new URL(process.env.APP_URL ?? request.url).origin)
     return NextResponse.json({ ok: false, error: "مصدر غير مسموح" }, { status: 403, headers: privateHeaders });
+  try {
+    const retryAfter = await portalExchangeRetryAfter(request);
+    if (retryAfter > 0)
+      return NextResponse.json({ ok: false, error: "محاولات كثيرة. انتظر قليلًا ثم أعد المحاولة" }, { status: 429, headers: { ...privateHeaders, "Retry-After": String(retryAfter) } });
+  } catch {
+    return NextResponse.json({ ok: false, error: "تعذر فتح الرابط الآن. أعد المحاولة بعد قليل" }, { status: 503, headers: { ...privateHeaders, "Retry-After": "30" } });
+  }
   try {
     const reader = request.body?.getReader();
     if (!reader) throw Error("الرابط غير مكتمل");

@@ -40,6 +40,7 @@ import {
 import { formatDate, riyadhToday } from "@/lib/dates";
 import { financeSummary, latestSubscription } from "@/lib/subscription-period";
 import { withTrainingDays } from "@/lib/program-builder";
+import { auditLabel } from "@/lib/audit-labels";
 import { Brand } from "./brand";
 import { ActionButton, DataForm, Notice, type Field } from "./forms";
 import { ProgramEditor } from "./program-editor";
@@ -73,7 +74,7 @@ import { isUnnamedTemplate, suggestCopyName, templateNameError } from "@/lib/tem
 import { countLabel, formatNumber, formatSar, nouns } from "@/lib/plural";
 
 const clientFields = (client?: Client): Field[] => [
-  { name: "name", label: "اسم العميل", value: client?.name, required: true },
+  { name: "name", label: "اسم المتدرب", value: client?.name, required: true },
   {
     name: "email",
     label: "الإيميل",
@@ -178,7 +179,7 @@ export function LinkBox({
           <p className="mt-2 text-xs text-muted">
             {kind === "invite"
               ? tr(
-                  "ينتهي خلال 7 أيام، لمرة واحدة، ولن يقبله إلا الحساب الموثّق بنفس إيميل العميل. إنشاء دعوة جديدة يلغي الدعوات السابقة.",
+                  "ينتهي خلال 7 أيام، لمرة واحدة، ولن يقبله إلا الحساب الموثّق بنفس إيميل المتدرب. إنشاء دعوة جديدة يلغي الدعوات السابقة.",
                 )
               : tr(
                   "ينتهي خلال 30 يومًا. الطلب يحتاج موافقتك ولا يمنح وصولًا للبيانات. إنشاء رابط جديد يلغي السابق.",
@@ -405,8 +406,8 @@ export function Workspace({
                 />
               ) : (
                 <Empty
-                  title={tr("العميل غير متاح")}
-                  text={tr("لا يوجد هذا العميل في حسابك.")}
+                  title={tr("المتدرب غير متاح")}
+                  text={tr("لا يوجد هذا المتدرب في حسابك.")}
                 />
               )
             ) : (
@@ -518,15 +519,16 @@ function Clients({
             }}
           >
             <Plus size={16} />
-            {tr("عميل جديد")}
+            {tr("متدرب جديد")}
           </button>
         </div>
       </Heading>
       {add ? (
         <section className="card mb-6 p-6">
-          <h2 className="mb-5">{tr("إضافة عميل")}</h2>
+          <h2 className="mb-5">{tr("إضافة متدرب")}</h2>
           <DataForm
             command="client_save"
+            refreshOnSuccess={false}
             fields={clientFields()}
             label={tr("إضافة وفتح الملف")}
             onDone={(r) =>
@@ -693,7 +695,7 @@ function ClientDetail({
                       "آخر نشر: {0}",
                       String(formatDate(published.published_at!, locale)),
                     )
-                  : tr("ما فيه نسخة منشورة للعميل بعد.")}
+                  : tr("ما فيه نسخة منشورة للمتدرب بعد.")}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -776,7 +778,7 @@ function ClientDetail({
       ) : (
         <div className="grid items-start gap-6 lg:grid-cols-2">
           <section className="card p-6">
-            <h2 className="mb-5">{tr("بيانات العميل")}</h2>
+            <h2 className="mb-5">{tr("بيانات المتدرب")}</h2>
             <DataForm
               command="client_save"
               base={{ id: client.id }}
@@ -887,7 +889,7 @@ function SubscriptionCard({
             <p key={f.id} className="mt-3 rounded-xl bg-canvas p-3 text-xs">
               {formatDate(f.start_date, locale)} —{" "}
               {formatDate(f.end_date, locale)} {tr("· طُبّق تمديد")}
-              {f.days} {tr("يومًا")}
+              {countLabel(locale, f.days, nouns.day)}
             </p>
           ))}
         </details>
@@ -1185,7 +1187,7 @@ function Library({ data }: { data: Snapshot }) {
           <Empty
             title={tr("مكتبتك تبدأ من أول قالب")}
             text={tr(
-              "أنشئ قالبًا ثم انسخ محتواه لكل عميل. التعديل على النسخة لا يغيّر القالب.",
+              "أنشئ قالبًا ثم انسخ محتواه لكل متدرب. التعديل على النسخة لا يغيّر القالب.",
             )}
           />
         )}
@@ -1275,7 +1277,7 @@ function Finance({ data }: { data: Snapshot }) {
     <Heading title={tr("الاشتراكات")} text={tr("إدارة الاشتراكات للمدرب. سجّل المدة والقيمة هنا؛ الدفع يتم خارج المنصة.")} />
     <section className="finance-summary" aria-label={tr("ملخص الاشتراكات")}>
       <div><span>{tr("إيراد الشهر الحالي")}</span><strong><bdi>{formatSar(summary.monthRevenue, locale)}</bdi></strong><small>{tr("قيمة الاشتراكات التي تبدأ هذا الشهر")}</small></div>
-      <div><span>{tr("المتوقع من التجديدات خلال 30 يومًا")}</span><strong><bdi>{formatSar(summary.renewalsDue, locale)}</bdi></strong><small>{countLabel(locale, summary.renewalsCount, nouns.subscription)} {tr("تنتهي قريبًا")}</small></div>
+      <div><span>{tr("المتوقع من التجديدات خلال 30 يومًا")}</span><strong><bdi>{formatSar(summary.renewalsDue, locale)}</bdi></strong><small>{tr("تنتهي قريبًا: {0}", countLabel(locale, summary.renewalsCount, nouns.subscription))}</small></div>
       <div><span>{tr("اشتراكات منتهية")}</span><strong><bdi>{formatNumber(summary.expired)}</bdi></strong><small>{tr("متدربون نشطون بلا اشتراك ساري")}</small></div>
     </section>
     <section className="card overflow-hidden"><div className="overflow-x-auto"><table>
@@ -1343,7 +1345,7 @@ function JoinRequests({
       ) : (
         <p className="mt-4 text-xs text-muted">
           {tr(
-            "الموافقة تضيف العميل فقط. أنشئ دعوته من ملفه لربط الحساب بعد التحقق.",
+            "الموافقة تضيف المتدرب فقط. أنشئ دعوته من ملفه لربط الحساب بعد التحقق.",
           )}
         </p>
       )}
@@ -1367,7 +1369,7 @@ function SettingsPage({ data }: { data: Snapshot }) {
           <h2 className="mb-3">{tr("رابط طلب الانضمام")}</h2>
           <p className="mb-5 text-sm leading-7 text-muted">
             {tr(
-              "يقدم العميل طلبًا، وتراجعه أنت. لا يُنشأ ارتباط حساب قبل الدعوة والتحقق من الإيميل.",
+              "يقدم المتدرب طلبًا، وتراجعه أنت. لا يُنشأ ارتباط حساب قبل الدعوة والتحقق من الإيميل.",
             )}
           </p>
           <LinkBox kind="join" />
@@ -1375,7 +1377,7 @@ function SettingsPage({ data }: { data: Snapshot }) {
         <section className="card p-6">
           <h2>{tr("تصدير البيانات")}</h2>
           <p className="mt-3 mb-5 text-sm text-muted">
-            {tr("تصدير خاص بعملائك فقط. احتفظ بالملفات في مكان آمن.")}
+            {tr("تصدير خاص بمتدربيك فقط. احتفظ بالملفات في مكان آمن.")}
           </p>
           <div className="flex flex-wrap gap-2">
             <a download href="/api/export" className="btn-secondary">
@@ -1383,7 +1385,7 @@ function SettingsPage({ data }: { data: Snapshot }) {
               {tr("كل بياناتك (JSON)")}
             </a>
             <a download href="/api/export?type=clients" className="btn-soft">
-              {tr("العملاء (CSV)")}
+              {tr("المتدربون (CSV)")}
             </a>
           </div>
           <Link
@@ -1423,7 +1425,7 @@ function SettingsPage({ data }: { data: Snapshot }) {
                       href={`/coach/clients/${r.client_id}`}
                       className="mb-4 inline-block text-xs text-teal underline"
                     >
-                      {tr("عدّل البيانات في ملف العميل أولًا")}
+                      {tr("عدّل البيانات في ملف المتدرب أولًا")}
                     </Link>
                   )}
                   <DataForm
@@ -1468,8 +1470,12 @@ function SettingsPage({ data }: { data: Snapshot }) {
                   <td className="text-xs">
                     {formatDate(a.created_at, locale)}
                   </td>
-                  <td className="text-xs" dir={/[؀-ۿ]/.test(a.action) ? "rtl" : "ltr"}>
-                    {tr(a.action)}
+                  <td className="text-xs">
+                    {(() => {
+                      // "حذف قياس وزن — سارة"; the trainee is resolved from the id, never stored by name.
+                      const clientName = data.clients.find((c) => c.id === (a.client_id ?? a.entity_id))?.name;
+                      return clientName ? `${tr(auditLabel(a.action))} — ${clientName}` : tr(auditLabel(a.action));
+                    })()}
                   </td>
                   <td className="text-xs text-muted">{a.detail ? tr(a.detail) : "—"}</td>
                   <td className="font-mono text-xs text-muted">

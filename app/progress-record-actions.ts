@@ -22,7 +22,11 @@ export async function changeProgressRecord(input: unknown, portalReference?: str
       value: payload, portal_hash: credential?.key ?? null, proof: credential?.proof ?? null,
     }, Boolean(credential));
     if (data.error) throw Error(data.error);
-    revalidatePath("/", "layout");
+    // The bearer portal refreshes its scoped snapshot through onUpdate. Only
+    // invalidate account pages that display the change, not the entire layout.
+    revalidatePath("/coach");
+    revalidatePath("/coach/clients/" + parsed.client_id);
+    revalidatePath("/me");
     return { ok: true, message: parsed.command === "delete" ? "تم حذف التحديث" : "تم حفظ التصحيح مع الاحتفاظ بإسناد السجل", data };
   } catch (error) { return { ok: false, message: readableError(error) }; }
 }

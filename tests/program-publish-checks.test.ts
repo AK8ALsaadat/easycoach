@@ -69,3 +69,23 @@ it("refuses to publish default names or empty meals in the database", async () =
   const published = await app<{ published_at: string | null }>("program_publish", { id: draft.id });
   expect(published.published_at).toBeTruthy();
 });
+
+it("persists explicit coach instructions separately from legacy descriptions and validates direct database writes", async () => {
+  const plan = named();
+  plan.days[0].exercises[0].description = "Legacy library description";
+  plan.days[0].exercises[0].coachNotes = "توقف ثانية.\nخفف الوزن عند الحاجة.";
+  expect(contentSchema.safeParse(plan).success).toBe(true);
+  const saved = await app<{ id: string; content: Content }>("program_save", { client_id: client, name: "توجيهات خاصة", content: plan });
+  expect(saved.content.days[0].exercises[0]).toMatchObject({ description: "Legacy library description", coachNotes: "توقف ثانية.\nخفف الوزن عند الحاجة." });
+  const published = await app<{ content: Content }>("program_publish", { id: saved.id });
+  expect(published.content.days[0].exercises[0].coachNotes).toBe(plan.days[0].exercises[0].coachNotes);
+  for (const bad of [null, 3, "a".repeat(2001)]) {
+    const invalid = structuredClone(plan);
+    Object.assign(invalid.days[0].exercises[0], { coachNotes: bad });
+    expect(contentSchema.safeParse(invalid).success).toBe(false);
+    const result = await db.query<{ valid: boolean }>("select public.valid_content($1::jsonb) as valid", [JSON.stringify(invalid)]);
+    expect(result.rows[0].valid).toBe(false);
+    await expect(app("program_save", { client_id: client, name: "Invalid notes", content: invalid })).rejects.toThrow();
+  }
+  expect((await db.query<{ valid: boolean }>("select public.valid_content($1::jsonb) as valid", [JSON.stringify(named())])).rows[0].valid).toBe(true);
+});

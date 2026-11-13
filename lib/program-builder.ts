@@ -20,7 +20,7 @@ export function customExercise(name: string): ProgramExercise {
 }
 
 export function isStarterExercise(exercise: ProgramExercise) {
-  return exercise.name === "تمرين جديد" && !exercise.description && !exercise.video && !exercise.mediaId && !exercise.catalogId &&
+  return exercise.name === "تمرين جديد" && !exercise.description && !exercise.coachNotes && !exercise.video && !exercise.mediaId && !exercise.catalogId &&
     exercise.sets === 3 && ["10", "10–12"].includes(exercise.reps) && exercise.rest === 60 &&
     exercise.weight === undefined && exercise.rpe === undefined && exercise.rir === undefined && !exercise.tempo;
 }

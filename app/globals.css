@@ -2047,3 +2047,7 @@ td { padding-block:18px; }
 /* Keep the program save bar's buttons clear of the floating support button (inline-end corner). */
 .program-savebar{padding-inline-end:84px}
 @media(max-width:600px){.program-savebar{padding-inline-end:76px}}
+/* "⋯" menu: floats in a portal so table overflow cannot clip it. */
+.actions-menu-trigger{min-width:44px;padding-inline:10px}
+.actions-menu-compact .actions-menu-trigger{min-height:40px}
+.actions-menu-list.actions-menu-floating{position:fixed;inset-inline-end:auto;z-index:120}
