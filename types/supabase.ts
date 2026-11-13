@@ -756,6 +756,78 @@ export type Database = {
           },
         ]
       }
+      paylink_invoices: {
+        Row: {
+          amount: number
+          client_id: string
+          coach_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          order_number: string
+          payment_errors: Json
+          payment_id: string | null
+          payment_type: string | null
+          payment_url: string | null
+          review_reason: string | null
+          settled_at: string | null
+          status: string
+          subscription_id: string
+          transaction_no: string | null
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          coach_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_number: string
+          payment_errors?: Json
+          payment_id?: string | null
+          payment_type?: string | null
+          payment_url?: string | null
+          review_reason?: string | null
+          settled_at?: string | null
+          status?: string
+          subscription_id: string
+          transaction_no?: string | null
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          coach_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_number?: string
+          payment_errors?: Json
+          payment_id?: string | null
+          payment_type?: string | null
+          payment_url?: string | null
+          review_reason?: string | null
+          settled_at?: string | null
+          status?: string
+          subscription_id?: string
+          transaction_no?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paylink_invoices_client_id_coach_id_fkey"
+            columns: ["client_id", "coach_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id", "coach_id"]
+          },
+          {
+            foreignKeyName: "paylink_invoices_subscription_id_coach_id_fkey"
+            columns: ["subscription_id", "coach_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id", "coach_id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -1349,6 +1421,43 @@ export type Database = {
         Args: { asset: string; portal_hash?: string; proof?: string }
         Returns: Json
       }
+      paylink_account_get: { Args: { coach: string }; Returns: string }
+      paylink_account_put: {
+        Args: { coach: string; sealed: string }
+        Returns: boolean
+      }
+      paylink_checkout_context: {
+        Args: { subscription: string; trainee: string }
+        Returns: Json
+      }
+      paylink_invoice_abandon: { Args: { order_no: string }; Returns: boolean }
+      paylink_invoice_attach: {
+        Args: { order_no: string; transaction: string; url: string }
+        Returns: boolean
+      }
+      paylink_invoice_lookup: {
+        Args: { order_no: string; transaction: string }
+        Returns: Json
+      }
+      paylink_invoice_mark: {
+        Args: { errors: Json; next_status: string; transaction: string }
+        Returns: boolean
+      }
+      paylink_invoice_open: {
+        Args: {
+          client: string
+          coach: string
+          order_no: string
+          subscription: string
+          total: number
+        }
+        Returns: string
+      }
+      paylink_invoice_settle: {
+        Args: { method_type: string; paid_amount: number; transaction: string }
+        Returns: Json
+      }
+      paylink_ready_coaches: { Args: { coaches: string[] }; Returns: string[] }
       photo_access: {
         Args: { asset: string; portal_hash?: string; proof?: string }
         Returns: Json
