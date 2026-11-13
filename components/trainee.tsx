@@ -10,6 +10,7 @@ import { WeightPanel } from "./weight-panel";
 import type { Snapshot } from "@/lib/model";
 import { formatDate, riyadhToday } from "@/lib/dates";
 import { latestSubscription } from "@/lib/subscription-period";
+import { PaylinkPay } from "./paylink-pay";
 import { Brand } from "./brand";
 import { DataForm } from "./forms";
 import { ProgramView } from "./program-view";
@@ -143,9 +144,11 @@ function BottomNav() {
 export function Trainee({
   data,
   selectedId,
+  paylinkCoaches = [],
 }: {
   data: Snapshot;
   selectedId?: string;
+  paylinkCoaches?: string[];
 }) {
   const { t: tr, language: locale } = useLocale();
 
@@ -350,13 +353,16 @@ export function Trainee({
                               {tr(". طُبّق تمديد {0}.", countLabel(locale, f.days, nouns.day))}
                             </p>
                           ))}
-                        <p className="mt-5 text-xs text-muted">{tr("للتجديد أو تعديل الباقة، أرسل طلبًا لمدربك. الدفع يتم بالاتفاق معه.")}</p>
+                        {paylinkCoaches.includes(client.coach_id) ? null : <p className="mt-5 text-xs text-muted">{tr("للتجديد أو تعديل الباقة، أرسل طلبًا لمدربك. الدفع يتم بالاتفاق معه.")}</p>}
                       </>
                     ) : (
                       <p className="mt-4 text-sm text-muted">
                         {tr("لم يضف مدربك باقة بعد.")}
                       </p>
                     )}
+                    {paylinkCoaches.includes(client.coach_id) ? (
+                      <PaylinkPay subscriptions={subscriptions} payments={data.payments} today={today} />
+                    ) : null}
                     <button type="button" className="btn-secondary mt-4" onClick={() => {
                       window.dispatchEvent(new Event("easycoach:open-messages"));
                       document.getElementById("client-management-hub")?.scrollIntoView({ behavior: "smooth", block: "start" });
