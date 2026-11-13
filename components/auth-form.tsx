@@ -10,7 +10,7 @@ import {
   type Result,
 } from "@/app/actions";
 import { Notice } from "./forms";
-import { passwordRequirements, passwordStrength, registrationPasswordIssue } from "@/lib/password";
+import { PASSWORD_MIN_LENGTH, passwordRequirements, passwordStrength, registrationPasswordIssue } from "@/lib/password";
 function GoogleMark() {
   return (
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48">
@@ -110,7 +110,7 @@ export function AuthForm({ next, local, google = false, initialRegister = false 
             className="field"
             type="password"
             required
-            minLength={8}
+            minLength={register ? PASSWORD_MIN_LENGTH : 8}
             maxLength={128}
             aria-describedby={register ? "password-rules password-strength-label" : undefined}
             autoComplete={register ? "new-password" : "current-password"}
@@ -127,7 +127,7 @@ export function AuthForm({ next, local, google = false, initialRegister = false 
               </div>
               <ul id="password-rules" className="space-y-1 text-xs text-muted">
                 {([
-                  [requirements.length, "8 أحرف على الأقل"],
+                  [requirements.length, "12 حرفًا على الأقل"],
                   [requirements.uppercase, "حرف إنجليزي كبير واحد على الأقل (A–Z)"],
                   [requirements.symbol, "رمز خاص واحد على الأقل مثل ! @ # $ %"],
                 ] as const).map(([met, label]) => <li key={label} className={met ? "text-emerald-600" : undefined}><span aria-hidden="true">{met ? "✓" : "○"} </span>{tr(label)}</li>)}
@@ -135,7 +135,7 @@ export function AuthForm({ next, local, google = false, initialRegister = false 
             </div>
             <div>
               <label htmlFor="auth-password-confirmation">{tr("تأكيد كلمة المرور")}</label>
-              <input id="auth-password-confirmation" name="password_confirmation" className="field" type="password" required minLength={8} maxLength={128} autoComplete="new-password" value={confirmation} onChange={event => { setConfirmation(event.target.value); setResult(null); }} aria-invalid={Boolean(confirmation && password !== confirmation)} aria-describedby="password-match" />
+              <input id="auth-password-confirmation" name="password_confirmation" className="field" type="password" required minLength={PASSWORD_MIN_LENGTH} maxLength={128} autoComplete="new-password" value={confirmation} onChange={event => { setConfirmation(event.target.value); setResult(null); }} aria-invalid={Boolean(confirmation && password !== confirmation)} aria-describedby="password-match" />
               <p id="password-match" role="status" className={`mt-2 text-xs ${password === confirmation ? "text-emerald-600" : "text-danger"}`}>
                 {confirmation ? tr(password === confirmation ? "كلمتا المرور متطابقتان" : "كلمتا المرور غير متطابقتين") : ""}
               </p>

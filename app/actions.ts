@@ -140,8 +140,19 @@ export async function registerAction(form: FormData): Promise<Result> {
         data: { display_name: input.name, role: input.role },
       },
     });
-    if (error)
-      throw new Error(error.status === 429 ? "طلبات تسجيل كثيرة. انتظر قليلًا ثم حاول مرة أخرى." : "تعذر إنشاء الحساب. حاول مرة أخرى بعد قليل.");
+    if (error) {
+      // Vercel logs keep the real cause; the user gets an actionable message.
+      console.error("signUp failed", error.status, error.code, error.message);
+      if (error.status === 429 || error.code === "over_email_send_rate_limit")
+        throw new Error("طلبات تسجيل كثيرة. انتظر قليلًا ثم حاول مرة أخرى.");
+      if (error.code === "weak_password")
+        throw new Error("كلمة المرور لا تحقق شروط الخادم: 12 حرفًا على الأقل مع حرف كبير ورمز خاص.");
+      if (error.code === "user_already_exists" || error.code === "email_exists")
+        throw new Error("هذا البريد مسجل مسبقًا. سجل دخولك أو استخدم استعادة كلمة المرور.");
+      if (/confirmation email|error sending/i.test(error.message))
+        throw new Error("تعذر إرسال رسالة التأكيد لبريدك. حاول بعد قليل، وإذا استمرت المشكلة تواصل مع الدعم.");
+      throw new Error("تعذر إنشاء الحساب. حاول مرة أخرى بعد قليل.");
+    }
     // signUp's user is not proof of verification. Confirm email must stay enabled.
     if (data?.session) {
       await client.auth.signOut({ scope: "local" });
