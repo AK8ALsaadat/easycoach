@@ -28,6 +28,10 @@ npm run dev
 
 كل هجرة جديدة لها سكربت تراجع يدوي في `supabase/rollbacks/`.
 
+## الدخول بحساب Google
+
+زر «الدخول بحساب Google» يظهر في وضع Supabase فقط عند `AUTH_GOOGLE_ENABLED=true`. قبل تفعيله: أنشئ OAuth Client (Web) في Google Cloud بعنوان الرجوع `https://trlgsugychocgwtnmzej.supabase.co/auth/v1/callback`، وأدخل Client ID وSecret في Supabase ← Authentication ← Providers ← Google، وتأكد أن `${APP_URL}/auth/callback` ضمن Redirect URLs. الحساب الجديد يأخذ نوع الحساب المختار قبل الدخول (مدرب افتراضيًا، ومتدرب عند الدخول من دعوة)، ولا يتغير نوع حساب موجود.
+
 ## ما نُفذ
 
 بورتال إيزي كوتش: واجهة عربية بخط واضح وتخطيط متجاوب، ومكتبة 876 حركة بشرح عربي محلي. أزيلت رسومات العصا، وأضيف عرض تشريحي مرخص لتمرينين فقط وبديل محايد صريح للبقية. رفع فيديو مباشر أو QR، وجبات، هدف المرحلة والوزن اليومي، ورابط عميل محمي برمز يتحدث بعد النشر. [تفاصيل الاستخدام](docs/STUDIO.md) و[تقرير إعادة التصميم والتغطية](docs/REDESIGN.md).

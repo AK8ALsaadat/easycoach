@@ -2017,3 +2017,9 @@ td { padding-block:18px; }
   .trainee-nutrition { grid-column:1; grid-row:2; }
   .trainee-aside { display:flex; flex-direction:column; gap:24px; grid-column:2; grid-row:1 / span 2; }
 }
+
+/* Google sign-in */
+.auth-divider{display:flex;align-items:center;gap:12px;color:var(--ui-text-muted);font-size:.8125rem}
+.auth-divider::before,.auth-divider::after{content:"";flex:1;height:1px;background:var(--ui-line)}
+.auth-google{gap:10px;justify-content:center;min-height:46px}
+.auth-google svg{flex:none}

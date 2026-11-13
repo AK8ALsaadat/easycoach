@@ -235,3 +235,42 @@ export async function claimAction(token: string): Promise<Result> {
     return { ok: false, message: readableError(e) };
   }
 }
+/** Google sign-in is shown only after the provider is configured in Supabase. */
+const googleAuthEnabled = () =>
+  !localMode() && process.env.AUTH_GOOGLE_ENABLED === "true";
+const OAUTH_ROLE_COOKIE = "ec_oauth_role";
+export async function googleLoginAction(input: {
+  next?: string;
+  role?: string;
+}): Promise<Result> {
+  try {
+    if (!googleAuthEnabled())
+      throw new Error("الدخول بحساب Google غير مفعّل حاليًا");
+    const next = safeNext(input.next);
+    const role = z.enum(["coach", "trainee"]).parse(
+      input.role ?? (next.startsWith("/invite/") ? "trainee" : "coach"),
+    );
+    // Applied only to brand-new accounts in /auth/callback; existing roles never change.
+    (await cookies()).set(OAUTH_ROLE_COOKIE, role, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.APP_URL?.startsWith("https://") ?? false,
+      maxAge: 600,
+      path: "/auth/callback",
+    });
+    const { data, error } = await (
+      await supabase()
+    ).auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${process.env.APP_URL}/auth/callback?next=${encodeURIComponent(next)}`,
+        skipBrowserRedirect: true,
+        queryParams: { prompt: "select_account" },
+      },
+    });
+    if (error || !data.url) throw new Error("تعذر فتح الدخول بحساب Google");
+    return { ok: true, message: "", url: data.url };
+  } catch (e) {
+    return { ok: false, message: readableError(e) };
+  }
+}

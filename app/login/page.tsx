@@ -35,11 +35,13 @@ export default async function Login({
             {tr("كل عملائك وبرامجهم واشتراكاتهم، بوضوح وفي مكان واحد.")}
           </p>
           {params.error ? (
-            <p className="mb-4 text-red-700">
-              {tr("تعذر تأكيد الحساب. جرّب رابطًا جديدًا أو سجّل الدخول.")}
+            <p role="alert" className="mb-4 text-red-700">
+              {params.error === "oauth"
+                ? tr("ما اكتمل الدخول بحساب Google. حاول مرة ثانية أو استخدم الإيميل.")
+                : tr("تعذر تأكيد الحساب. جرّب رابطًا جديدًا أو سجّل الدخول.")}
             </p>
           ) : null}
-          <AuthForm next={safeNext(params.next)} local={localMode()} />
+          <AuthForm next={safeNext(params.next)} local={localMode()} google={!localMode() && process.env.AUTH_GOOGLE_ENABLED === "true"} />
           <Link href="/demo" className="btn-secondary mt-4 w-full">
             {tr("تجربة المنصة")}
           </Link>
