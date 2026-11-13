@@ -146,7 +146,7 @@ export async function registerAction(form: FormData): Promise<Result> {
       if (error.status === 429 || error.code === "over_email_send_rate_limit")
         throw new Error("طلبات تسجيل كثيرة. انتظر قليلًا ثم حاول مرة أخرى.");
       if (error.code === "weak_password")
-        throw new Error("كلمة المرور لا تحقق شروط الخادم: 12 حرفًا على الأقل مع حرف كبير ورمز خاص.");
+        throw new Error("كلمة المرور لا تحقق شروط الخادم. استخدم كلمة أطول وأعقد ثم أعد المحاولة.");
       if (error.code === "user_already_exists" || error.code === "email_exists")
         throw new Error("هذا البريد مسجل مسبقًا. سجل دخولك أو استخدم استعادة كلمة المرور.");
       if (/confirmation email|error sending/i.test(error.message))

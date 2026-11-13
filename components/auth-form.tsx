@@ -127,7 +127,7 @@ export function AuthForm({ next, local, google = false, initialRegister = false 
               </div>
               <ul id="password-rules" className="space-y-1 text-xs text-muted">
                 {([
-                  [requirements.length, "12 حرفًا على الأقل"],
+                  [requirements.length, "8 أحرف على الأقل"],
                   [requirements.uppercase, "حرف إنجليزي كبير واحد على الأقل (A–Z)"],
                   [requirements.symbol, "رمز خاص واحد على الأقل مثل ! @ # $ %"],
                 ] as const).map(([met, label]) => <li key={label} className={met ? "text-emerald-600" : undefined}><span aria-hidden="true">{met ? "✓" : "○"} </span>{tr(label)}</li>)}
