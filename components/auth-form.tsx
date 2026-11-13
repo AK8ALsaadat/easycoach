@@ -1,8 +1,6 @@
 "use client";
 import { useLocale } from "./locale-provider";
 import { useRef, useState } from "react";
-import Link from "next/link";
-import { demoLogin } from "@/app/demo-actions";
 import {
   loginAction,
   registerAction,
@@ -28,7 +26,6 @@ export function AuthForm({ next, local, google = false }: { next: string; local:
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [email,setEmail]=useState(local ? "coach@example.test" : "");
-  const demo=!register&&email.trim().toLowerCase()==="test";
   const formRef = useRef<HTMLFormElement>(null);
   return (
     <div>
@@ -38,10 +35,7 @@ export function AuthForm({ next, local, google = false }: { next: string; local:
           event.preventDefault();
           setBusy(true);
           try {
-            if(demo){
-              const form=new FormData(event.currentTarget);form.set("username","test");
-              setResult(await demoLogin(form));
-            } else setResult(
+            setResult(
               await (register ? registerAction : loginAction)(
                 new FormData(event.currentTarget),
               ),
@@ -81,7 +75,7 @@ export function AuthForm({ next, local, google = false }: { next: string; local:
             id="auth-email"
             name="email"
             className="field"
-            type={demo?"text":"email"}
+            type="email"
             required
             autoComplete="email"
             value={email}
@@ -96,7 +90,7 @@ export function AuthForm({ next, local, google = false }: { next: string; local:
             className="field"
             type="password"
             required
-            minLength={register ? 12 : demo ? 4 : 8}
+            minLength={register ? 12 : 8}
             autoComplete={register ? "new-password" : "current-password"}
             defaultValue={local ? "CoachPreview!2026" : ""}
           />
@@ -108,7 +102,7 @@ export function AuthForm({ next, local, google = false }: { next: string; local:
               ? tr("إنشاء حساب")
               : tr("الدخول إلى مساحتك")}
         </button>
-        {!local && !register && !demo ? (
+        {!local && !register ? (
           <button
             type="button"
             disabled={busy}
@@ -126,7 +120,7 @@ export function AuthForm({ next, local, google = false }: { next: string; local:
             {tr("الدخول برابط على الإيميل")}
           </button>
         ) : null}
-        {google && !demo ? (
+        {google ? (
           <>
             <div className="auth-divider"><span>{tr("أو")}</span></div>
             <button
@@ -154,7 +148,6 @@ export function AuthForm({ next, local, google = false }: { next: string; local:
         ) : null}
         <Notice result={result} />
       </form>
-      {!register&&<Link href="/demo" className="auth-demo-entry"><strong>{tr("جرّب المنصة بحساب تجريبي")}</strong><span>{tr("اسم المستخدم: test · كلمة المرور: test")}</span></Link>}
       {!local ? (
         <button
           className="mt-5 text-sm text-teal"

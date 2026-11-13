@@ -42,12 +42,9 @@ export default async function Login({
             </p>
           ) : null}
           <AuthForm next={safeNext(params.next)} local={localMode()} google={!localMode() && process.env.AUTH_GOOGLE_ENABLED === "true"} />
-          <Link href="/demo" className="btn-secondary mt-4 w-full">
-            {tr("تجربة المنصة")}
-          </Link>
         </div>
         <Link href="/privacy" className="text-xs text-muted underline">
-          {tr("إشعار الخصوصية · مسودة للمراجعة")}
+          {tr("إشعار الخصوصية")}
         </Link>
       </section>
       <aside className="relative hidden overflow-hidden bg-ink p-16 text-white lg:flex lg:flex-col lg:justify-center">

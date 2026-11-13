@@ -8,7 +8,6 @@ Supabase: `https://trlgsugychocgwtnmzej.supabase.co`، منطقة لندن. ال
 
 | المتغير | الاستخدام |
 |---|---|
-| `APP_MODE=supabase` | تفعيل القاعدة المستضافة، وليس القاعدة الملفية المحلية |
 | `APP_URL` | النطاق الموثوق للروابط والرجوع؛ حاليًا `https://easycoach-livid.vercel.app` |
 | `NEXT_PUBLIC_SUPABASE_URL` | رابط المشروع؛ عام |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | المفتاح العام المفضّل |

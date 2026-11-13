@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { hostEnvironmentPlan } from "../scripts/host-env-scope.mjs";
-const production = { APP_URL: "https://production.example.test", NEXT_PUBLIC_SUPABASE_URL: "https://prod-project.supabase.co", APP_MODE: "supabase", DATABASE_URL: "synthetic-db-value", SUPABASE_SERVICE_ROLE_KEY: "synthetic-only" };
+const production = { APP_URL: "https://production.example.test", NEXT_PUBLIC_SUPABASE_URL: "https://prod-project.supabase.co", DATABASE_URL: "synthetic-db-value", SUPABASE_SERVICE_ROLE_KEY: "synthetic-only" };
 const preview = { ...production, APP_URL: "https://preview.example.test", NEXT_PUBLIC_SUPABASE_URL: "https://preview-project.supabase.co" };
 it("never fans production configuration out to preview or development", () => {
   const plan = hostEnvironmentPlan(production);

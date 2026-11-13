@@ -30,7 +30,7 @@
 
 ## Supabase الفعلي
 
-نُفذ `scripts/remote-check.mjs` على المشروع المخصص، بحسابات اصطناعية وكلمات مرور عشوائية محفوظة محليًا في `.vercel/preview-accounts.private.json`. جميع عمليات بيانات المدرب عبر جلسات المستخدمين ومفتاح عام؛ المفتاح الإداري لإنشاء هويات الاختبار فقط. النتيجة التفصيلية في `artifacts/remote-check-results.json`.
+حُذف سكربت الفحص المستضاف الذي كان يُنشئ حسابات مراجعة اصطناعية في Supabase قبل الإطلاق. حذف تلك الحسابات من الإنتاج في `supabase/scripts/remove-test-accounts.sql` (يُشغَّل يدويًا).
 
 ظهر أولًا `permission denied for schema auth`: Supabase لا يمنح دور الكتابة المخصص USAGE على مخطط auth. عولج في هجرة `managed_auth_identity` بوسيط ثابت search_path يعيد هوية الجلسة فقط، دون منح auth.users أو BYPASSRLS. أُعيد الاختبار ونجح.
 

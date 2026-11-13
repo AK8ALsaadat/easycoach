@@ -15,7 +15,7 @@ export function hostEnvironmentPlan(environment, target = "production", producti
   }
   return Object.entries(environment).map(([key, value]) => ({
     key, value,
-    type: key.startsWith("NEXT_PUBLIC_") || ["APP_URL", "APP_MODE"].includes(key) ? "plain" : "encrypted",
+    type: key.startsWith("NEXT_PUBLIC_") || key === "APP_URL" ? "plain" : "encrypted",
     target: [target],
   }));
 }

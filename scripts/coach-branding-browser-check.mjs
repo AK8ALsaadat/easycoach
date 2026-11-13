@@ -1,4 +1,4 @@
-// Run against an isolated APP_MODE=local database, never against production.
+// Run against an isolated local development database (LOCAL_DB_PATH), never against production.
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
 import sharp from "sharp";

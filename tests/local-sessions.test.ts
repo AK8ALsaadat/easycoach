@@ -20,7 +20,7 @@ vi.mock("@/lib/local-db", async importOriginal => {
 import { actor, hash, loginLocal } from "@/lib/server";
 
 beforeAll(async () => {
-  vi.stubEnv("APP_MODE", "local");
+  vi.stubEnv("LOCAL_DB_PATH", "memory://tests");
   context.db = await openDatabase();
   await context.db.query("insert into auth.users values($1,$2,$3,now())", [LOCAL_IDS.coach, "sessions@example.test", passwordHash("Synthetic!2026")]);
 });

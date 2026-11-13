@@ -1,9 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/supabase";
+import { localPreview } from "@/lib/runtime";
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
-  if (process.env.APP_MODE === "local") return response;
+  if (localPreview()) return response;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL,
     key =
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??

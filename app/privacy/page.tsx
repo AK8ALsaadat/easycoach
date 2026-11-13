@@ -11,14 +11,9 @@ export default async function Privacy() {
       <Brand />
       <article className="card mt-9 space-y-7 p-7 sm:p-10">
         <div>
-          <span className="badge bg-amber-50 text-amber-800">
-            {tr("مسودة للمراجعة — ليست اعتمادًا قانونيًا")}
-          </span>
-          <h1 className="mt-4">{tr("إشعار الخصوصية")}</h1>
+          <h1>{tr("إشعار الخصوصية")}</h1>
           <p className="mt-3 text-sm text-muted">
-            {tr(
-              "نسخة المعاينة · 7 نوفمبر 2026. يجب إكمال بيانات المشغّل وقنوات التواصل ومدد الاحتفاظ ومراجعة الإشعار قبل أي إطلاق أو استخدام لبيانات حقيقية.",
-            )}
+            {tr("آخر تحديث: 13 نوفمبر 2026")}
           </p>
         </div>
         {[

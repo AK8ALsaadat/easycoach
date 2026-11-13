@@ -19,7 +19,7 @@ async function fixture(kind: "workout" | "nutrition" | "nutrition_targets") {
     await manage("record_save", { id: randomUUID(), client_id: client.id, kind: "nutrition_target", entry_date: riyadhToday(), payload: { ...macros(calories), text: "خطة شخصية", meals: [{ name: "الفطور", time: "08:00", foods: "طعام شخصي", ...macros(calories / 4) }] } });
   }
   const content = structuredClone(blankContent);
-  content.days[0].exercises[0] = { ...content.days[0].exercises[0], name: "تمرين عام", video: "https://example.test/demo", weight: 95, rpe: 9, rir: 1, tempo: "3-1-1-0" };
+  content.days[0].exercises[0] = { ...content.days[0].exercises[0], name: "تمرين عام", video: "https://example.test/video", weight: 95, rpe: 9, rir: 1, tempo: "3-1-1-0" };
   content.nutrition = { ...macros(3900), text: "أطعمة عامة", meals: [{ name: "الفطور", time: "09:00", foods: "طعام القالب", ...macros(1000) }] };
   const template = await manage<{ id: string }>("template_save_typed", { name: "قالب عام " + randomUUID().slice(0, 8), content, kind, description: "وصف محفوظ", archived: false });
   return { clients, template, content };
@@ -60,7 +60,7 @@ it("keeps personal nutrition when assigning training and excludes personal loads
   for (const [index, client] of clients.entries()) {
     const program = state.programs.find(program => program.client_id === client)!;
     expect(program.content.nutrition).toMatchObject(macros(index === 0 ? 1700 : 2800));
-    expect(program.content.days[0].exercises[0]).toMatchObject({ video: "https://example.test/demo" });
+    expect(program.content.days[0].exercises[0]).toMatchObject({ video: "https://example.test/video" });
     for (const field of ["weight", "rpe", "rir", "tempo"]) expect(program.content.days[0].exercises[0]).not.toHaveProperty(field);
   }
   expect(state.templates.find(item => item.id === template.id)?.content).toEqual(content);

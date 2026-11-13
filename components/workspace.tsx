@@ -382,16 +382,6 @@ export function Workspace({
           </div>
         ) : null}
         <main id="portal-content" className="portal-content">
-          {data.demo && (
-            <p
-              role="status"
-              className="rounded-xl border border-amber-200 bg-amber-50 text-amber-900 px-4 py-3 mb-5"
-            >
-              {tr(
-                "حساب تجريبي عام — جميع البيانات هنا وهمية ومشتركة للاختبار. لا تدخل بيانات عملاء حقيقية.",
-              )}
-            </p>
-          )}
           {section === "support" && supportOwner ? (
             <SupportDesk owner />
           ) : section === "today" ? (
@@ -431,7 +421,7 @@ export function Workspace({
         <footer className="flex flex-wrap justify-between gap-3 border-t px-5 py-5 text-xs text-muted lg:px-9">
           <span>{tr("إيزي كوتش · بوابتك لإدارة التدريب")}</span>
           <Link href="/privacy" className="underline">
-            {tr("الخصوصية · مسودة للمراجعة")}
+            {tr("الخصوصية")}
           </Link>
         </footer>
       </div>

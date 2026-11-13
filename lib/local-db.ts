@@ -88,7 +88,7 @@ export async function seedDatabase(db: PGlite) {
   for (const [id, email, name, role] of [
     [LOCAL_IDS.coach, "coach@example.test", "عبدالله السالم", "coach"],
     [LOCAL_IDS.other, "coach2@example.test", "نورة العتيبي", "coach"],
-    [LOCAL_IDS.trainee, "trainee@example.test", "سلمان التجريبي", "trainee"],
+    [LOCAL_IDS.trainee, "trainee@example.test", "سلمان الحربي", "trainee"],
   ]) {
     await db.query(
       "insert into auth.users(id,email,encrypted_password,email_confirmed_at) values($1,$2,$3,now())",
@@ -101,12 +101,12 @@ export async function seedDatabase(db: PGlite) {
   }
   const clients = [];
   for (const [i, name] of [
-    "سلمان التجريبي",
-    "فهد التجريبي",
-    "ريم التجريبية",
-    "خالد التجريبي",
-    "سارة التجريبية",
-    "عمر التجريبي",
+    "سلمان الحربي",
+    "فهد القحطاني",
+    "ريم الشهري",
+    "خالد الزهراني",
+    "سارة العنزي",
+    "عمر الدوسري",
   ].entries()) {
     const row = await rpcLocal<{ id: string }>(
       db,
@@ -217,7 +217,7 @@ export async function seedDatabase(db: PGlite) {
           amount: i === 0 ? 650 : 300,
           method: "bank",
           paid_date: shift(-26 + i),
-          reference: `DEMO-${i}`,
+          reference: `LOCAL-${i}`,
         },
       });
     if (i < 3) {

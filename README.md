@@ -12,11 +12,11 @@ cp .env.example .env.local
 npm run dev
 ```
 
-في Windows استخدم `Copy-Item .env.example .env.local`. اترك `APP_MODE=local` لتشغيل PostgreSQL مضمّن (PGlite) على القرص، بنفس الهجرات وسياسات RLS. لا توجد محاكاة للحفظ باستخدام localStorage. القاعدة في `data/easycoach` افتراضيًا؛ المسار قابل للضبط بـ`LOCAL_DB_PATH`. لا تفتح القاعدة نفسها من عمليتي Node متزامنتين.
+في Windows استخدم `Copy-Item .env.example .env.local`. اضبط `LOCAL_DB_PATH` لتشغيل `npm run dev` على PostgreSQL مضمّن (PGlite) على القرص، بنفس الهجرات وسياسات RLS. هذه القاعدة للتطوير فقط: بناء الإنتاج (`next build`) يحذف هذا الفرع بالكامل ولا يقرأ `LOCAL_DB_PATH`. لا توجد محاكاة للحفظ باستخدام localStorage. القاعدة في المسار المحدد بـ`LOCAL_DB_PATH` (مثل `./data/easycoach`). لا تفتح القاعدة نفسها من عمليتي Node متزامنتين.
 
 المعاينة: **http://127.0.0.1:3200**. حسابات اصطناعية محلية: `coach@example.test` و`coach2@example.test` و`trainee@example.test`، وكلمة المرور `CoachPreview!2026`. وضع المعاينة المحلية يرفض المضيفين غير localhost/127.0.0.1 ولا يُنشر بهذا الوضع.
 
-للاستخدام مع Supabase: `APP_MODE=supabase`، اضبط URL ومفتاح Publishable و`APP_URL`، ثم ابنِ المشروع بنفس متغيرات البيئة. لا يُنشئ التطبيق حسابات المعاينة المحلية في Supabase. حسابات المراجعة المستضافة، إن جُهزت، لها كلمات مرور عشوائية في ملف خاص مستثنى من Git.
+للاستخدام مع Supabase: احذف `LOCAL_DB_PATH`، واضبط URL ومفتاح Publishable و`APP_URL`، ثم ابنِ المشروع بنفس متغيرات البيئة. لا يوجد حساب تجريبي، ولا يُنشئ التطبيق حسابات المعاينة المحلية في Supabase.
 
 ## إضافات نوفمبر 2026
 

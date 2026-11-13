@@ -168,7 +168,7 @@ try {
     (await snapshot(page)).clients.find(
       (c) => c.email === "trainee@example.test",
     ).name,
-    "سلمان التجريبي",
+    "سلمان الحربي",
   );
   const second = await login("coach2@example.test");
   assert(!(await snapshot(second)).clients.some((c) => c.id === clientId));

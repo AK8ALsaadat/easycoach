@@ -299,7 +299,6 @@ export type Snapshot = {
   coach_branding?: import("./coach-branding").CoachBranding[];
   /** Trainee links whose coach archived them: access is paused, data is kept. */
   paused_access?: { client_id: string; coach: string | null }[];
-  demo?: boolean;
   management?: ManagementData;
   weights: WeightEntry[];
   client_goals: ClientGoal[];

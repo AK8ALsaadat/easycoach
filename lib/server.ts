@@ -11,10 +11,10 @@ import {
 import { getLocalDatabase, rpcLocal } from "./local-db";
 import type { Snapshot } from "./model";
 import type { Database } from "@/types/supabase";
-import { DEMO_EMAIL, isDemoIdentity } from "./demo-config";
 import { ZodError } from "zod";
 
-export const localMode = () => process.env.APP_MODE === "local";
+export { localPreview as localMode } from "./runtime";
+import { localPreview as localMode } from "./runtime";
 export const hash = (v: string) => createHash("sha256").update(v).digest("hex");
 export function safeNext(value: unknown) {
   return typeof value === "string" &&
@@ -70,7 +70,6 @@ export async function actor() {
           ...r.rows[0],
           name: "",
           role: "trainee",
-          demo: r.rows[0].email === DEMO_EMAIL,
         }
       : null;
   }
@@ -79,7 +78,6 @@ export async function actor() {
   if (error || !data.user?.email_confirmed_at) return null;
   return {
     id: data.user.id,
-    demo: isDemoIdentity(data.user.email, data.user.app_metadata),
     email: data.user.email!,
     name: String(data.user.user_metadata.display_name ?? "مستخدم جديد"),
     role: data.user.user_metadata.role === "coach" ? "coach" : "trainee",
@@ -135,7 +133,7 @@ export async function snapshot(): Promise<Snapshot> {
     }
   }
   data.coach_branding = await rpc("coach_branding_snapshot");
-  return { ...data, demo: user.demo };
+  return data;
 }
 export async function requireCoach() {
   const data = await snapshot();
