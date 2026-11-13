@@ -1094,6 +1094,49 @@
   font-size: 0.875rem;
   color: var(--ui-text-primary);
 }
+.otp-field {
+  position: relative;
+  direction: ltr;
+}
+.otp-input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  /* 16px stops iOS from zooming into the invisible field. */
+  font-size: 16px;
+}
+.otp-boxes {
+  display: flex;
+  gap: 7px;
+  justify-content: center;
+}
+.otp-box {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 50px;
+  aspect-ratio: 4 / 5;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--ui-line);
+  border-radius: 12px;
+  background: var(--ui-canvas);
+  font-size: clamp(1rem, 4.5vw, 1.375rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-text-primary);
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+}
+.otp-box-filled {
+  background: var(--ui-surface);
+  border-color: var(--ui-accent-border);
+}
+.otp-box-active {
+  border-color: var(--ui-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-primary) 20%, transparent);
+}
 .weekly-review-done {
   display: inline-flex;
   align-items: center;

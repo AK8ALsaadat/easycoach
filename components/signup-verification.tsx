@@ -8,6 +8,7 @@ import { EMAIL_OTP_LENGTH, normalizeEmailOtp, validEmailOtp } from "@/lib/email-
 export function SignupVerification({ email, resendAt }: { email: string; resendAt: number }) {
   const router = useRouter();
   const [code, setCode] = useState("");
+  const [focused, setFocused] = useState(false);
   const [pending, setPending] = useState<"verify" | "resend" | null>(null);
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [retryAt, setRetryAt] = useState(resendAt);
@@ -41,7 +42,16 @@ export function SignupVerification({ email, resendAt }: { email: string; resendA
     </div>
     <form method="post" className="space-y-4" onSubmit={event => { event.preventDefault(); if (validEmailOtp(code)) void run("verify"); }}>
       <label htmlFor="signup-otp" className="block font-semibold">رمز التحقق</label>
-      <input ref={input} id="signup-otp" name="code" type="text" inputMode="numeric" autoComplete="one-time-code" dir="ltr" className="field text-center text-2xl tracking-[0.25em]" required minLength={EMAIL_OTP_LENGTH} maxLength={EMAIL_OTP_LENGTH} pattern={`[0-9]{${EMAIL_OTP_LENGTH}}`} value={code} onChange={event => { setCode(normalizeEmailOtp(event.target.value)); setResult(null); }} onPaste={event => { event.preventDefault(); setCode(normalizeEmailOtp(event.clipboardData.getData("text"))); setResult(null); }} readOnly={pending !== null} aria-describedby="signup-otp-help" />
+      <div className="otp-field" dir="ltr">
+        <input ref={input} id="signup-otp" name="code" type="text" inputMode="numeric" autoComplete="one-time-code" dir="ltr" className="otp-input" required minLength={EMAIL_OTP_LENGTH} maxLength={EMAIL_OTP_LENGTH} pattern={`[0-9]{${EMAIL_OTP_LENGTH}}`} value={code} onChange={event => { setCode(normalizeEmailOtp(event.target.value)); setResult(null); }} onPaste={event => { event.preventDefault(); setCode(normalizeEmailOtp(event.clipboardData.getData("text"))); setResult(null); }} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} readOnly={pending !== null} aria-describedby="signup-otp-help" />
+        <div className="otp-boxes" aria-hidden="true">
+          {Array.from({ length: EMAIL_OTP_LENGTH }, (_, index) => (
+            <span key={index} className={`otp-box${code[index] ? " otp-box-filled" : ""}${focused && index === Math.min(code.length, EMAIL_OTP_LENGTH - 1) ? " otp-box-active" : ""}`}>
+              {code[index] ?? ""}
+            </span>
+          ))}
+        </div>
+      </div>
       <p id="signup-otp-help" className="text-xs text-muted">الرمز مكوّن من {EMAIL_OTP_LENGTH} أرقام. يمكنك لصقه كاملًا، بما في ذلك الأصفار في بدايته.</p>
       <button className="btn w-full justify-center" disabled={pending !== null || !validEmailOtp(code)}>{pending === "verify" ? "جارٍ التحقق…" : "تأكيد البريد وفتح الحساب"}<ShieldCheck size={18} aria-hidden="true" /></button>
     </form>
