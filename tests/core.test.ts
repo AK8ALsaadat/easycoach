@@ -10,7 +10,9 @@ import {
   LOCAL_IDS,
   passwordHash,
 } from "@/lib/local-db";
-import { blankContent, type Snapshot } from "@/lib/model";
+import { blankContent as defaultContent, type Snapshot } from "@/lib/model";
+import { publishable } from "./helpers/db";
+const blankContent = publishable(defaultContent);
 import { addDays, daysBetween, riyadhToday } from "@/lib/dates";
 import { readImportFile } from "@/lib/import";
 import { csvCell, previewImport } from "@/lib/import-preview";

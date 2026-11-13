@@ -8,11 +8,13 @@ import {
   passwordHash,
 } from "@/lib/local-db";
 import {
-  blankContent,
+  blankContent as defaultContent,
   content,
   type PortalData,
   type Snapshot,
 } from "@/lib/model";
+import { publishable } from "./helpers/db";
+const blankContent = publishable(defaultContent);
 import { riyadhToday, addDays } from "@/lib/dates";
 let db: PGlite;
 const coach = LOCAL_IDS.coach,

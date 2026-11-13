@@ -45,3 +45,10 @@ export async function fixtureDatabase() {
   }
   return { db: db as PGlite, call, app, manage, client, linkTrainee, newTrainee };
 }
+
+/** blankContent with a real exercise name, so it can be published (default names are blocked). */
+export function publishable<T extends { days: { exercises: { name: string }[] }[] }>(content: T): T {
+  const copy = structuredClone(content);
+  copy.days.forEach((day, d) => day.exercises.forEach((exercise, i) => { if (exercise.name.trim() === "تمرين جديد") exercise.name = `تمرين ${d + 1}-${i + 1}`; }));
+  return copy;
+}

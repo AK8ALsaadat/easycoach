@@ -8,7 +8,9 @@ import {
   LOCAL_IDS,
   passwordHash,
 } from "@/lib/local-db";
-import { blankContent, content, type Snapshot } from "@/lib/model";
+import { blankContent as defaultContent, content, type Snapshot } from "@/lib/model";
+import { publishable } from "./helpers/db";
+const blankContent = publishable(defaultContent);
 import {
   recordInput,
   effectiveNutrition,

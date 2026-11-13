@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Scale, TrendingDown, Plus, Trash2 } from "lucide-react";
 import type { WeightEntry } from "@/lib/model";
 import { riyadhToday, formatDate } from "@/lib/dates";
+import { formatNumber } from "@/lib/plural";
+import { ConfirmDialog } from "./modal";
 export function WeightPanel({
   entries,
   target,
@@ -32,7 +34,25 @@ export function WeightPanel({
     [weight, setWeight] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [message, setMessage] = useState("");
+    [message, setMessage] = useState(""),
+    [pendingDelete, setPendingDelete] = useState<WeightEntry | null>(null);
+  async function confirmDelete() {
+    if (!pendingDelete || !onDelete) return;
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const err = await onDelete(pendingDelete.entry_date);
+      if (err) setError(err);
+      else setMessage("تم حذف تسجيل الوزن");
+      setPendingDelete(null);
+    } catch {
+      setError("تعذر الاتصال. لم نتأكد من الحذف؛ حدّث السجل قبل إعادة المحاولة.");
+      setPendingDelete(null);
+    } finally {
+      setBusy(false);
+    }
+  }
   const low = Math.min(...recent.map((e) => Number(e.weight))) - 1,
     high = Math.max(...recent.map((e) => Number(e.weight))) + 1;
   const start = recent[0] ? Date.parse(recent[0].entry_date) : 0,
@@ -155,13 +175,19 @@ export function WeightPanel({
       {onSave ? (
         <form
           className="mt-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
+          noValidate
           onSubmit={async (e) => {
             e.preventDefault();
+            const value = Number(weight.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[,،٫]/g, "."));
+            if (!day) { setError("اختر تاريخ الوزن"); return; }
+            if (day > riyadhToday()) { setError("لا يمكن تسجيل وزن بتاريخ قادم"); return; }
+            if (!weight.trim()) { setError("أدخل الوزن بالكيلوجرام"); return; }
+            if (!Number.isFinite(value) || value < 20 || value > 400) { setError("الوزن بين 20 و400 كجم"); return; }
             setBusy(true);
             setError("");
             setMessage("");
             try {
-              const err = await onSave(day, Number(weight));
+              const err = await onSave(day, Math.round(value * 10) / 10);
               if (err) setError(err);
               else {
                 setMessage("تم حفظ الوزن");
@@ -193,16 +219,13 @@ export function WeightPanel({
               aria-label={tr("الوزن بالكيلوجرام")}
               disabled={busy}
               className="field mt-1"
-              type="number"
+              type="text"
               inputMode="decimal"
               dir="ltr"
-              min={20}
-              max={400}
-              step="0.1"
+              autoComplete="off"
               placeholder={tr("مثال: 82.4")}
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
-              required
             />
           </label>
           <button className="btn self-end" disabled={busy}>
@@ -222,7 +245,7 @@ export function WeightPanel({
       ) : null}
       {message ? (
         <p role="status" className="mt-3 text-sm text-teal">
-          {message}
+          {tr(message)}
         </p>
       ) : null}
       {ordered.length ? (
@@ -240,23 +263,15 @@ export function WeightPanel({
                   key={w.id}
                 >
                   <span>{formatDate(w.entry_date, locale)}</span>
-                  <strong dir="ltr">{Number(w.weight).toFixed(1)} kg</strong>
+                  <strong><bdi>{formatNumber(Number(w.weight))}</bdi> {tr("كجم")}</strong>
                   {onDelete ? (
                     <button
                       aria-label={tr("حذف وزن ") + w.entry_date}
                       className="p-2 text-muted"
                       disabled={busy}
-                      onClick={async () => {
-                        if (!window.confirm("تحذف تسجيل هذا اليوم؟")) return;
-                        setBusy(true);
-                        try {
-                          const err = await onDelete(w.entry_date);
-                          if (err) setError(err);
-                        } catch {
-                          setError("تعذر الاتصال. لم نتأكد من الحذف؛ حدّث السجل قبل إعادة المحاولة.");
-                        } finally {
-                          setBusy(false);
-                        }
+                      onClick={() => {
+                        setMessage("");
+                        setPendingDelete(w);
                       }}
                     >
                       <Trash2 size={14} />
@@ -267,6 +282,17 @@ export function WeightPanel({
           </div>
         </details>
       ) : null}
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title={tr("حذف تسجيل الوزن؟")}
+        confirmLabel="حذف"
+        danger
+        busy={busy}
+        onConfirm={confirmDelete}
+        onClose={() => setPendingDelete(null)}
+      >
+        {pendingDelete && tr("سيُحذف وزن {0} كجم بتاريخ {1}. يمكنك تسجيله مرة ثانية متى ما أردت.", formatNumber(Number(pendingDelete.weight)), formatDate(pendingDelete.entry_date, locale))}
+      </ConfirmDialog>
     </section>
   );
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { REPS_ERROR, REST_ERROR, SETS_ERROR, validReps } from "./program-validation";
 import type { ManagementData } from "./management";
 import { exactCaloriesFromMacros, hasOneDecimal, MACRO_LIMITS } from "./macros";
 import { templateName } from "./template-names";
@@ -46,9 +47,9 @@ export const exercise = z
     name: z.string().trim().min(2).max(140),
     description: z.string().max(2000),
     video: z.union([z.literal(""), z.url().startsWith("https://")]),
-    sets: z.number().int().min(1).max(20),
-    reps: z.string().min(1).max(60),
-    rest: z.number().int().min(0).max(600),
+    sets: z.number({ error: SETS_ERROR }).int(SETS_ERROR).min(1, SETS_ERROR).max(20, SETS_ERROR),
+    reps: z.string().max(60).refine(validReps, REPS_ERROR),
+    rest: z.number({ error: REST_ERROR }).int(REST_ERROR).min(0, REST_ERROR).max(600, REST_ERROR),
     catalogId: z.string().max(160).optional(),
     mediaId: id.optional(),
     rowId: id.optional(),

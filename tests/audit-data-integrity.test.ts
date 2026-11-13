@@ -3,7 +3,9 @@ import { randomUUID } from "node:crypto";
 import type { PGlite } from "@electric-sql/pglite";
 import { openDatabase, rpcLocal, LOCAL_IDS } from "@/lib/local-db";
 import type { Snapshot } from "@/lib/model";
-import { blankContent, type Program } from "@/lib/model";
+import { blankContent as defaultContent, type Program } from "@/lib/model";
+import { publishable } from "./helpers/db";
+const blankContent = publishable(defaultContent);
 
 let db: PGlite;
 let client: string;

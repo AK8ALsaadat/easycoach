@@ -338,7 +338,8 @@ export function CoachToday({
           </p>
           <div className="mt-4">
             {(data.management?.records ?? [])
-              .slice()
+              // Values preserved when a weight is corrected or deleted are history, not new activity.
+              .filter((record) => !record.payload.historical_only)
               .sort((a, b) => b.created_at.localeCompare(a.created_at))
               .slice(0, 6)
               .map((record) => (

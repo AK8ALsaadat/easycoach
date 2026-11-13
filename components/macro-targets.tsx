@@ -176,7 +176,16 @@ export function MacroTargets({
           </button>
         </div>
       )}
-      <details className="macro-reverse">
+      <details
+        className="macro-reverse"
+        onToggle={(event) => {
+          // Start from the current targets every time the calculator opens.
+          if (!event.currentTarget.open) return;
+          setReverseCalories(value.calories ? String(value.calories) : "");
+          setSplit(macroSplit(value) ?? { protein: 30, carbs: 45, fat: 25 });
+          setSplitText({});
+        }}
+      >
         <summary>{tr("احسب الجرامات من السعرات ونسب التوزيع (اختياري)")}</summary>
         <p className="mt-2 text-xs text-muted">{tr("مثال: 2,000 سعرة بتوزيع 40/35/25 للبروتين والكارب والدهون.")}</p>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">

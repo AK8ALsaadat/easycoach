@@ -115,6 +115,8 @@ export const recordInput = z
     entry_date: date,
     payload: z.unknown(),
     source_key: z.string().min(1).max(160).optional(),
+    /** Portal the record was written from; decides the sender when one account is both coach and trainee. */
+    author_type: z.enum(["coach", "client"]).optional(),
   })
   .strict()
   .transform((row, ctx) => {
@@ -151,7 +153,7 @@ export const managementCommands = {
     feedback: z.string().max(4000),
     reviewed: z.boolean(),
   }),
-  messages_read: z.object({ client_id: id }),
+  messages_read: z.object({ client_id: id, side: z.enum(["coach", "client"]).optional() }),
   template_meta: z.object({
     id,
     description: z.string().max(2000),

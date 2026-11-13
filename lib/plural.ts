@@ -31,3 +31,9 @@ export const nouns = {
   subscription: { ar: { zero: "لا توجد اشتراكات", one: "اشتراك واحد", two: "اشتراكان", few: "{n} اشتراكات", many: "{n} اشتراكًا", other: "{n} اشتراك" }, en: ["subscription", "subscriptions"] },
   trainee: { ar: { zero: "لا يوجد متدربون", one: "متدرب واحد", two: "متدربان", few: "{n} متدربين", many: "{n} متدربًا", other: "{n} متدرب" }, en: ["trainee", "trainees"] },
 } satisfies Record<string, Noun>;
+
+/** Saudi riyal amounts with Western digits, matching the rest of the interface. */
+export function formatSar(value: number | string, language: Language = "ar") {
+  const amount = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(Number(value));
+  return language === "en" ? `SAR ${amount}` : `${amount} ر.س`;
+}

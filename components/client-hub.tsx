@@ -224,6 +224,10 @@ export function ClientHub({
     payload: unknown,
   ) {
     setBusy(true);
+    // The portal decides the sender (/me = trainee, /coach = coach), even for one account on both sides.
+    const side = coach ? "coach" : "client";
+    if (command === "record_save" && payload && typeof payload === "object") payload = { ...payload, author_type: side };
+    if (command === "messages_read" && payload && typeof payload === "object") payload = { ...payload, side };
     try {
       const response =
         portalToken && ["record_save", "messages_read"].includes(command)

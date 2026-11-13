@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { randomUUID, createHash } from "node:crypto";
 import type { Snapshot } from "@/lib/model";
-import { blankContent } from "@/lib/model";
+import { blankContent as defaultContent } from "@/lib/model";
+import { publishable } from "./helpers/db";
+const blankContent = publishable(defaultContent);
 import { riyadhToday } from "@/lib/dates";
 import { clientExport, clientExportCsv } from "@/lib/client-export";
 import { coach, other, fixtureDatabase } from "./helpers/db";

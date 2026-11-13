@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ClipboardList,
   Copy,
+  Check,
   Download,
   Dumbbell,
   FileText,
@@ -37,7 +38,8 @@ import {
   type Template,
 } from "@/lib/model";
 import { formatDate, riyadhToday } from "@/lib/dates";
-import { latestSubscription } from "@/lib/subscription-period";
+import { financeSummary, latestSubscription } from "@/lib/subscription-period";
+import { withTrainingDays } from "@/lib/program-builder";
 import { Brand } from "./brand";
 import { ActionButton, DataForm, Notice, type Field } from "./forms";
 import { ProgramEditor } from "./program-editor";
@@ -64,11 +66,11 @@ import {
   templateLibraryState,
 } from "@/lib/template-availability";
 import { SupportDesk } from "./support-desk";
-import { ToastHost } from "./toast";
+import { ToastHost, showToast } from "./toast";
 import { ClientActionsMenu } from "./client-lifecycle";
 import { TemplateNameDialog, TemplateTags, type TemplateDetails } from "./template-name-dialog";
 import { isUnnamedTemplate, suggestCopyName, templateNameError } from "@/lib/template-names";
-import { countLabel, nouns } from "@/lib/plural";
+import { countLabel, formatNumber, formatSar, nouns } from "@/lib/plural";
 
 const clientFields = (client?: Client): Field[] => [
   { name: "name", label: "اسم العميل", value: client?.name, required: true },
@@ -357,18 +359,23 @@ export function Workspace({
               <CalendarDays size={16} />
               {formatDate(riyadhToday(), locale)}
             </span>
-            <Link
-              href="/coach"
-              aria-label={tr("طلبات تحتاج مراجعتك")}
-              className="header-notifications"
-            >
-              <Bell size={19} />
-              {coachingAlerts(data).some((alert) => alert.urgent) ||
-              data.join_requests.some((r) => r.status === "pending") ||
-              data.privacy_requests.some((r) => r.status === "pending") ? (
-                <span />
-              ) : null}
-            </Link>
+            {(() => {
+              // Urgent follow-ups (new trainee messages, check-ins…) plus pending requests.
+              const pending =
+                coachingAlerts(data).filter((alert) => alert.urgent).length +
+                data.join_requests.filter((r) => r.status === "pending").length +
+                data.privacy_requests.filter((r) => r.status === "pending").length;
+              return (
+                <Link
+                  href="/coach"
+                  aria-label={pending ? tr("طلبات تحتاج مراجعتك: {0}", formatNumber(pending)) : tr("طلبات تحتاج مراجعتك")}
+                  className="header-notifications"
+                >
+                  <Bell size={19} />
+                  {pending ? <span className="header-notifications-count" aria-hidden="true">{pending > 9 ? "9+" : formatNumber(pending)}</span> : null}
+                </Link>
+              );
+            })()}
             <span className="header-avatar">
               {data.profile!.name.slice(0, 1)}
             </span>
@@ -596,9 +603,9 @@ function ClientDetail({
         className="mb-5 inline-flex items-center gap-1 text-xs text-muted"
         href="/coach/clients"
       >
-        {tr("العملاء")}
+        {tr("المتدربون")}
         <ChevronLeft size={12} />
-        {tr("ملف العميل")}
+        {tr("ملف المتدرب")}
       </Link>
       <Heading
         title={client.name}
@@ -606,23 +613,19 @@ function ClientDetail({
       >
         <div className="flex flex-wrap gap-2">
           <PhoneLink phone={client.phone}/>
-          <span
-            className={`badge ${client.trainee_user_id ? "bg-accent/40 text-teal" : ""}`}
-          >
-            {client.trainee_user_id
-              ? tr("حسابه مرتبط")
-              : tr("بانتظار ربط الحساب")}
-          </span>
+          {!client.trainee_user_id && <span className="badge">{tr("بانتظار ربط الحساب")}</span>}
           <button
-            className="btn-secondary"
+            className={client.trainee_user_id ? "btn-soft" : "btn-secondary"}
+            title={tr("نسخ رابط البرنامج")}
             onClick={() =>
               void navigator.clipboard
                 .writeText(programUrl)
-                .catch(() => window.prompt("انسخ رابط البرنامج", programUrl))
+                .then(() => showToast({ message: tr("تم نسخ رابط البرنامج"), tone: "success" }))
+                .catch(() => window.prompt(tr("انسخ رابط البرنامج"), programUrl))
             }
           >
-            <Copy size={14} />
-            {tr("رابط الحساب المرتبط")}
+            {client.trainee_user_id ? <Check size={14} /> : <Copy size={14} />}
+            {client.trainee_user_id ? tr("الحساب مرتبط") : tr("رابط البرنامج")}
           </button>
           {client.phone ? (
             <a
@@ -842,6 +845,9 @@ function SubscriptionCard({
             {formatDate(sub.start_date, locale)} ←{" "}
             {formatDate(sub.end_date, locale)}
           </p>
+          <p className="subscription-value mt-2">
+            <span>{tr("قيمة الاشتراك")}</span> <bdi>{formatSar(sub.price, locale)}</bdi>
+          </p>
         </div>
         <span className="badge bg-accent/30 text-teal">
           {subscriptionState(data, sub)}
@@ -935,7 +941,8 @@ function Library({ data }: { data: Snapshot }) {
     if (!nameDialog) return { ok: false, message: "" };
     const tags = { goal: details.goal, level: details.level, days_per_week: details.days_per_week };
     if (nameDialog.mode === "create") {
-      const seed = nameDialog.seed ?? blankContent;
+      // Days per week creates that many named days up front (اليوم الأول… الرابع).
+      const seed = withTrainingDays(nameDialog.seed ?? blankContent, details.days_per_week);
       const response = await manage("template_save_typed", { name: details.name, content: seed, kind: "workout", description: "", archived: false, ...tags });
       if (!response.ok) return response;
       const saved = response.data as Template;
@@ -1263,13 +1270,19 @@ function Library({ data }: { data: Snapshot }) {
 function Finance({ data }: { data: Snapshot }) {
   const { t: tr, language: locale } = useLocale();
   const clients = data.clients.filter(c => !c.archived);
+  const summary = financeSummary(data.subscriptions, clients.map(c => c.id), riyadhToday());
   return <>
     <Heading title={tr("الاشتراكات")} text={tr("إدارة الاشتراكات للمدرب. سجّل المدة والقيمة هنا؛ الدفع يتم خارج المنصة.")} />
+    <section className="finance-summary" aria-label={tr("ملخص الاشتراكات")}>
+      <div><span>{tr("إيراد الشهر الحالي")}</span><strong><bdi>{formatSar(summary.monthRevenue, locale)}</bdi></strong><small>{tr("قيمة الاشتراكات التي تبدأ هذا الشهر")}</small></div>
+      <div><span>{tr("المتوقع من التجديدات خلال 30 يومًا")}</span><strong><bdi>{formatSar(summary.renewalsDue, locale)}</bdi></strong><small>{countLabel(locale, summary.renewalsCount, nouns.subscription)} {tr("تنتهي قريبًا")}</small></div>
+      <div><span>{tr("اشتراكات منتهية")}</span><strong><bdi>{formatNumber(summary.expired)}</bdi></strong><small>{tr("متدربون نشطون بلا اشتراك ساري")}</small></div>
+    </section>
     <section className="card overflow-hidden"><div className="overflow-x-auto"><table>
-      <thead><tr><th>{tr("المتدربون")}</th><th>{tr("بداية الاشتراك")}</th><th>{tr("نهاية الاشتراك")}</th><th>{tr("الحالة")}</th><th>{tr("تجديد الاشتراك")}</th></tr></thead>
+      <thead><tr><th>{tr("المتدربون")}</th><th>{tr("بداية الاشتراك")}</th><th>{tr("نهاية الاشتراك")}</th><th>{tr("القيمة")}</th><th>{tr("الحالة")}</th><th>{tr("تجديد الاشتراك")}</th></tr></thead>
       <tbody>{clients.map(client => {
         const sub = currentSubscription(data, client.id);
-        return <tr key={client.id}><td><Link className="text-teal" href={`/coach/clients/${client.id}?tab=finance`}>{client.name}</Link></td><td>{sub ? formatDate(sub.start_date, locale) : "—"}</td><td>{sub ? formatDate(latestSubscription(data.subscriptions, client.id)!.end_date, locale) : "—"}</td><td>{sub ? subscriptionState(data, sub) : tr("بدون اشتراك")}</td><td><SubscriptionRenewal client={client} subscriptions={data.subscriptions} /></td></tr>;
+        return <tr key={client.id}><td><Link className="text-teal" href={`/coach/clients/${client.id}?tab=finance`}>{client.name}</Link></td><td>{sub ? formatDate(sub.start_date, locale) : "—"}</td><td>{sub ? formatDate(latestSubscription(data.subscriptions, client.id)!.end_date, locale) : "—"}</td><td>{sub ? <bdi>{formatSar(sub.price, locale)}</bdi> : "—"}</td><td>{sub ? subscriptionState(data, sub) : tr("بدون اشتراك")}</td><td><SubscriptionRenewal client={client} subscriptions={data.subscriptions} /></td></tr>;
       })}</tbody>
     </table></div>{!clients.length && <div className="empty">{tr("أضف أول متدرب لبدء المتابعة.")}</div>}</section>
   </>;

@@ -53,3 +53,41 @@ export function Modal({
     </div>
   );
 }
+
+/** Two-button confirmation built on Modal; the cancel button is always explicit. */
+export function ConfirmDialog({
+  open,
+  title,
+  children,
+  confirmLabel,
+  cancelLabel = "إلغاء",
+  danger = false,
+  busy = false,
+  onConfirm,
+  onClose,
+}: {
+  open: boolean;
+  title: ReactNode;
+  children?: ReactNode;
+  confirmLabel: string;
+  cancelLabel?: string;
+  danger?: boolean;
+  busy?: boolean;
+  onConfirm: () => void | Promise<void>;
+  onClose: () => void;
+}) {
+  const { t: tr } = useLocale();
+  return (
+    <Modal open={open} onClose={onClose} title={title} dismissible={!busy} initialFocus="[data-confirm-cancel]">
+      {children ? <div className="text-sm leading-7 text-muted">{children}</div> : null}
+      <div className="mt-5 flex flex-wrap gap-2">
+        <button type="button" className={danger ? "btn btn-danger" : "btn"} disabled={busy} onClick={() => void onConfirm()}>
+          {tr(confirmLabel)}
+        </button>
+        <button type="button" className="btn-secondary" data-confirm-cancel disabled={busy} onClick={onClose}>
+          {tr(cancelLabel)}
+        </button>
+      </div>
+    </Modal>
+  );
+}

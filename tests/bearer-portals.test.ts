@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { createHash, randomBytes } from "node:crypto";
 import { openDatabase, rpcLocal, LOCAL_IDS } from "@/lib/local-db";
-import { blankContent, type Snapshot } from "@/lib/model";
+import { blankContent as defaultContent, type Snapshot } from "@/lib/model";
+import { publishable } from "./helpers/db";
+const blankContent = publishable(defaultContent);
 import type { PGlite } from "@electric-sql/pglite";
 let db: PGlite;
 const { coach, other, trainee } = LOCAL_IDS;

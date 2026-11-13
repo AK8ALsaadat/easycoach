@@ -40,3 +40,30 @@ export function transferExercise(plan: Content, source: number, row: number, tar
   if (added === plan) return plan;
   return { ...added, days: added.days.map((item,index) => index === source ? { ...item, exercises: item.exercises.filter((_,i) => i !== row) } : index === target ? { ...item, exercises: item.exercises.map((entry,i) => i === item.exercises.length - 1 ? { ...entry, rowId: exercise.rowId } : entry) } : item) };
 }
+
+const ORDINALS = ["الأول", "الثاني", "الثالث", "الرابع", "الخامس", "السادس", "السابع", "الثامن", "التاسع", "العاشر", "الحادي عشر", "الثاني عشر", "الثالث عشر", "الرابع عشر"];
+/** "اليوم الأول", "اليوم الثاني"… (English: "Day 1"). */
+export function dayName(index: number, language: "ar" | "en" = "ar") {
+  if (language === "en") return `Day ${index + 1}`;
+  return `اليوم ${ORDINALS[index] ?? index + 1}`;
+}
+/** Shows older generic names ("اليوم 2", "Day 2") with the same ordinal wording. */
+export function displayDayName(name: string, language: "ar" | "en" = "ar") {
+  const match = /^(?:اليوم|يوم|Day)\s+([0-9٠-٩]{1,2})$/i.exec(name.trim());
+  if (!match) return name;
+  const number = Number(match[1].replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))));
+  return number >= 1 && number <= 14 ? dayName(number - 1, language) : name;
+}
+/** Adds ordinal-named days (each with one starter exercise) until the plan has `count` days. */
+export function withTrainingDays(plan: Content, count: number | null | undefined): Content {
+  const target = Math.min(14, Math.max(0, Math.trunc(count ?? 0)));
+  if (plan.days.length >= target) return plan;
+  const starter = { name: "تمرين جديد", description: "", video: "", sets: 3, reps: "10–12", rest: 60 };
+  const days = [...plan.days];
+  for (let index = days.length; index < target; index++) {
+    let name = dayName(index);
+    for (let n = 2; days.some((day) => day.name === name); n++) name = `${dayName(index)} (${n})`;
+    days.push({ name, exercises: [{ ...starter }] });
+  }
+  return { ...plan, days };
+}

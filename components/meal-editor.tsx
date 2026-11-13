@@ -1,6 +1,8 @@
 "use client";
 import { useLocale } from "./locale-provider";
+import { useState } from "react";
 import { Plus, Trash2, Copy, Utensils } from "lucide-react";
+import { ConfirmDialog } from "./modal";
 import type { Content } from "@/lib/model";
 import { caloriesFromMacros, MACRO_LIMITS, remainingAgainstTarget, sumMeals } from "@/lib/macros";
 import { formatNumber } from "@/lib/plural";
@@ -37,6 +39,18 @@ export function MealEditor({
   const meals = nutrition.meals ?? [];
   const total = sumMeals(meals);
   const remaining = remainingAgainstTarget(nutrition, total);
+  const [confirmTargets, setConfirmTargets] = useState(false);
+  const mealsEmpty = [total.calories, total.protein, total.carbs, total.fat].every((value) => !value);
+  const applyTotals = () => {
+    onChange({
+      ...nutrition,
+      protein: total.protein,
+      carbs: total.carbs,
+      fat: total.fat,
+      calories: auto ? caloriesFromMacros(total) : Math.round(total.calories * 10) / 10,
+    });
+    setConfirmTargets(false);
+  };
   function update(i: number, k: keyof Meal, v: string | number) {
     onChange({
       ...nutrition,
@@ -84,8 +98,9 @@ export function MealEditor({
       {meals.map((m, i) => (
         <article className="meal-card" key={i}>
           <div className="meal-card-head mb-4 flex gap-3">
-            <span className="meal-number">{String(i + 1).padStart(2, "0")}</span>
+            <span className="meal-number">{i + 1}</span>
             <input
+              id={`meal-${i}-name`}
               aria-label={tr("اسم الوجبة {0}", String(i + 1))}
               className="field"
               value={m.name}
@@ -158,15 +173,15 @@ export function MealEditor({
             <Utensils size={20} />
             <div>
               <strong>
-                {tr("مجموع الوجبات:")} <bdi dir="ltr">{formatNumber(total.calories)} kcal</bdi>
+                {tr("مجموع الوجبات:")} <bdi>{formatNumber(total.calories)}</bdi> {tr("سعرة")}
               </strong>
-              <p className="text-xs" dir="ltr">
-                P {formatNumber(total.protein)}g · C {formatNumber(total.carbs)}g · F {formatNumber(total.fat)}g
+              <p className="text-xs">
+                {tr("بروتين")} <bdi>{formatNumber(total.protein)}</bdi>{tr("غ")} · {tr("كارب")} <bdi>{formatNumber(total.carbs)}</bdi>{tr("غ")} · {tr("دهون")} <bdi>{formatNumber(total.fat)}</bdi>{tr("غ")}
               </p>
             </div>
           </div>
           <div className="meal-balances" aria-label={tr("مقارنة الوجبات بالهدف اليومي")}>
-            <Balance label="السعرات" unit="kcal" value={remaining.calories} />
+            <Balance label="السعرات" unit="سعرة" value={remaining.calories} />
             <Balance label="بروتين" unit="غ" value={remaining.protein} />
             <Balance label="كارب" unit="غ" value={remaining.carbs} />
             <Balance label="دهون" unit="غ" value={remaining.fat} />
@@ -174,18 +189,22 @@ export function MealEditor({
           <button
             type="button"
             className="btn-secondary"
-            onClick={() =>
-              onChange({
-                ...nutrition,
-                protein: total.protein,
-                carbs: total.carbs,
-                fat: total.fat,
-                calories: auto ? caloriesFromMacros(total) : Math.round(total.calories * 10) / 10,
-              })
-            }
+            disabled={mealsEmpty}
+            aria-describedby={mealsEmpty ? "meals-empty-hint" : undefined}
+            onClick={() => setConfirmTargets(true)}
           >
             {tr("اعتمد المجموع كأهداف")}
           </button>
+          {mealsEmpty && <p id="meals-empty-hint" className="form-hint">{tr("أدخل قيم الوجبات أولًا؛ مجموعها الآن صفر.")}</p>}
+          <ConfirmDialog
+            open={confirmTargets}
+            title={tr("استبدال الأهداف اليومية؟")}
+            confirmLabel="استبدل الأهداف"
+            onConfirm={applyTotals}
+            onClose={() => setConfirmTargets(false)}
+          >
+            {tr("ستصبح الأهداف: {0} سعرة · بروتين {1}غ · كارب {2}غ · دهون {3}غ. الأهداف الحالية ({4} سعرة) تُستبدل.", formatNumber(auto ? caloriesFromMacros(total) : total.calories), formatNumber(total.protein), formatNumber(total.carbs), formatNumber(total.fat), formatNumber(nutrition.calories))}
+          </ConfirmDialog>
         </div>
       ) : (
         <p className="py-5 text-sm text-muted">

@@ -31,11 +31,14 @@ import { useDialog } from "./use-dialog";
 import { useUnsavedChanges } from "./use-unsaved-changes";
 import { VideoUpload } from "./video-upload";
 import { MealEditor } from "./meal-editor";
+import { ExerciseField } from "./exercise-field";
+import { showToast } from "./toast";
+import { publishIssues, type PublishIssue } from "@/lib/program-validation";
 import { MacroTargets } from "./macro-targets";
 import { caloriesFromMacros, inferCaloriesMode } from "@/lib/macros";
 import { templateNameError } from "@/lib/template-names";
 import { ProgramDayNav } from "./program-day-nav";
-import { appendExercise, customExercise, isStarterExercise, transferExercise, repeatProgramDay, appendExercises } from "@/lib/program-builder";
+import { appendExercise, customExercise, dayName, isStarterExercise, transferExercise, repeatProgramDay, appendExercises } from "@/lib/program-builder";
 function withRowIds(value: Content): Content {
   return {
     ...value,
@@ -110,6 +113,16 @@ export function ProgramEditor({
   const savedEditRevision = useRef<number | null>(editRevision ?? null);
   const revision = useRef(0);
   const lock = useRef(false);
+  const [checkPublish, setCheckPublish] = useState(false);
+  // Re-evaluated on every edit so fixed problems disappear from the list immediately.
+  const issues: PublishIssue[] = checkPublish ? publishIssues(plan) : [];
+  const invalidCells = useRef(new Set<string>());
+  const [invalidCount, setInvalidCount] = useState(0);
+  const trackCell = useCallback((cell: string, valid: boolean) => {
+    if (valid) invalidCells.current.delete(cell);
+    else invalidCells.current.add(cell);
+    setInvalidCount(invalidCells.current.size);
+  }, []);
   function changed() {
     setUndo(null);
     revision.current++;
@@ -125,6 +138,10 @@ export function ProgramEditor({
     const check = contentSchema.safeParse(!clientId && templateKind !== "workout" ? { ...plan, days: blankContent.days } : plan);
     if (nameError) {
       setResult({ ok: false, message: nameError });
+      return null;
+    }
+    if (invalidCells.current.size) {
+      setResult({ ok: false, message: "صحّح المجموعات والتكرارات والراحة المظللة قبل الحفظ." });
       return null;
     }
     if (!check.success) {
@@ -162,12 +179,12 @@ export function ProgramEditor({
     }
   }, [plan, name, clientId, templateKind, templateMeta, nameError]);
   useEffect(() => {
-    if (!dirty || busy || result?.ok === false || nameError || !contentSchema.safeParse(!clientId && templateKind !== "workout" ? { ...plan, days: blankContent.days } : plan).success) return;
+    if (!dirty || busy || result?.ok === false || nameError || invalidCount || !contentSchema.safeParse(!clientId && templateKind !== "workout" ? { ...plan, days: blankContent.days } : plan).success) return;
     const timer = setTimeout(() => {
       void save();
     }, 1200);
     return () => clearTimeout(timer);
-  }, [dirty, busy, save, result, plan, name, clientId, templateKind, nameError]);
+  }, [dirty, busy, save, result, plan, name, clientId, templateKind, nameError, invalidCount]);
   useUnsavedChanges(dirty);
   const active = plan.days[day] ?? plan.days[0];
   function updateExercise(
@@ -198,7 +215,7 @@ export function ProgramEditor({
   function addDay() {
     if (plan.days.length >= 14) return;
     const next=plan.days.length;
-    edit(current=>({...current,days:[...current.days,{name:tr("اليوم {0}",String(next+1)),exercises:[]}]}));
+    edit(current=>{let name=dayName(next,locale);for(let n=2;current.days.some(item=>item.name===name);n++)name=`${dayName(next,locale)} (${n})`;return {...current,days:[...current.days,{name,exercises:[]}]};});
     setDay(next); setCustomName(""); setFeedback("");
   }
   function openRepeat(index:number){
@@ -506,6 +523,7 @@ export function ProgramEditor({
                     {i + 1}
                   </span>
                   <input
+                    id={`ex-${i}-name`}
                     aria-label={tr("اسم التمرين {0}", String(i + 1))}
                     className="field"
                     value={e.name}
@@ -559,31 +577,20 @@ export function ProgramEditor({
                 <div className="grid grid-cols-3 gap-3">
                   {(
                     [
-                      ["sets", tr("المجموعات")],
-                      ["reps", tr("العدات")],
-                      ["rest", tr("الراحة (ثانية)")],
+                      ["sets", "المجموعات"],
+                      ["reps", "التكرارات"],
+                      ["rest", "الراحة (ثانية)"],
                     ] as const
                   ).map(([f, label]) => (
-                    <div key={f}>
-                      <label htmlFor={`ex-${i}-${f}`}>{tr(label)}</label>
-                      <input
-                        id={`ex-${i}-${f}`}
-                        className="field"
-                        type={f === "reps" ? "text" : "number"}
-                        min={f === "sets" ? 1 : 0}
-                        max={f === "sets" ? 20 : f === "rest" ? 600 : undefined}
-                        value={e[f]}
-                        onChange={(event) =>
-                          updateExercise(
-                            i,
-                            f,
-                            f === "reps"
-                              ? event.target.value
-                              : Number(event.target.value),
-                          )
-                        }
-                      />
-                    </div>
+                    <ExerciseField
+                      key={f}
+                      id={`ex-${i}-${f}`}
+                      field={f}
+                      label={tr(label)}
+                      value={e[f]}
+                      onCommit={(value) => updateExercise(i, f, value)}
+                      onValidity={trackCell}
+                    />
                   ))}
                 </div>
                 <details className="program-exercise-more"><summary>{tr(clientId ? "الفيديو والأوزان المتقدمة" : "فيديو شرح التمرين")}</summary>
@@ -764,6 +771,13 @@ export function ProgramEditor({
               className="btn"
               disabled={busy}
               onClick={async () => {
+                const found = publishIssues(plan);
+                setCheckPublish(true);
+                if (found.length) {
+                  setResult(null);
+                  window.requestAnimationFrame(() => document.getElementById("publish-issues")?.focus());
+                  return;
+                }
                 const draftId = await save();
                 if (!draftId) return;
                 const response = await mutate("program_publish", {
@@ -778,6 +792,7 @@ export function ProgramEditor({
                     ok: true,
                     message: "تم النشر. المتدرب يرى هذه النسخة الآن.",
                   });
+                  showToast({ message: tr("تم نشر البرنامج للمتدرب ✓"), tone: "success" });
                   router.refresh();
                 }
               }}
@@ -793,6 +808,35 @@ export function ProgramEditor({
           )}
         </div>
       </div>
+      {issues.length > 0 && (
+        <section id="publish-issues" tabIndex={-1} className="publish-issues" role="alert" aria-labelledby="publish-issues-title">
+          <h3 id="publish-issues-title">{tr("قبل النشر، أصلح هذه النقاط:")}</h3>
+          <ul>
+            {issues.map((issue) => (
+              <li key={issue.key}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = issue.kind === "exercise" ? `ex-${issue.index}-name` : `meal-${issue.index}-name`;
+                    if (issue.kind === "exercise") { setTab("training"); setDay(issue.day ?? 0); }
+                    else setTab("nutrition");
+                    window.setTimeout(() => {
+                      const element = document.getElementById(target) as HTMLInputElement | null;
+                      element?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      element?.focus({ preventScroll: true });
+                      if (issue.kind === "exercise") element?.select();
+                    }, 60);
+                  }}
+                >
+                  {issue.kind === "exercise"
+                    ? tr("{0}: التمرين {1} ما زال باسم «تمرين جديد»", plan.days[issue.day ?? 0]?.name ?? "", String(issue.index + 1))
+                    : tr("{0}: الوجبة فارغة وكل قيمها صفر", plan.nutrition.meals?.[issue.index]?.name ?? "")}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {plan.days.some(d=>!d.exercises.length) && <p className="text-sm text-amber-800" role="status">{tr("أضف تمرينًا واحدًا على الأقل لكل يوم حتى تُحفظ المسودة وتصبح جاهزة للنشر.")}</p>}
       <Notice result={result} />
       {repeatSource!==null && <div className="modal-backdrop" onClick={()=>setRepeatSource(null)}><div className="modal-sheet max-w-lg" ref={repeatRef} role="dialog" aria-modal="true" aria-labelledby="repeat-day-title" tabIndex={-1} onClick={event=>event.stopPropagation()}>
