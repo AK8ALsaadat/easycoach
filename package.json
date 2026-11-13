@@ -38,6 +38,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "bcryptjs": "^3.0.3",
     "eslint": "^9",
     "eslint-config-next": "16.4.5",
     "supabase": "^3.0.0",
