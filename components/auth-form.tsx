@@ -1,6 +1,7 @@
 "use client";
 import { useLocale } from "./locale-provider";
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   loginAction,
   registerAction,
@@ -20,10 +21,11 @@ function GoogleMark() {
     </svg>
   );
 }
-export function AuthForm({ next, local, google = false }: { next: string; local: boolean; google?: boolean }) {
+export function AuthForm({ next, local, google = false, initialRegister = false }: { next: string; local: boolean; google?: boolean; initialRegister?: boolean }) {
   const { t: tr } = useLocale();
+  const router = useRouter();
 
-  const [register, setRegister] = useState(false);
+  const [register, setRegister] = useState(initialRegister && !local);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [email,setEmail]=useState(local ? "coach@example.test" : "");
@@ -32,6 +34,7 @@ export function AuthForm({ next, local, google = false }: { next: string; local:
   const requirements = passwordRequirements(password);
   const strength = passwordStrength(password);
   const formRef = useRef<HTMLFormElement>(null);
+  const submitLock = useRef(false);
   return (
     <div>
       <form
@@ -39,19 +42,25 @@ export function AuthForm({ next, local, google = false }: { next: string; local:
         ref={formRef}
         onSubmit={async (event) => {
           event.preventDefault();
+          if (submitLock.current) return;
           const form = new FormData(event.currentTarget);
           if (register) {
             const issue = registrationPasswordIssue(String(form.get("password") ?? ""), String(form.get("password_confirmation") ?? ""));
             if (issue) { setResult({ ok: false, message: issue }); return; }
           }
+          submitLock.current = true;
           setBusy(true);
           try {
-            setResult(
-              await (register ? registerAction : loginAction)(
-                form,
-              ),
-            );
+            const response = await (register ? registerAction : loginAction)(form);
+            setResult(response);
+            if (register && response.ok && response.url) {
+              setPassword(""); setConfirmation("");
+              router.replace(response.url);
+            }
+          } catch {
+            setResult({ ok: false, message: "تعذر الاتصال. لم تكتمل العملية؛ حاول مرة أخرى." });
           } finally {
+            submitLock.current = false;
             setBusy(false);
           }
         }}

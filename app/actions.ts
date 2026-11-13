@@ -19,6 +19,7 @@ import {
 import { getLocalDatabase } from "@/lib/local-db";
 import { arabicIssues } from "@/lib/form-errors";
 import { registrationPasswordIssue } from "@/lib/password";
+import { beginPendingSignup } from "@/lib/pending-signup";
 import { cleanPendingPhotos } from "@/lib/photo-cleanup";
 
 export type Result = {
@@ -130,9 +131,8 @@ export async function registerAction(form: FormData): Promise<Result> {
       .parse(Object.fromEntries(form));
     const passwordIssue = registrationPasswordIssue(input.password, input.password_confirmation);
     if (passwordIssue) return { ok: false, message: passwordIssue };
-    const { error } = await (
-      await supabase()
-    ).auth.signUp({
+    const client = await supabase();
+    const { data, error } = await client.auth.signUp({
       email: input.email,
       password: input.password,
       options: {
@@ -141,11 +141,17 @@ export async function registerAction(form: FormData): Promise<Result> {
       },
     });
     if (error)
-      throw new Error("تعذر إنشاء الحساب. تحقق من البيانات أو جرّب الدخول");
+      throw new Error(error.status === 429 ? "طلبات تسجيل كثيرة. انتظر قليلًا ثم حاول مرة أخرى." : "تعذر إنشاء الحساب. حاول مرة أخرى بعد قليل.");
+    // signUp's user is not proof of verification. Confirm email must stay enabled.
+    if (data?.session) {
+      await client.auth.signOut({ scope: "local" });
+      return { ok: false, message: "تعذر بدء تأكيد البريد. حاول لاحقًا أو تواصل مع الدعم." };
+    }
+    await beginPendingSignup(input.email, form.get("next"));
     return {
       ok: true,
-      message:
-        "تحقق من رسالة تأكيد الإيميل، ثم سجّل الدخول. الدعوة تتطلب نفس الإيميل الموثّق.",
+      message: "تحقق من بريدك وأدخل رمز تأكيد الحساب.",
+      url: "/verify-email",
     };
   } catch (e) {
     return { ok: false, message: readableError(e) };

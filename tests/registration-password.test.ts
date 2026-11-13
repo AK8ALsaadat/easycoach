@@ -1,18 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { passwordStrength, registrationPasswordIssue } from "@/lib/password";
 
-const state = vi.hoisted(() => ({ signUp: vi.fn() }));
+const state = vi.hoisted(() => ({ signUp: vi.fn(), signOut: vi.fn(), beginPendingSignup: vi.fn() }));
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/pending-signup", () => ({ beginPendingSignup: state.beginPendingSignup }));
 vi.mock("@/lib/server", () => ({
   localMode: () => false,
   safeNext: () => "/coach",
   readableError: () => "تحقق من البيانات المدخلة",
-  supabase: async () => ({ auth: { signUp: state.signUp } }),
+  supabase: async () => ({ auth: { signUp: state.signUp, signOut: state.signOut } }),
 }));
 import { registerAction } from "@/app/actions";
 
 beforeEach(() => {
   state.signUp.mockReset().mockResolvedValue({ error: null });
+  state.beginPendingSignup.mockReset();
+  state.signOut.mockReset().mockResolvedValue({ error: null });
   vi.stubEnv("APP_URL", "https://coach.example");
 });
 
@@ -39,10 +42,19 @@ describe("server registration password policy", () => {
   });
 
   it("accepts exactly eight characters, an uppercase letter and a symbol without demanding digits", async () => {
-    expect(await registerAction(form("Abcdefg!", "Abcdefg!"))).toMatchObject({ ok: true });
+    state.signUp.mockResolvedValue({ data: { user: { id: "unverified" }, session: null }, error: null });
+    expect(await registerAction(form("Abcdefg!", "Abcdefg!"))).toMatchObject({ ok: true, url: "/verify-email" });
     expect(state.signUp).toHaveBeenCalledTimes(1);
     expect(state.signUp.mock.calls[0][0]).toMatchObject({ password: "Abcdefg!", email: "registration@example.test" });
     expect(state.signUp.mock.calls[0][0]).not.toHaveProperty("password_confirmation");
+    expect(state.beginPendingSignup).toHaveBeenCalledWith("registration@example.test", null);
+  });
+
+  it("fails closed and clears an unexpected signup session when Confirm email is disabled", async () => {
+    state.signUp.mockResolvedValue({ data: { user: { id: "test" }, session: { access_token: "synthetic" } }, error: null });
+    expect((await registerAction(form("Abcdefg!", "Abcdefg!"))).ok).toBe(false);
+    expect(state.signOut).toHaveBeenCalledWith({ scope: "local" });
+    expect(state.beginPendingSignup).not.toHaveBeenCalled();
   });
 
   it("compares the exact passwords without trimming or normalizing them", () => {

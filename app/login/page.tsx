@@ -9,7 +9,7 @@ import { Check, Layers3, Users, Wallet } from "lucide-react";
 export default async function Login({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; register?: string }>;
 }) {
   const params = await searchParams;
   const tr = translator(
@@ -41,7 +41,7 @@ export default async function Login({
                 : tr("تعذر تأكيد الحساب. جرّب رابطًا جديدًا أو سجّل الدخول.")}
             </p>
           ) : null}
-          <AuthForm next={safeNext(params.next)} local={localMode()} google={!localMode() && process.env.AUTH_GOOGLE_ENABLED === "true"} />
+          <AuthForm next={safeNext(params.next)} local={localMode()} initialRegister={params.register === "1"} google={!localMode() && process.env.AUTH_GOOGLE_ENABLED === "true"} />
         </div>
         <Link href="/privacy" className="text-xs text-muted underline">
           {tr("إشعار الخصوصية")}
