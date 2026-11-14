@@ -3,9 +3,15 @@ import { snapshot } from "@/lib/server";
 import { csvCell } from "@/lib/import-preview";
 import { exportWorkbook } from "@/lib/export-workbook";
 import { clientExport, clientExportCsv } from "@/lib/client-export";
+import { requireFeature } from "@/lib/platform/server";
 export async function GET(request: NextRequest) {
   const data = await snapshot();
   const type = request.nextUrl.searchParams.get("type");
+  // Individual privacy exports remain available on every plan.
+  if (data.profile?.role === "coach" && type !== "client-json" && type !== "client-csv") {
+    try { await requireFeature("export"); }
+    catch { return NextResponse.json({ error: "تصدير التقارير يتطلب الباقة الاحترافية أو الأعمال" }, { status: 403 }); }
+  }
   // One trainee's data (offered before permanent deletion). The snapshot is
   // already limited to the coach's own clients by RLS.
   if ((type === "client-json" || type === "client-csv") && data.profile?.role === "coach") {

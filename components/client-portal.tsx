@@ -19,6 +19,8 @@ import { portalDataAfterResponse, requestPortal } from "@/lib/portal-request";
 import { useRouter } from "next/navigation";
 import { PhotoConsentDialog, useConsentPrompt } from "./photo-consent";
 import type { PhotoConsentState } from "@/lib/photo-consent";
+import { portalTheme } from "@/lib/platform/portal-theme";
+import type { CSSProperties } from "react";
 
 /** Personal-link users get the same one-time progress-photo notice as account users. */
 function PortalConsentPrompt({ clientId, state, coachName, token, onAccepted }: { clientId: string; state?: PhotoConsentState; coachName: string; token: string; onAccepted: () => Promise<unknown> }) {
@@ -134,8 +136,9 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
         </form>
       </main>
     );
+  if (data.basic_only) return <main dir="rtl" className="mx-auto max-w-2xl p-6 space-y-6"><Brand /><h1>أهلًا {data.name}</h1><p>رصيد الحصص والحضور مع {data.coach}</p>{data.session_packages?.map(pkg=><section key={pkg.id} className="card p-5 space-y-3"><h2>{pkg.name}</h2><p>{formatDate(pkg.start_date)} — {formatDate(pkg.end_date)}</p><p>الحضور: {pkg.attended} · الحصص المتبقية: {pkg.remaining??"لم يُحدد الرصيد"}</p><details><summary>سجل الحضور</summary><ul>{pkg.attendance.map(day=><li key={day}>{formatDate(day)}</li>)}</ul></details></section>)}<button className="btn" disabled={busy} onClick={()=>void refresh()}>تحديث الرصيد والحضور</button>{error&&<p role="alert">{error}</p>}</main>;
   return (
-    <div className="client-portal">
+    <div className="client-portal" style={portalTheme(data.portal_color) as CSSProperties}>
       <header className="portal-topbar flex-wrap">
         <Brand />
         <LanguageSwitch />

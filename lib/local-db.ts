@@ -75,9 +75,15 @@ export async function rpcLocal<T>(
     ]);
     const entries = Object.entries(args);
     const sql = `select public.${name}(${entries.map(([key], i) => `${key}=>$${i + 1}`).join(",")}) as result`;
-    const values = entries.map(([, value]) =>
-      value !== null && typeof value === "object" ? JSON.stringify(value) : value,
-    );
+    const values = entries.map(([key, value]) => {
+      // Supabase accepts native uuid[] arguments. PGlite's wire encoder needs
+      // PostgreSQL array syntax for these two top-level RPC parameters.
+      if (name === "ec_select_resources" && (key === "clients" || key === "templates") && Array.isArray(value)) {
+        if (value.some(id => typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))) throw new Error("Invalid resource identifier");
+        return `{${value.join(",")}}`;
+      }
+      return value !== null && typeof value === "object" ? JSON.stringify(value) : value;
+    });
     const result = await tx.query<{ result: T }>(sql, values);
     return result.rows[0].result;
   });
@@ -99,6 +105,9 @@ export async function seedDatabase(db: PGlite) {
       requested_role: role,
     });
   }
+  // These fictional preview accounts exercise the pre-migration feature set.
+  // Real new accounts retain the database's managed Free default.
+  await db.query("update public.ec_accounts set mode='legacy' where owner_id in ($1,$2)", [LOCAL_IDS.coach, LOCAL_IDS.other]);
   const clients = [];
   for (const [i, name] of [
     "سلمان الحربي",

@@ -179,7 +179,8 @@ do $$ declare t text; key text; extra boolean; begin
  if exists(select 1 from public.clients c join promo_client_ids s on s.id=c.id where c.coach_id<>(select id from promo_owner)) then raise exception 'Seed client ownership changed'; end if;
  if exists(select 1 from auth.users u join private.promo_seed_rows r on r.row_id=u.id and r.run_key=${literal(PROMO_RUN)} and r.table_name='auth.users' where u.raw_app_meta_data->>'promo_seed' is distinct from ${literal(PROMO_RUN)}) then raise exception 'Seed account marker changed'; end if;
  for t in select table_name from information_schema.columns where table_schema='public' and column_name='client_id' loop
-  if t in ('client_details','client_goals','client_checkin_schedules','client_consents','import_subscription_refs') then key:='client_id'; else key:='id'; end if;
+  -- Additive tables may use client_id as their primary key (for example team assignments).
+  if exists(select 1 from information_schema.columns where table_schema='public' and table_name=t and column_name='id') then key:='id'; else key:='client_id'; end if;
   execute format('select exists(select 1 from public.%I x where x.client_id in (select id from promo_client_ids) and not exists(select 1 from private.promo_seed_rows r where r.run_key=%L and r.table_name=%L and r.row_id=x.%I))',t,${literal(PROMO_RUN)},t,key) into extra;
   if extra then raise exception 'Untracked data in %; cleanup aborted without deleting anything',t; end if;
  end loop;

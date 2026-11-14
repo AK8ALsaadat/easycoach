@@ -1,6 +1,7 @@
+import { openLegacyDatabase as openDatabase } from "./helpers/legacy-db";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import type { PGlite } from "@electric-sql/pglite";
-import { openDatabase, rpcLocal, LOCAL_IDS } from "@/lib/local-db";
+import { rpcLocal, LOCAL_IDS } from "@/lib/local-db";
 import { blankContent, content as contentSchema, draftContent as draftSchema, type Content } from "@/lib/model";
 import { parseReps, parseRest, parseSets, publishIssues } from "@/lib/program-validation";
 

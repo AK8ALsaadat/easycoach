@@ -325,6 +325,7 @@ export type PrivacyRequest = {
   resolution: string;
 };
 export type Snapshot = {
+  page_info?: { total_active_clients: number; client_count: number; next_client: string | null; next_template: string | null; next_exercise: string | null };
   coach_branding?: import("./coach-branding").CoachBranding[];
   /** Trainee links whose coach archived them: access is paused, data is kept. */
   paused_access?: { client_id: string; coach: string | null }[];
@@ -380,6 +381,9 @@ export type ClientGoal = {
   notes: string;
 };
 export type PortalData = {
+  portal_color?: string | null;
+  basic_only?: boolean;
+  session_packages?: { id: string; name: string; start_date: string; end_date: string; remaining: number | null; attended: number; attendance: string[] }[];
   coach_branding?: import("./coach-branding").CoachBranding | null;
   client_id?: string;
   management?: ManagementData;

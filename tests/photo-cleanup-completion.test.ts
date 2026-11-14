@@ -1,9 +1,10 @@
+import { openLegacyDatabase as openDatabase } from "./helpers/legacy-db";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import { mkdtemp, writeFile, readFile, mkdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { openDatabase, rpcLocal, LOCAL_IDS } from "@/lib/local-db";
+import { rpcLocal, LOCAL_IDS } from "@/lib/local-db";
 const state = vi.hoisted(() => ({ db: null as import("@electric-sql/pglite").PGlite | null, user: null as string | null, directory: "" }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/server", () => ({ localMode: () => true, localGuard: async () => {}, rpc: (fn: string, args: object) => rpcLocal(state.db!, state.user, fn, args as Record<string, unknown>) }));

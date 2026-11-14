@@ -292,7 +292,7 @@ export function Workspace({
               <span>{tr(item.label)}</span>
               {item.key === "clients" && (
                 <span className="nav-count">
-                  {data.clients.filter((c) => !c.archived).length}
+                  {data.page_info?.total_active_clients ?? data.clients.filter((c) => !c.archived).length}
                 </span>
               )}
               {section === item.key && item.key !== "clients" && (
@@ -300,6 +300,10 @@ export function Workspace({
               )}
             </Link>
           ))}
+          <Link href="/subscription" className="nav-item"><FileText size={19} /><span>اشتراك EasyCoach</span></Link>
+          <Link href="/attendance" className="nav-item"><CalendarDays size={19} /><span>الحضور والحصص</span></Link>
+          <Link href="/organization" className="nav-item"><Users size={19} /><span>الفريق والمتابعات</span></Link>
+          <Link href="/reports" className="nav-item"><LayoutDashboard size={19} /><span>التقارير</span></Link>
         </nav>
         <Link
           href="/coach/clients?add=1"

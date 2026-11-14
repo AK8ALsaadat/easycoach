@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, it, vi } from "vitest";
 vi.mock("@/app/actions", () => ({ mutate: vi.fn() }));
+vi.mock("@/app/platform-actions", () => ({ saveTeamProgram: vi.fn(), publishTeamProgram: vi.fn() }));
 vi.mock("@/app/management-actions", () => ({ manage: vi.fn() }));
 vi.mock("@/app/studio-actions", () => ({ uploadTicket: vi.fn(), completeUpload: vi.fn(), phoneUploadStatus: vi.fn(), createPhoneUpload: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));

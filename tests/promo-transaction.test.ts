@@ -1,5 +1,6 @@
+import { openLegacyDatabase as openDatabase } from "./helpers/legacy-db";
 import { beforeAll, afterAll, expect, it } from "vitest";
-import { openDatabase, rpcLocal, LOCAL_IDS } from "@/lib/local-db";
+import { rpcLocal, LOCAL_IDS } from "@/lib/local-db";
 import { buildPromoDataset, promoId } from "@/scripts/promo-dataset";
 import { promoSeedSql, promoCleanupSql, PROMO_RUN } from "@/scripts/promo-seed-sql";
 import type { PGlite } from "@electric-sql/pglite";

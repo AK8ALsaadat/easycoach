@@ -1,6 +1,7 @@
+import { openLegacyDatabase as openDatabase } from "./helpers/legacy-db";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { createHash, randomBytes } from "node:crypto";
-import { openDatabase, rpcLocal, LOCAL_IDS } from "@/lib/local-db";
+import { rpcLocal, LOCAL_IDS } from "@/lib/local-db";
 import { blankContent as defaultContent, type Snapshot } from "@/lib/model";
 import { publishable } from "./helpers/db";
 const blankContent = publishable(defaultContent);

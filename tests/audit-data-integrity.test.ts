@@ -1,7 +1,8 @@
+import { openLegacyDatabase as openDatabase } from "./helpers/legacy-db";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { randomUUID } from "node:crypto";
 import type { PGlite } from "@electric-sql/pglite";
-import { openDatabase, rpcLocal, LOCAL_IDS } from "@/lib/local-db";
+import { rpcLocal, LOCAL_IDS } from "@/lib/local-db";
 import type { Snapshot } from "@/lib/model";
 import { blankContent as defaultContent, type Program } from "@/lib/model";
 import { publishable } from "./helpers/db";

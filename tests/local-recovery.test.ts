@@ -1,6 +1,7 @@
+import { openLegacyDatabase as openDatabase } from "./helpers/legacy-db";
 import { expect, it } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
-import { openDatabase, rpcLocal, LOCAL_IDS } from "@/lib/local-db";
+import { rpcLocal, LOCAL_IDS } from "@/lib/local-db";
 import { blankContent, type Snapshot } from "@/lib/model";
 
 it("restores a real database backup into a new database with records, ownership and RLS intact", async () => {

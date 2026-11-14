@@ -129,13 +129,13 @@ export async function rpc<T>(
     throw Object.assign(new Error(error.message), { code: error.code });
   return data as T;
 }
-export async function snapshot(): Promise<Snapshot> {
+export async function snapshot(page?: { target?: string | null; after_client?: string | null; after_template?: string | null; after_exercise?: string | null; search_text?: string }): Promise<Snapshot> {
   const user = await actor();
   if (!user) redirect("/login");
   // These tenant-scoped reads depend on the verified actor, not on each other.
   // Keep promises request-local: no shared cache of private snapshots.
   const read = () => Promise.all([
-    retryOnce(() => rpc<Snapshot>("management_snapshot")),
+    retryOnce(() => page ? rpc<Snapshot>("ec_workspace_page",page) : rpc<Snapshot>("management_snapshot")),
     rpc<NonNullable<NonNullable<Snapshot["management"]>["schedules"]>>("client_schedules_snapshot").catch(() => []),
     rpc<NonNullable<NonNullable<Snapshot["management"]>["photo_consents"]>>("photo_consent_snapshot").catch(() => undefined),
     rpc<Snapshot["coach_branding"]>("coach_branding_snapshot").catch(() => undefined),
@@ -153,6 +153,11 @@ export async function snapshot(): Promise<Snapshot> {
     ? await rpc<NonNullable<Snapshot["paused_access"]>>("trainee_access_status").catch(() => [] as NonNullable<Snapshot["paused_access"]>)
     : undefined;
   if (data.management) {
+    if (page) {
+      const clientIds=new Set(data.clients.map(client=>client.id));
+      schedules=schedules.filter(schedule=>clientIds.has(schedule.client_id));
+      consents=consents?.filter(consent=>clientIds.has(consent.client_id));
+    }
     data.management.schedules = schedules;
     data.management.photo_consents = consents;
   }

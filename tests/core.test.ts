@@ -1,3 +1,4 @@
+import { openLegacyDatabase as openDatabase } from "./helpers/legacy-db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { randomUUID, createHash } from "node:crypto";
 import { mkdir } from "node:fs/promises";
@@ -5,7 +6,6 @@ import path from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import ExcelJS from "exceljs";
 import {
-  openDatabase,
   rpcLocal,
   LOCAL_IDS,
   passwordHash,

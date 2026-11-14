@@ -1,8 +1,9 @@
+import { openLegacyDatabase as openDatabase } from "./helpers/legacy-db";
 import { beforeAll, afterAll, expect, it } from "vitest";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import type { PGlite } from "@electric-sql/pglite";
-import { openDatabase, rpcLocal, LOCAL_IDS } from "@/lib/local-db";
+import { rpcLocal, LOCAL_IDS } from "@/lib/local-db";
 import type { CoachingRecord } from "@/lib/management";
 import type { WeightEntry } from "@/lib/model";
 import { progressComparisonDates, progressMetricsForDate } from "@/lib/progress-comparison";

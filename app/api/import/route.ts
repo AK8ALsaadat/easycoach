@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireCoach, readableError, localMode } from "@/lib/server";
 import { readImportFile } from "@/lib/import";
+import { requireFeature } from "@/lib/platform/server";
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
   const allowed = [
@@ -14,6 +15,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "مصدر غير مسموح" }, { status: 403 });
   try {
     await requireCoach();
+    await requireFeature("import");
     const limit = localMode() ? 6 * 1024 * 1024 : 4_200_000;
     if (Number(request.headers.get("content-length") ?? 0) > limit)
       throw new Error("الملف أكبر من الحد الآمن");

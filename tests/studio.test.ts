@@ -1,8 +1,8 @@
+import { openLegacyDatabase as openDatabase } from "./helpers/legacy-db";
 import { beforeAll, afterAll, it, expect } from "vitest";
 import { randomUUID, createHash } from "node:crypto";
 import type { PGlite } from "@electric-sql/pglite";
 import {
-  openDatabase,
   rpcLocal,
   LOCAL_IDS,
   passwordHash,

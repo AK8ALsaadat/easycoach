@@ -12,3 +12,5 @@ next-env.d.ts
 /.local-dev/
 /seed-credentials.md
 /seed-credentials.json
+outputs/
+test-results/

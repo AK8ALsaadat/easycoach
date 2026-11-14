@@ -7,13 +7,15 @@
     "automation:worker": "node --env-file=automation/.env automation/n8n-worker.mjs",
     "test:automation": "node --test automation/test/*.node.mjs",
     "dev": "next dev -H 127.0.0.1 -p 3200",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start -H 127.0.0.1 -p 3200",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "db:local": "node --env-file-if-exists=.env.local --experimental-strip-types scripts/init-local.ts",
-    "test:ui": "node scripts/browser-check.mjs"
+    "test:ui": "node scripts/browser-check.mjs",
+    "test:platform:ui": "node scripts/qa-platform-release.mjs",
+    "test:platform:postgres": "node scripts/qa-platform-postgres.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.15",

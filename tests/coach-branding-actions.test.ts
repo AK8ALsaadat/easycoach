@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
-import { openDatabase, rpcLocal, LOCAL_IDS } from "@/lib/local-db";
+import { rpcLocal, LOCAL_IDS } from "@/lib/local-db";
+import { openLegacyDatabase as openDatabase } from "./helpers/legacy-db";
 import type { CoachBranding } from "@/lib/coach-branding";
 const context = vi.hoisted(() => ({ db: null as import("@electric-sql/pglite").PGlite | null, user: "11111111-1111-4111-8111-111111111111" }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));

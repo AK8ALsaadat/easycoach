@@ -1,7 +1,8 @@
+import { openLegacyDatabase as openDatabase } from "./helpers/legacy-db";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
-import { openDatabase, rpcLocal, LOCAL_IDS } from "@/lib/local-db";
+import { rpcLocal, LOCAL_IDS } from "@/lib/local-db";
 import { avatarUrl, brandingPreview, type CoachBranding } from "@/lib/coach-branding";
 import { prepareCoachAvatar } from "@/lib/coach-avatar";
 import type { PGlite } from "@electric-sql/pglite";

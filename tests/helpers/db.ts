@@ -6,7 +6,7 @@ export const other = LOCAL_IDS.other;
 export const trainee = LOCAL_IDS.trainee;
 
 /** Fresh in-memory PostgreSQL with every migration, RLS policy and role applied. */
-export async function fixtureDatabase() {
+export async function fixtureDatabase(options: { platformManaged?: boolean } = {}) {
   const db = await openDatabase();
   for (const [id, role] of [
     [coach, "coach"],
@@ -20,6 +20,9 @@ export async function fixtureDatabase() {
     ]);
     await rpcLocal(db, id, "init_profile", { display_name: "Fictional test account", requested_role: role });
   }
+  // Existing feature regression suites represent pre-migration customers.
+  // Dedicated platform suites opt into new-owner defaults instead.
+  if (!options.platformManaged) await db.exec("update public.ec_accounts set mode='legacy'; alter table public.ec_accounts alter column mode set default 'legacy'");
   const call = <T = Record<string, unknown>>(user: string | null, name: string, args: Record<string, unknown> = {}) =>
     rpcLocal<T>(db, user, name, args);
   const app = <T = Record<string, unknown>>(user: string, command: string, payload: unknown) =>

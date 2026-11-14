@@ -27,6 +27,7 @@ import {
 import { manage } from "@/app/management-actions";
 import type { TemplateMeta } from "@/lib/management";
 import { mutate, type Result } from "@/app/actions";
+import { saveTeamProgram,publishTeamProgram } from "@/app/platform-actions";
 import { Notice } from "./forms";
 import { ExerciseCatalog } from "./exercise-catalog";
 import { ConfirmDialog } from "./modal";
@@ -74,6 +75,7 @@ export function ProgramEditor({
   templateMeta,
   siblingTemplates = [],
   onPublished,
+  organizationOwner,
 }: {
   initial: Content;
   name: string;
@@ -86,6 +88,7 @@ export function ProgramEditor({
   /** Other templates of this coach, for the "same name" check while renaming. */
   siblingTemplates?: { id: string; name: string }[];
   onPublished?: (publishedAt: string) => void;
+  organizationOwner?: string;
 }) {
   const { t: tr, language: locale } = useLocale();
 
@@ -175,7 +178,9 @@ export function ProgramEditor({
     const rev = revision.current;
     try {
       const response = clientId
-        ? await mutate("program_save", { client_id: clientId, name, content: check.data, expected_draft_id: savedId.current ?? null, expected_edit_revision: savedEditRevision.current })
+        ? organizationOwner
+          ? await saveTeamProgram(organizationOwner,{ client_id: clientId, name, content: check.data, expected_draft_id: savedId.current ?? null, expected_edit_revision: savedEditRevision.current })
+          : await mutate("program_save", { client_id: clientId, name, content: check.data, expected_draft_id: savedId.current ?? null, expected_edit_revision: savedEditRevision.current })
         : await manage("template_save_typed", { id: savedId.current, name, content: check.data, kind: templateKind, description: templateMeta?.description ?? "", archived: templateMeta?.archived ?? false });
       setResult(response);
       if (response.ok) {
@@ -196,7 +201,7 @@ export function ProgramEditor({
       lock.current = false;
       setBusy(false);
     }
-  }, [plan, name, clientId, templateKind, templateMeta, nameError]);
+  }, [plan, name, clientId, templateKind, templateMeta, nameError,organizationOwner]);
   useEffect(() => {
     // Autosave follows the same rule as the save button: an incomplete draft is
     // still saved, so a closed tab never costs the coach their work.
@@ -680,7 +685,7 @@ export function ProgramEditor({
                 </label>
                 <details className="program-exercise-more"><summary>{tr(clientId ? "الفيديو والأوزان المتقدمة" : "فيديو شرح التمرين")}</summary>
                 <div className="mt-4 border-t pt-4">
-                  <VideoUpload
+                  {!organizationOwner ? <VideoUpload
                     onComplete={(mediaId) => {
                       edit((c) => ({
                         ...c,
@@ -696,7 +701,7 @@ export function ProgramEditor({
                         ),
                       }));
                     }}
-                  />
+                  /> : <p className="text-sm text-muted">استخدم فيديوهات مكتبة المنشأة أو رابط شرح. يدير المالك رفع الفيديوهات من المكتبة.</p>}
                   {e.mediaId ? (
                     <div className="mt-3">
                       <ExerciseVideo
@@ -895,7 +900,9 @@ export function ProgramEditor({
                 setBusy(true);
                 lock.current = true;
                 try {
-                const response = await mutate("program_publish", {
+                const response = organizationOwner
+                  ? await publishTeamProgram(organizationOwner,draftId,savedEditRevision.current!)
+                  : await mutate("program_publish", {
                   id: draftId,
                   expected_edit_revision: savedEditRevision.current ?? undefined,
                 });
