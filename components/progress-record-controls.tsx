@@ -1,4 +1,5 @@
 "use client";
+import { DateInput } from "./date-input";
 import { useState, useSyncExternalStore } from "react";
 import { changeProgressRecord } from "@/app/progress-record-actions";
 import type { CoachingRecord } from "@/lib/management";
@@ -54,7 +55,7 @@ export function ProgressRecordControls({ record, coach, portalReference, onUpdat
       <summary>{t("تصحيح التحديث أو حذفه")}</summary>
       <form className="mt-3 space-y-3" onSubmit={event => { event.preventDefault(); void save("edit", new FormData(event.currentTarget)); }}>
         <fieldset disabled={locked} className="min-w-0 space-y-3">
-          <label className="block">{t("تاريخ التحديث")}<input className="field" type="date" name="entry_date" defaultValue={record.entry_date} max={riyadhToday()} required /></label>
+          <label className="block">{t("تاريخ التحديث")}<DateInput className="field" type="date" name="entry_date" defaultValue={record.entry_date} max={riyadhToday()} required /></label>
           <div className="grid gap-3 sm:grid-cols-2">{fields.map(([key, label, min, max]) => <label key={key}>{t(label)}<input className="field" type="number" name={key} min={min} max={max} step={record.kind === "checkin" && key !== "weight" ? "1" : "0.1"} required={record.kind === "checkin" && key !== "weight"} defaultValue={typeof record.payload[key] === "number" ? String(record.payload[key]) : ""} /></label>)}</div>
           {record.kind === "measurement" ? <label className="block">{t("الملاحظات")}<textarea className="field" name="notes" maxLength={4000} defaultValue={String(record.payload.notes ?? "")} /></label> : <><label className="block">{t("ملاحظات المتدرب")}<textarea className="field" name="feedback" maxLength={4000} defaultValue={String(record.payload.feedback ?? "")} /></label><label className="block">{t("أسئلة أو صعوبات")}<textarea className="field" name="questions" maxLength={4000} defaultValue={String(record.payload.questions ?? "")} /></label></>}
           <p className="text-muted">{t("التصحيح يحفظ إسناد التحديث ووقت تعديله. الحذف يزيل سجل التحديث وتصحيحاته، ولا يحذف صورًا مستقلة سبق رفعها.")}</p>

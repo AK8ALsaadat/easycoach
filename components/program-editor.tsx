@@ -42,7 +42,7 @@ import { MacroTargets } from "./macro-targets";
 import { caloriesFromMacros, inferCaloriesMode } from "@/lib/macros";
 import { templateNameError } from "@/lib/template-names";
 import { ProgramDayNav } from "./program-day-nav";
-import { appendExercise, customExercise, dayName, displayDayName, isStarterExercise, transferExercise, repeatProgramDay, appendExercises } from "@/lib/program-builder";
+import { appendExercise, copyExerciseAfter, customExercise, dayName, dayNameKey, displayDayName, isStarterExercise, transferExercise, repeatProgramDay, appendExercises } from "@/lib/program-builder";
 function withRowIds(value: Content): Content {
   return {
     ...value,
@@ -73,6 +73,7 @@ export function ProgramEditor({
   separateNutrition = false,
   templateMeta,
   siblingTemplates = [],
+  onPublished,
 }: {
   initial: Content;
   name: string;
@@ -84,6 +85,7 @@ export function ProgramEditor({
   templateMeta?: TemplateMeta;
   /** Other templates of this coach, for the "same name" check while renaming. */
   siblingTemplates?: { id: string; name: string }[];
+  onPublished?: (publishedAt: string) => void;
 }) {
   const { t: tr, language: locale } = useLocale();
 
@@ -132,6 +134,7 @@ export function ProgramEditor({
     if (valid) invalidCells.current.delete(cell);
     else invalidCells.current.add(cell);
     setInvalidCount(invalidCells.current.size);
+    if (!valid) { revision.current++; setDirty(true); setResult(null); }
   }, []);
   function changed() {
     setUndo(null);
@@ -238,18 +241,14 @@ export function ProgramEditor({
   function addDay() {
     if (plan.days.length >= 14) return;
     const next=plan.days.length;
-    edit(current=>{let name=dayName(next,locale);for(let n=2;current.days.some(item=>item.name===name);n++)name=`${dayName(next,locale)} (${n})`;return {...current,days:[...current.days,{name,exercises:[]}]};});
+    edit(current=>{let name=dayName(next,locale);for(let n=2;current.days.some(item=>dayNameKey(item.name)===dayNameKey(name));n++)name=`${dayName(next,locale)} (${n})`;return {...current,days:[...current.days,{name,exercises:[]}]};});
     setDay(next); setCustomName(""); setFeedback("");
   }
   /** Removing a day with exercises in it is asked about first; the undo bar
    *  still covers an accidental confirm. */
   function removeDay(index: number) {
     if (plan.days.length === 1) return;
-    if (plan.days[index]?.exercises.length) {
-      setDeleteDay(index);
-      return;
-    }
-    commitRemoveDay(index);
+    setDeleteDay(index);
   }
   function commitRemoveDay(index: number) {
     const previous = { plan: structuredClone(plan), day };
@@ -370,7 +369,7 @@ export function ProgramEditor({
         >
           {tr("البرنامج التدريبي")}
         </button>}
-        {separateNutrition && clientId ? <Link className="btn-secondary" href={`/coach/clients/${clientId}/edit?tab=nutrition`}>{tr("تعديل السعرات")}</Link> : (clientId || templateKind !== "workout") && <button
+        {separateNutrition && clientId ? <Link className="btn-secondary" href={`/coach/clients/${clientId}/edit?tab=nutrition`}>{tr("فتح أهداف التغذية")}</Link> : (clientId || templateKind !== "workout") && <button
           type="button"
           className={tab === "nutrition" ? "btn" : "btn-secondary"}
           onClick={() => setTab("nutrition")}
@@ -552,6 +551,7 @@ export function ProgramEditor({
               aria-label={tr("اسم اليوم")}
               className="field max-w-sm"
               value={active.name}
+              aria-invalid={plan.days.some((item, index) => index !== day && dayNameKey(item.name) === dayNameKey(active.name))}
               maxLength={100}
               onChange={(e) =>
                 edit((c) => ({
@@ -563,6 +563,7 @@ export function ProgramEditor({
               }
             />
 
+            {plan.days.some((item, index) => index !== day && dayNameKey(item.name) === dayNameKey(active.name)) && <p role="alert" className="field-error">{tr("اسم اليوم مكرر؛ اختر اسمًا يميزه عن بقية الأيام.")}</p>}
             <button
               type="button"
               className="btn-secondary text-red-700"
@@ -791,7 +792,7 @@ export function ProgramEditor({
                 </div>
                 </details>
                 <div className="program-exercise-actions">
-                  <button type="button" className="btn-secondary" disabled={active.exercises.length>=40} onClick={()=>edit(current=>appendExercise(current,day,e))}><Copy size={14}/>{tr("نسخ التمرين")}</button>
+                  <button type="button" className="btn-secondary" disabled={active.exercises.length>=40} onClick={()=>edit(current=>copyExerciseAfter(current,day,i))}><Copy size={14}/>{tr("نسخ التمرين")}</button>
                   {plan.days.length>1 && <select className="field" aria-label={tr("نقل التمرين {0} إلى يوم",String(i+1))} value="" onChange={event=>{const target=Number(event.target.value);const next=transferExercise(plan,day,i,target);if(next===plan)return;const previous={plan:structuredClone(plan),day};edit(()=>next);setUndo(previous);}}>
                     <option value="">{tr("نقل إلى يوم آخر…")}</option>{plan.days.map((target,index)=>index===day?null:<option key={index} value={index} disabled={target.exercises.length>=40}>{target.name}</option>)}
                   </select>}
@@ -831,7 +832,7 @@ export function ProgramEditor({
           </section>
         </div>
       )}
-      <div className="program-savebar sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white/95 p-4 shadow-lg backdrop-blur">
+      <div className="program-savebar flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white/95 p-4 shadow-lg">
         <p className="max-w-md text-xs text-muted">
           {/* Autosave runs 1.2s after the last edit; the state is said out loud
               so nobody has to guess whether their work is safe. */}
@@ -844,6 +845,7 @@ export function ProgramEditor({
                   ? tr("كل التعديلات محفوظة ✓")
                   : tr("ما فيه تعديلات بعد")}
           </span>
+          {dirty && (nameError || invalidCount > 0 || result?.ok === false) && <span role="alert" className="field-error block mt-2">{tr(nameError ?? (invalidCount ? "صحّح المجموعات والتكرارات والراحة المظللة قبل الحفظ." : result?.message ?? "تعذر حفظ المسودة"))}</span>}
           <br />
           {clientId
             ? tr("جاهز؟ انشر التحديث على رابط المتدرب.")
@@ -883,14 +885,23 @@ export function ProgramEditor({
                   window.requestAnimationFrame(() => document.getElementById("publish-issues")?.focus());
                   return;
                 }
+                const publishRevision = revision.current;
                 const draftId = await save();
                 if (!draftId) return;
+                if (publishRevision !== revision.current) {
+                  setResult({ ok: false, message: "فيه تعديلات أثناء الحفظ. احفظها ثم انشر النسخة الأحدث." });
+                  return;
+                }
+                setBusy(true);
+                lock.current = true;
+                try {
                 const response = await mutate("program_publish", {
                   id: draftId,
                   expected_edit_revision: savedEditRevision.current ?? undefined,
                 });
                 setResult(response);
                 if (response.ok) {
+                  onPublished?.((response.data as { published_at?: string })?.published_at ?? new Date().toISOString());
                   savedId.current = undefined;
                   savedEditRevision.current = null;
                   setResult({
@@ -900,6 +911,9 @@ export function ProgramEditor({
                   showToast({ message: tr("تم نشر البرنامج للمتدرب ✓"), tone: "success" });
                   router.refresh();
                 }
+                } catch {
+                  setResult({ ok: false, message: "تعذر الاتصال. لم نتأكد من النشر؛ أعد المحاولة." });
+                } finally { lock.current = false; setBusy(false); }
               }}
             >
               <Send size={16} />
@@ -994,6 +1008,7 @@ export function ProgramEditor({
               initialDropDay={day}
               dropDays={plan.days.map((item) => ({
                 name: item.name,
+                weekday: item.weekday,
                 count: item.exercises.length,
                 exercises: item.exercises,
               }))}

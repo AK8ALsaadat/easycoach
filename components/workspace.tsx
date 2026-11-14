@@ -2,8 +2,10 @@
 import { useLocale } from "./locale-provider";
 import { LanguageSwitch } from "./language-switch";
 import { useState } from "react";
+import dynamic from "next/dynamic";
+import { ChunkLoading } from "./chunk-loading";
+import { VisitedPanel } from "./visited-panel";
 import { SessionGuard } from "./session-guard";
-import { CustomExercises } from "./custom-exercises";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -45,12 +47,7 @@ import { withTrainingDays } from "@/lib/program-builder";
 import { auditLabel } from "@/lib/audit-labels";
 import { Brand } from "./brand";
 import { ActionButton, DataForm, Notice, type Field } from "./forms";
-import { ProgramEditor } from "./program-editor";
-import { ImportClients } from "./import-clients";
 import { ClientProgress, PortalControl } from "./client-progress";
-import { ExerciseCatalog } from "./exercise-catalog";
-import { TemplateTools } from "./template-tools";
-import { ClientHub } from "./client-hub";
 import { ClientRoster } from "./client-roster";
 import { ClientOverview } from "./client-overview";
 import { NutritionTargetEditor } from "./nutrition-target-editor";
@@ -58,23 +55,30 @@ import { PhoneLink } from "./phone-link";
 import { clientInsights } from "@/lib/client-insights";
 import { SubscriptionRenewal } from "./subscription-renewal";
 import { coachingAlerts } from "@/lib/coaching-alerts";
-import { NotificationSettings } from "./notification-settings";
-import { AccountSettings } from "./account-settings";
-import { CoachBrandingSettings } from "./coach-branding-settings";
-import { PaylinkSettings } from "./paylink-settings";
-import { exerciseName, isCustomExercise } from "@/lib/catalog";
 import { CoachToday } from "./coach-today";
 import { useDialog } from "./use-dialog";
 import {
   availableTemplates,
   templateLibraryState,
 } from "@/lib/template-availability";
-import { SupportDesk } from "./support-desk";
 import { ToastHost, showToast } from "./toast";
 import { ClientActionsMenu } from "./client-lifecycle";
 import { TemplateNameDialog, TemplateTags, type TemplateDetails } from "./template-name-dialog";
 import { isUnnamedTemplate, suggestCopyName, templateNameError } from "@/lib/template-names";
 import { countLabel, formatNumber, formatSar, nouns } from "@/lib/plural";
+
+// Keep server rendering, but download each tool only when its route/panel opens.
+const ProgramEditor = dynamic(() => import("./program-editor").then(m => m.ProgramEditor), { loading: ChunkLoading });
+const ImportClients = dynamic(() => import("./import-clients").then(m => m.ImportClients), { loading: ChunkLoading });
+const ExerciseCatalog = dynamic(() => import("./exercise-catalog").then(m => m.TemplateExerciseCatalog), { loading: ChunkLoading });
+const TemplateTools = dynamic(() => import("./template-tools").then(m => m.TemplateTools), { loading: ChunkLoading });
+const ClientHub = dynamic(() => import("./client-hub").then(m => m.ClientHub), { loading: ChunkLoading });
+const CustomExercises = dynamic(() => import("./custom-exercises").then(m => m.CustomExercises), { loading: ChunkLoading });
+const NotificationSettings = dynamic(() => import("./notification-settings").then(m => m.NotificationSettings), { loading: ChunkLoading });
+const AccountSettings = dynamic(() => import("./account-settings").then(m => m.AccountSettings), { loading: ChunkLoading });
+const CoachBrandingSettings = dynamic(() => import("./coach-branding-settings").then(m => m.CoachBrandingSettings), { loading: ChunkLoading });
+const PaylinkSettings = dynamic(() => import("./paylink-settings").then(m => m.PaylinkSettings), { loading: ChunkLoading });
+const SupportDesk = dynamic(() => import("./support-desk").then(m => m.SupportDesk), { loading: ChunkLoading });
 
 const clientFields = (client?: Client): Field[] => [
   { name: "name", label: "اسم المتدرب", value: client?.name, required: true },
@@ -225,6 +229,7 @@ export function Workspace({
   initialFilter = "",
   initialQuery = "",
   initialTab = "overview",
+  initialTemplate,
   tutorialDismissed = false,
   appUrl,
   local,
@@ -236,6 +241,7 @@ export function Workspace({
   initialFilter?: string;
   initialQuery?: string;
   initialTab?: string;
+  initialTemplate?: string;
   tutorialDismissed?: boolean;
   appUrl: string;
   local: boolean;
@@ -423,7 +429,7 @@ export function Workspace({
               />
             )
           ) : section === "library" ? (
-            <Library data={data} initialTab={initialTab} />
+            <Library data={data} initialTab={initialTab} initialTemplate={initialTemplate} />
           ) : section === "finance" ? (
             <Finance data={data} />
           ) : (
@@ -583,6 +589,7 @@ function ClientDetail({
   );
   const [templateId, setTemplateId] = useState("");
   const [loaded, setLoaded] = useState<Template | null>(null);
+  const [justPublished, setJustPublished] = useState<string | null>(null);
   const draft = data.programs.find(
     (p) => p.client_id === client.id && !p.published_at,
   );
@@ -619,6 +626,7 @@ function ClientDetail({
       >
         <div className="flex flex-wrap gap-2">
           <PhoneLink phone={client.phone}/>
+          <Link className="btn-secondary" href={`/coach/clients/${client.id}/preview`}>{tr("معاينة كمتدرب")}</Link>
           {!client.trainee_user_id && <span className="badge">{tr("بانتظار ربط الحساب")}</span>}
           <button
             className={client.trainee_user_id ? "btn-soft" : "btn-secondary"}
@@ -693,11 +701,11 @@ function ClientDetail({
           <div className="section-title">
             <div>
               <h2>{tr("مسودة البرنامج")}</h2>
-              <p className="mt-1 text-xs text-muted">
-                {published
+              <p className="mt-1 text-xs text-muted" data-last-published={justPublished ?? published?.published_at ?? ""}>
+                {justPublished || published
                   ? tr(
                       "آخر نشر: {0}",
-                      String(formatDate(published.published_at!, locale)),
+                      `${formatDate(justPublished ?? published!.published_at!, locale)} · ${new Date(justPublished ?? published!.published_at!).toLocaleTimeString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-GB", { timeZone: "Asia/Riyadh", hour: "2-digit", minute: "2-digit", second: "2-digit" })}`,
                     )
                   : tr("ما فيه نسخة منشورة للمتدرب بعد.")}
               </p>
@@ -746,7 +754,7 @@ function ClientDetail({
             key={
               loaded
                 ? `template-${loaded.id}`
-                : (draft?.id ?? published?.id ?? client.id)
+                : `client-editor-${client.id}`
             }
             initial={{...(selected?.content ?? blankContent),nutrition:{...(selected?.content.nutrition ?? blankContent.nutrition),...insight.nutrition}}}
             separateNutrition
@@ -755,6 +763,7 @@ function ClientDetail({
             editRevision={draft?.edit_revision}
             clientId={client.id}
             library={data.exercises}
+            onPublished={(date) => setJustPublished(date)}
           />
         </section>
       ) : tab === "finance" ? (
@@ -913,7 +922,7 @@ function SubscriptionCard({
   );
 }
 const LIBRARY_TABS = ["catalog", "templates", "exercises"] as const;
-function Library({ data, initialTab }: { data: Snapshot; initialTab?: string }) {
+function Library({ data, initialTab, initialTemplate }: { data: Snapshot; initialTab?: string; initialTemplate?: string }) {
   const { t: tr, language: locale } = useLocale();
   const router = useRouter();
   const [deletingTemplate, setDeletingTemplate] = useState("");
@@ -933,8 +942,9 @@ function Library({ data, initialTab }: { data: Snapshot; initialTab?: string }) 
     else url.searchParams.set("tab", next);
     window.history.replaceState(null, "", url.toString());
   };
-  const [template, setTemplate] = useState<Template | null>(null);
-  const [editor, setEditor] = useState(false);
+  const [template, setTemplate] = useState<Template | null>(() => data.templates.find(row => row.id === initialTemplate) ?? null);
+  const [editor, setEditor] = useState(() => data.templates.some(row => row.id === initialTemplate));
+  const activeTemplate = template ?? data.templates.find(row => row.id === initialTemplate);
   const [templateRevision, setTemplateRevision] = useState(0);
   const [nameDialog, setNameDialog] = useState<null | { key: number; mode: "create" | "copy" | "rename"; initial: Partial<TemplateDetails>; seed?: Template["content"]; source?: Template }>(null);
   const templates = availableTemplates(
@@ -953,6 +963,11 @@ function Library({ data, initialTab }: { data: Snapshot; initialTab?: string }) 
     setTemplateRevision((value) => value + 1);
     setEditor(true);
     openTab("templates");
+    const url = new URL(window.location.href);
+    url.searchParams.set("template", next.id);
+    // The new record is committed. Enter its durable editor URL before any
+    // editing starts; the action's RSC refresh must not replace local editor state.
+    window.location.assign(url.pathname + url.search);
   };
   async function submitName(details: TemplateDetails): Promise<Result> {
     if (!nameDialog) return { ok: false, message: "" };
@@ -965,7 +980,6 @@ function Library({ data, initialTab }: { data: Snapshot; initialTab?: string }) 
       const saved = response.data as Template;
       setNameDialog(null);
       openEditor({ ...saved, content: seed });
-      router.refresh();
       return response;
     }
     const source = nameDialog.source!;
@@ -1083,19 +1097,13 @@ function Library({ data, initialTab }: { data: Snapshot; initialTab?: string }) 
         aria-labelledby="library-tab-catalog"
         hidden={tab !== "catalog"}
       >
-        <ExerciseCatalog
+        <VisitedPanel active={tab === "catalog"}><ExerciseCatalog
           embedded
           custom={data.exercises}
-          onConfirm={(exercises) => {
-            const seed = structuredClone(blankContent);
-            seed.days[0].exercises = exercises.map(exercise=>isCustomExercise(exercise)
-              ? {name:exercise.name,description:exercise.custom.description,video:exercise.custom.video,...(exercise.custom.mediaId?{mediaId:exercise.custom.mediaId}:{}),sets:3,reps:"10–12",rest:90}
-              : {name:exerciseName(exercise,locale),catalogId:exercise.id,description:"",video:"",sets:3,reps:"10–12",rest:90});
-            const first = exercises[0];
-            const suggested = ("برنامج " + (isCustomExercise(first) ? first.name : exerciseName(first,locale))).slice(0, 60).trim();
+          onCreate={(seed, suggested) => {
             createTemplate(seed, templateNameError(suggested, data.templates) ? "" : suggested);
           }}
-        />
+        /></VisitedPanel>
       </div>
       <div
         id="library-panel-templates"
@@ -1103,22 +1111,23 @@ function Library({ data, initialTab }: { data: Snapshot; initialTab?: string }) 
         aria-labelledby="library-tab-templates"
         hidden={tab !== "templates"}
       >
+        <VisitedPanel active={tab === "templates"}>
         <TemplateTools data={data} />
         <Notice result={templateResult} />
-        {editor ? (
+        {editor || Boolean(initialTemplate && activeTemplate) ? (
           <section className="card p-6">
             <button
               className="mb-5 text-xs text-muted"
-              onClick={() => setEditor(false)}
+              onClick={() => { setEditor(false); const url = new URL(window.location.href); url.searchParams.delete("template"); router.replace(url.pathname + url.search, { scroll: false }); }}
             >
               {tr("رجوع للقوالب")}
             </button>
-            {template && <ProgramEditor
-              key={template.id + ":" + templateRevision}
-              initial={template.content}
-              name={template.name}
-              id={template.id}
-              templateMeta={metaFor(template.id)}
+            {activeTemplate && <ProgramEditor
+              key={activeTemplate.id + ":" + templateRevision}
+              initial={activeTemplate.content}
+              name={activeTemplate.name}
+              id={activeTemplate.id}
+              templateMeta={metaFor(activeTemplate.id)}
               siblingTemplates={data.templates}
               library={data.exercises}
             />}
@@ -1210,6 +1219,7 @@ function Library({ data, initialTab }: { data: Snapshot; initialTab?: string }) 
             )}
           />
         )}
+        </VisitedPanel>
       </div>
       <div
         id="library-panel-exercises"
@@ -1217,7 +1227,7 @@ function Library({ data, initialTab }: { data: Snapshot; initialTab?: string }) 
         aria-labelledby="library-tab-exercises"
         hidden={tab !== "exercises"}
       >
-        <CustomExercises data={data} />
+        <VisitedPanel active={tab === "exercises"}><CustomExercises data={data} /></VisitedPanel>
       </div>
     </>
   );

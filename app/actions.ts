@@ -248,11 +248,11 @@ export async function claimAction(token: string): Promise<Result> {
       .regex(/^[a-f0-9]{64}$/)
       .parse(token);
     await rpc("claim_invite", { token: hash(token) });
-    revalidatePath("/", "layout");
-    return { ok: true, message: "تم ربط الحساب. افتح بوابة المتدرب." };
   } catch (e) {
     return { ok: false, message: readableError(e) };
   }
+  revalidatePath("/", "layout");
+  redirect("/me");
 }
 /** Google sign-in is shown only after the provider is configured in Supabase. */
 const googleAuthEnabled = () =>

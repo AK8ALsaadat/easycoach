@@ -1,0 +1,6970 @@
+{
+ "3_4_Sit-Up": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "90_90_Hamstring": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Ab_Crunch_Machine": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Ab_Roller": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Adductor": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Adductor_Groin": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Advanced_Kettlebell_Windmill": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 128,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Air_Bike": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "All_Fours_Quad_Stretch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Alternate_Hammer_Curl": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Alternate_Heel_Touchers": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Alternate_Incline_Dumbbell_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Alternate_Leg_Diagonal_Bound": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Alternating_Cable_Shoulder_Press": {
+  "left": 30,
+  "top": 0,
+  "width": 299,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Alternating_Deltoid_Raise": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Alternating_Floor_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Alternating_Hang_Clean": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Alternating_Kettlebell_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Alternating_Kettlebell_Row": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Alternating_Renegade_Row": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Ankle_Circles": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Ankle_On_The_Knee": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Anterior_Tibialis-SMR": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Anti-Gravity_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Arm_Circles": {
+  "left": 0,
+  "top": 25,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Arnold_Dumbbell_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Around_The_Worlds": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Atlas_Stone_Trainer": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Atlas_Stones": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Axle_Deadlift": {
+  "left": 0,
+  "top": 32,
+  "width": 360,
+  "height": 117,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Back_Flyes_-_With_Bands": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Backward_Drag": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Backward_Medicine_Ball_Throw": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Balance_Board": {
+  "left": 26,
+  "top": 0,
+  "width": 308,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Ball_Leg_Curl": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Band_Assisted_Pull-Up": {
+  "left": 30,
+  "top": 0,
+  "width": 299,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Band_Good_Morning": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Band_Good_Morning_Pull_Through": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Band_Hip_Adductions": {
+  "left": 0,
+  "top": 32,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Band_Pull_Apart": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Band_Skull_Crusher": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Ab_Rollout": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Ab_Rollout_-_On_Knees": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Bench_Press_-_Medium_Grip": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Curl": {
+  "left": 0,
+  "top": 25,
+  "width": 360,
+  "height": 126,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Curls_Lying_Against_An_Incline": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Deadlift": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Full_Squat": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 127,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Glute_Bridge": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Guillotine_Bench_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Hack_Squat": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Hip_Thrust": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Incline_Bench_Press_-_Medium_Grip": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Incline_Shoulder_Raise": {
+  "left": 0,
+  "top": 25,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Lunge": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Rear_Delt_Row": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Rollout_from_Bench": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Seated_Calf_Raise": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Shoulder_Press": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Shrug": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Shrug_Behind_The_Back": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Side_Bend": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Side_Split_Squat": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Squat": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Squat_To_A_Bench": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 127,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Step_Ups": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Barbell_Walking_Lunge": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Battling_Ropes": {
+  "left": 30,
+  "top": 0,
+  "width": 301,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bear_Crawl_Sled_Drags": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Behind_Head_Chest_Stretch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bench_Dips": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bench_Jump": {
+  "left": 29,
+  "top": 0,
+  "width": 301,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bench_Press_-_Powerlifting": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bench_Press_-_With_Bands": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bench_Press_with_Chains": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bench_Sprint": {
+  "left": 28,
+  "top": 0,
+  "width": 302,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bent-Arm_Barbell_Pullover": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bent-Arm_Dumbbell_Pullover": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bent-Knee_Hip_Raise": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bent_Over_Barbell_Row": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bent_Over_Dumbbell_Rear_Delt_Raise_With_Head_On_Bench": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bent_Over_Low-Pulley_Side_Lateral": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bent_Over_One-Arm_Long_Bar_Row": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bent_Over_Two-Arm_Long_Bar_Row": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bent_Over_Two-Dumbbell_Row": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bent_Over_Two-Dumbbell_Row_With_Palms_In": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bent_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bicycling": {
+  "left": 0,
+  "top": 25,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bicycling_Stationary": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Board_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Body-Up": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Body_Tricep_Press": {
+  "left": 30,
+  "top": 0,
+  "width": 302,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bodyweight_Flyes": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bodyweight_Mid_Row": {
+  "left": 29,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bodyweight_Squat": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bodyweight_Walking_Lunge": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bosu_Ball_Cable_Crunch_With_Side_Bends": {
+  "left": 26,
+  "top": 0,
+  "width": 308,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bottoms-Up_Clean_From_The_Hang_Position": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bottoms_Up": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Box_Jump_Multiple_Response": {
+  "left": 28,
+  "top": 0,
+  "width": 302,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Box_Skip": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Box_Squat": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Box_Squat_with_Bands": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Box_Squat_with_Chains": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Brachialis-SMR": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Bradford_Rocky_Presses": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Butt-Ups": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Butt_Lift_Bridge": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Butterfly": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Chest_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Crossover": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Crunch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Deadlifts": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Hammer_Curls_-_Rope_Attachment": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Hip_Adduction": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Incline_Pushdown": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Incline_Triceps_Extension": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Internal_Rotation": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Iron_Cross": {
+  "left": 30,
+  "top": 0,
+  "width": 301,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Judo_Flip": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Lying_Triceps_Extension": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_One_Arm_Tricep_Extension": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Preacher_Curl": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Rear_Delt_Fly": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Reverse_Crunch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Rope_Overhead_Triceps_Extension": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Rope_Rear-Delt_Rows": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Russian_Twists": {
+  "left": 29,
+  "top": 0,
+  "width": 302,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Seated_Crunch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Seated_Lateral_Raise": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Shoulder_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Shrugs": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cable_Wrist_Curl": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Calf-Machine_Shoulder_Shrug": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Calf_Press": {
+  "left": 30,
+  "top": 0,
+  "width": 304,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Calf_Press_On_The_Leg_Press_Machine": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Calf_Raise_On_A_Dumbbell": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Calf_Raises_-_With_Bands": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Calf_Stretch_Elbows_Against_Wall": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Calf_Stretch_Hands_Against_Wall": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Calves-SMR": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Car_Deadlift": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Car_Drivers": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Carioca_Quick_Step": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cat_Stretch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Catch_and_Overhead_Throw": {
+  "left": 26,
+  "top": 0,
+  "width": 305,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chain_Handle_Extension": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chain_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chair_Leg_Extended_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chair_Lower_Back_Stretch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chair_Squat": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chair_Upper_Body_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chest_And_Front_Of_Shoulder_Stretch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chest_Push_from_3_point_stance": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chest_Push_multiple_response": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chest_Push_single_response": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chest_Push_with_Run_Release": {
+  "left": 30,
+  "top": 0,
+  "width": 301,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chest_Stretch_on_Stability_Ball": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Childs_Pose": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chin-Up": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Chin_To_Chest_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Circus_Bell": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Clean": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Clean_Deadlift": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Clean_Pull": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Clean_Shrug": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Clean_and_Jerk": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Clean_and_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Clean_from_Blocks": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Clock_Push-Up": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Close-Grip_Barbell_Bench_Press": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Close-Grip_Dumbbell_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Close-Grip_EZ-Bar_Curl_with_Band": {
+  "left": 31,
+  "top": 0,
+  "width": 298,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Close-Grip_EZ-Bar_Press": {
+  "left": 30,
+  "top": 0,
+  "width": 328,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Close-Grip_EZ_Bar_Curl": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Close-Grip_Front_Lat_Pulldown": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Close-Grip_Push-Up_off_of_a_Dumbbell": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Close-Grip_Standing_Barbell_Curl": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cocoons": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Conans_Wheel": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Concentration_Curls": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cross-Body_Crunch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cross_Body_Hammer_Curl": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cross_Over_-_With_Bands": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Crossover_Reverse_Lunge": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Crucifix": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Crunch_-_Hands_Overhead": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Crunch_-_Legs_On_Exercise_Ball": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Crunches": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Cuban_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dancers_Stretch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dead_Bug": {
+  "left": 0,
+  "top": 40,
+  "width": 360,
+  "height": 98,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Deadlift_with_Bands": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Deadlift_with_Chains": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Decline_Barbell_Bench_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Decline_Close-Grip_Bench_To_Skull_Crusher": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Decline_Crunch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Decline_Dumbbell_Bench_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Decline_Dumbbell_Flyes": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Decline_Dumbbell_Triceps_Extension": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Decline_EZ_Bar_Triceps_Extension": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Decline_Oblique_Crunch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Decline_Push-Up": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Decline_Reverse_Crunch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Decline_Smith_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Deficit_Deadlift": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Depth_Jump_Leap": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dip_Machine": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dips_-_Chest_Version": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dips_-_Triceps_Version": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Donkey_Calf_Raises": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Double_Kettlebell_Alternating_Hang_Clean": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Double_Kettlebell_Jerk": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Double_Kettlebell_Push_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Double_Kettlebell_Snatch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Double_Kettlebell_Windmill": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Double_Leg_Butt_Kick": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Downward_Facing_Balance": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 128,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Drag_Curl": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Drop_Push": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Alternate_Bicep_Curl": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Bench_Press": {
+  "left": 0,
+  "top": 25,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Bench_Press_with_Neutral_Grip": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Bicep_Curl": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Clean": {
+  "left": 0,
+  "top": 38,
+  "width": 360,
+  "height": 100,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Floor_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Flyes": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Incline_Row": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Incline_Shoulder_Raise": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Lunges": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Lying_One-Arm_Rear_Lateral_Raise": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Lying_Pronation": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Lying_Rear_Lateral_Raise": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 127,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Lying_Supination": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_One-Arm_Shoulder_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_One-Arm_Triceps_Extension": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_One-Arm_Upright_Row": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Prone_Incline_Curl": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Raise": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Rear_Lunge": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Scaption": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Seated_Box_Jump": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Seated_One-Leg_Calf_Raise": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Shoulder_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Shrug": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Side_Bend": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Squat": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Squat_To_A_Bench": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Step_Ups": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dumbbell_Tricep_Extension_-Pronated_Grip": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dynamic_Back_Stretch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Dynamic_Chest_Stretch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "EZ-Bar_Curl": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "EZ-Bar_Skullcrusher": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Elbow_Circles": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Elbow_to_Knee": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Elbows_Back": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Elevated_Back_Lunge": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Elevated_Cable_Rows": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Elliptical_Trainer": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 126,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Exercise_Ball_Crunch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Exercise_Ball_Pull-In": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Extended_Range_One-Arm_Kettlebell_Floor_Press": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "External_Rotation": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "External_Rotation_with_Band": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "External_Rotation_with_Cable": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Face_Pull": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Farmers_Walk": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Fast_Skipping": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Finger_Curls": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Flat_Bench_Cable_Flyes": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Flat_Bench_Leg_Pull-In": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 126,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Flat_Bench_Lying_Leg_Raise": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Flexor_Incline_Dumbbell_Curls": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Floor_Glute-Ham_Raise": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Floor_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Floor_Press_with_Chains": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Flutter_Kicks": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Foot-SMR": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Forward_Drag_with_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Frankenstein_Squat": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Freehand_Jump_Squat": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Frog_Hops": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Frog_Sit-Ups": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Front_Barbell_Squat": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Front_Barbell_Squat_To_A_Bench": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Front_Box_Jump": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Front_Cable_Raise": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Front_Cone_Hops_or_hurdle_hops": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Front_Dumbbell_Raise": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Front_Incline_Dumbbell_Raise": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Front_Leg_Raises": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Front_Plate_Raise": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Front_Raise_And_Pullover": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Front_Squat_Clean_Grip": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Front_Squats_With_Two_Kettlebells": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Front_Two-Dumbbell_Raise": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Full_Range-Of-Motion_Lat_Pulldown": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Gironda_Sternum_Chins": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Glute_Ham_Raise": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Glute_Kickback": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Goblet_Squat": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Good_Morning": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Good_Morning_off_Pins": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 126,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Gorilla_Chin_Crunch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Groin_and_Back_Stretch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Groiners": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hammer_Curls": {
+  "left": 0,
+  "top": 25,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hammer_Grip_Incline_DB_Bench_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hamstring-SMR": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hamstring_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Handstand_Push-Ups": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hang_Clean": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hang_Clean_-_Below_the_Knees": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hang_Snatch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hang_Snatch_-_Below_Knees": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hanging_Bar_Good_Morning": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hanging_Leg_Raise": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 126,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hanging_Pike": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Heaving_Snatch_Balance": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "High_Cable_Curls": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hip_Circles_prone": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hip_Extension_with_Bands": {
+  "left": 0,
+  "top": 32,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hip_Flexion_with_Band": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hip_Lift_with_Band": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hug_A_Ball": {
+  "left": 0,
+  "top": 24,
+  "width": 360,
+  "height": 126,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hug_Knees_To_Chest": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hurdle_Hops": {
+  "left": 30,
+  "top": 0,
+  "width": 301,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hyperextensions_Back_Extensions": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Hyperextensions_With_No_Hyperextension_Bench": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "IT_Band_and_Glute_Stretch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Iliotibial_Tract-SMR": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Inchworm": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Barbell_Triceps_Extension": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Bench_Pull": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Cable_Chest_Press": {
+  "left": 31,
+  "top": 0,
+  "width": 299,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Cable_Flye": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Dumbbell_Bench_With_Palms_Facing_In": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Dumbbell_Curl": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Dumbbell_Flyes": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Dumbbell_Flyes_-_With_A_Twist": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Dumbbell_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Hammer_Curls": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Inner_Biceps_Curl": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Push-Up": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Push-Up_Close-Grip": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Push-Up_Depth_Jump": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 127,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Push-Up_Medium": {
+  "left": 31,
+  "top": 0,
+  "width": 299,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Push-Up_Reverse_Grip": {
+  "left": 30,
+  "top": 0,
+  "width": 302,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Incline_Push-Up_Wide": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Intermediate_Groin_Stretch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Intermediate_Hip_Flexor_and_Quad_Stretch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Internal_Rotation_with_Band": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Inverted_Row": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Inverted_Row_with_Straps": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Iron_Cross": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Iron_Crosses_stretch": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Isometric_Chest_Squeezes": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Isometric_Neck_Exercise_-_Front_And_Back": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Isometric_Neck_Exercise_-_Sides": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Isometric_Wipers": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "JM_Press": {
+  "left": 0,
+  "top": 25,
+  "width": 360,
+  "height": 128,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Jackknife_Sit-Up": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Janda_Sit-Up": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Jefferson_Squats": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Jerk_Balance": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Jerk_Dip_Squat": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Jogging_Treadmill": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Keg_Load": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Arnold_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Dead_Clean": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Figure_8": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Hang_Clean": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_One-Legged_Deadlift": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Pass_Between_The_Legs": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Pirate_Ships": {
+  "left": 29,
+  "top": 0,
+  "width": 301,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Pistol_Squat": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Seated_Press": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Seesaw_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Sumo_High_Pull": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Thruster": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Turkish_Get-Up_Lunge_style": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Turkish_Get-Up_Squat_style": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kettlebell_Windmill": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kipping_Muscle_Up": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Knee_Across_The_Body": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Knee_Circles": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Knee_Hip_Raise_On_Parallel_Bars": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Knee_Tuck_Jump": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kneeling_Arm_Drill": {
+  "left": 0,
+  "top": 32,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kneeling_Cable_Crunch_With_Alternating_Oblique_Twists": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kneeling_Cable_Triceps_Extension": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kneeling_Forearm_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kneeling_High_Pulley_Row": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kneeling_Hip_Flexor": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kneeling_Jump_Squat": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kneeling_Single-Arm_High_Pulley_Row": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Kneeling_Squat": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Landmine_180s": {
+  "left": 30,
+  "top": 0,
+  "width": 301,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Landmine_Linear_Jammer": {
+  "left": 30,
+  "top": 0,
+  "width": 304,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lateral_Bound": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lateral_Box_Jump": {
+  "left": 30,
+  "top": 0,
+  "width": 301,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lateral_Cone_Hops": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lateral_Raise_-_With_Bands": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Latissimus_Dorsi-SMR": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leg-Over_Floor_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leg-Up_Hamstring_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leg_Extensions": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leg_Lift": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leg_Press": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leg_Pull-In": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leverage_Chest_Press": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leverage_Deadlift": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leverage_Decline_Chest_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leverage_High_Row": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leverage_Incline_Chest_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leverage_Iso_Row": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leverage_Shoulder_Press": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Leverage_Shrug": {
+  "left": 31,
+  "top": 0,
+  "width": 297,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Linear_3-Part_Start_Technique": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Linear_Acceleration_Wall_Drill": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Linear_Depth_Jump": {
+  "left": 30,
+  "top": 0,
+  "width": 304,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Log_Lift": {
+  "left": 0,
+  "top": 32,
+  "width": 360,
+  "height": 117,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "London_Bridges": {
+  "left": 30,
+  "top": 0,
+  "width": 302,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Looking_At_Ceiling": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Low_Cable_Crossover": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Low_Cable_Triceps_Extension": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Low_Pulley_Row_To_Neck": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lower_Back-SMR": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lower_Back_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lunge_Pass_Through": {
+  "left": 29,
+  "top": 0,
+  "width": 302,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lunge_Sprint": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Bent_Leg_Groin": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Cable_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Cambered_Barbell_Row": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Close-Grip_Bar_Curl_On_High_Pulley": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Close-Grip_Barbell_Triceps_Extension_Behind_The_Head": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Close-Grip_Barbell_Triceps_Press_To_Chin": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Crossover": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Dumbbell_Tricep_Extension": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Face_Down_Plate_Neck_Resistance": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 131,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Face_Up_Plate_Neck_Resistance": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Glute": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Hamstring": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_High_Bench_Barbell_Curl": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Leg_Curls": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Machine_Squat": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_One-Arm_Lateral_Raise": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 130,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Prone_Quadriceps": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Rear_Delt_Raise": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Supine_Dumbbell_Curl": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_T-Bar_Row": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Lying_Triceps_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Machine_Bench_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Machine_Bicep_Curl": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Machine_Preacher_Curls": {
+  "left": 0,
+  "top": 25,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Machine_Shoulder_Military_Press": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Machine_Triceps_Extension": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Medicine_Ball_Chest_Pass": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Medicine_Ball_Full_Twist": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Medicine_Ball_Scoop_Throw": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Middle_Back_Shrug": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Middle_Back_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Mixed_Grip_Chin": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Monster_Walk": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Mountain_Climbers": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Moving_Claw_Series": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Muscle_Snatch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Muscle_Up": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Narrow_Stance_Hack_Squats": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Narrow_Stance_Leg_Press": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Narrow_Stance_Squats": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Natural_Glute_Ham_Raise": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Neck-SMR": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Neck_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Oblique_Crunches": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Oblique_Crunches_-_On_The_Floor": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Olympic_Squat": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "On-Your-Back_Quad_Stretch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "On_Your_Side_Quad_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Dumbbell_Row": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Flat_Bench_Dumbbell_Flye": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_High-Pulley_Cable_Side_Bends": {
+  "left": 28,
+  "top": 0,
+  "width": 302,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Incline_Lateral_Raise": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Kettlebell_Clean": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Kettlebell_Clean_and_Jerk": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Kettlebell_Floor_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Kettlebell_Jerk": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Kettlebell_Military_Press_To_The_Side": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Kettlebell_Para_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Kettlebell_Push_Press": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Kettlebell_Row": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Kettlebell_Snatch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Kettlebell_Split_Jerk": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Kettlebell_Split_Snatch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Kettlebell_Swings": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Long_Bar_Row": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Medicine_Ball_Slam": {
+  "left": 30,
+  "top": 0,
+  "width": 303,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Open_Palm_Kettlebell_Clean": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 126,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Overhead_Kettlebell_Squats": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Side_Deadlift": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Arm_Side_Laterals": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One-Legged_Cable_Kickback": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One_Arm_Against_Wall": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One_Arm_Chin-Up": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One_Arm_Dumbbell_Bench_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One_Arm_Dumbbell_Preacher_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One_Arm_Floor_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One_Arm_Lat_Pulldown": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One_Arm_Pronated_Dumbbell_Triceps_Extension": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 126,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One_Arm_Supinated_Dumbbell_Triceps_Extension": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One_Half_Locust": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One_Handed_Hang": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One_Knee_To_Chest": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "One_Leg_Barbell_Squat": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Open_Palm_Kettlebell_Clean": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Otis-Up": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Overhead_Cable_Curl": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Overhead_Lat": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Overhead_Slam": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Overhead_Squat": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 127,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Overhead_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Overhead_Triceps": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Pallof_Press": {
+  "left": 0,
+  "top": 40,
+  "width": 360,
+  "height": 100,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Pallof_Press_With_Rotation": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Palms-Down_Dumbbell_Wrist_Curl_Over_A_Bench": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Palms-Down_Wrist_Curl_Over_A_Bench": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Palms-Up_Barbell_Wrist_Curl_Over_A_Bench": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Palms-Up_Dumbbell_Wrist_Curl_Over_A_Bench": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Parallel_Bar_Dip": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Pelvic_Tilt_Into_Bridge": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Peroneals-SMR": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Peroneals_Stretch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Physioball_Hip_Bridge": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Pin_Presses": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Piriformis-SMR": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Plank": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Plate_Pinch": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Plate_Twist": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Platform_Hamstring_Slides": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Plie_Dumbbell_Squat": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Plyo_Kettlebell_Pushups": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Plyo_Push-up": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Posterior_Tibialis_Stretch": {
+  "left": 0,
+  "top": 25,
+  "width": 360,
+  "height": 126,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Power_Clean": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Power_Clean_from_Blocks": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Power_Jerk": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Power_Partials": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Power_Snatch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Power_Snatch_from_Blocks": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Power_Stairs": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Preacher_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Preacher_Hammer_Dumbbell_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Press_Sit-Up": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Prone_Manual_Hamstring": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Prowler_Sprint": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Pull_Through": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Pullups": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Push-Up_Wide": {
+  "left": 30,
+  "top": 0,
+  "width": 302,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Push-Ups_-_Close_Triceps_Position": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Push-Ups_With_Feet_Elevated": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Push-Ups_With_Feet_On_An_Exercise_Ball": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Push_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Push_Press_-_Behind_the_Neck": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Push_Up_to_Side_Plank": {
+  "left": 0,
+  "top": 32,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Pushups": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Pushups_Close_and_Wide_Hand_Positions": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Pyramid": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Quad_Stretch": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Quadriceps-SMR": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Quick_Leap": {
+  "left": 30,
+  "top": 0,
+  "width": 301,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rack_Delivery": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rack_Pull_with_Bands": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rack_Pulls": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rear_Leg_Raises": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Recumbent_Bike": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Return_Push_from_Stance": {
+  "left": 29,
+  "top": 0,
+  "width": 304,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Band_Bench_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Band_Box_Squat": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Band_Deadlift": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Band_Power_Squat": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Band_Sumo_Deadlift": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Barbell_Curl": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Barbell_Preacher_Curls": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Cable_Curl": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Crunch": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Flyes": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Flyes_With_External_Rotation": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Grip_Bent-Over_Rows": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Grip_Triceps_Pushdown": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Hyperextension": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Machine_Flyes": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Plate_Curls": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Reverse_Triceps_Bench_Press": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rhomboids-SMR": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rickshaw_Carry": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rickshaw_Deadlift": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Ring_Dips": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rocket_Jump": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rocking_Standing_Calf_Raise": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rocky_Pull-Ups_Pulldowns": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Romanian_Deadlift": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Romanian_Deadlift_from_Deficit": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rope_Climb": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rope_Crunch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rope_Jumping": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rope_Straight-Arm_Pulldown": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Round_The_World_Shoulder_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Rowing_Stationary": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Runners_Stretch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Running_Treadmill": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Russian_Twist": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Sandbag_Load": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Scapular_Pull-Up": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Scissor_Kick": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Scissors_Jump": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Band_Hamstring_Curl": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Barbell_Military_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Barbell_Twist": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Bent-Over_One-Arm_Dumbbell_Triceps_Extension": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Bent-Over_Rear_Delt_Raise": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Bent-Over_Two-Arm_Dumbbell_Triceps_Extension": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Biceps": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Cable_Rows": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Cable_Shoulder_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Calf_Raise": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Calf_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Close-Grip_Concentration_Barbell_Curl": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Dumbbell_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Dumbbell_Inner_Biceps_Curl": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Dumbbell_Palms-Down_Wrist_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Dumbbell_Palms-Up_Wrist_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Dumbbell_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Flat_Bench_Leg_Pull-In": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Floor_Hamstring_Stretch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Front_Deltoid": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Glute": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Good_Mornings": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Hamstring": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Hamstring_and_Calf_Stretch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Head_Harness_Neck_Resistance": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Leg_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Leg_Tucks": {
+  "left": 0,
+  "top": 25,
+  "width": 360,
+  "height": 127,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_One-Arm_Dumbbell_Palms-Down_Wrist_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_One-Arm_Dumbbell_Palms-Up_Wrist_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_One-arm_Cable_Pulley_Rows": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Overhead_Stretch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Palm-Up_Barbell_Wrist_Curl": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Palms-Down_Barbell_Wrist_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Side_Lateral_Raise": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Triceps_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Seated_Two-Arm_Palms-Up_Low-Pulley_Wrist_Curl": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "See-Saw_Press_Alternating_Side_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Shotgun_Row": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Shoulder_Circles": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Shoulder_Press_-_With_Bands": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Shoulder_Raise": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Shoulder_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Side-Lying_Floor_Stretch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Side_Bridge": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Side_Hop-Sprint": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Side_Jackknife": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Side_Lateral_Raise": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Side_Laterals_to_Front_Raise": {
+  "left": 0,
+  "top": 0,
+  "width": 360,
+  "height": 176,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Side_Leg_Raises": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Side_Lying_Groin_Stretch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Side_Neck_Stretch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Side_Standing_Long_Jump": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Side_To_Side_Chins": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Side_Wrist_Pull": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Side_to_Side_Box_Shuffle": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Single-Arm_Cable_Crossover": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Single-Arm_Linear_Jammer": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Single-Arm_Push-Up": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Single-Cone_Sprint_Drill": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Single-Leg_High_Box_Squat": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Single-Leg_Hop_Progression": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Single-Leg_Lateral_Hop": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Single-Leg_Leg_Extension": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Single-Leg_Stride_Jump": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Single_Dumbbell_Raise": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Single_Leg_Butt_Kick": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Single_Leg_Glute_Bridge": {
+  "left": 0,
+  "top": 32,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Single_Leg_Push-off": {
+  "left": 29,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Sit-Up": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Sit_Squats": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Skating": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Sled_Drag_-_Harness": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Sled_Overhead_Backward_Walk": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Sled_Overhead_Triceps_Extension": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Sled_Push": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Sled_Reverse_Flye": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Sled_Row": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Sledgehammer_Swings": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Incline_Shoulder_Raise": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Behind_the_Back_Shrug": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Bench_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Bent_Over_Row": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Calf_Raise": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Close-Grip_Bench_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Decline_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Hang_Power_Clean": {
+  "left": 0,
+  "top": 39,
+  "width": 360,
+  "height": 99,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Hip_Raise": {
+  "left": 31,
+  "top": 0,
+  "width": 299,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Incline_Bench_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Leg_Press": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_One-Arm_Upright_Row": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Overhead_Shoulder_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Pistol_Squat": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Reverse_Calf_Raises": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Squat": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Stiff-Legged_Deadlift": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Machine_Upright_Row": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Smith_Single-Leg_Split_Squat": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Snatch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Snatch_Balance": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Snatch_Deadlift": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Snatch_Pull": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Snatch_Shrug": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Snatch_from_Blocks": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Speed_Band_Overhead_Triceps": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Speed_Box_Squat": {
+  "left": 28,
+  "top": 0,
+  "width": 303,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Speed_Squats": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Spell_Caster": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Spider_Crawl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Spider_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Spinal_Stretch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Split_Clean": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Split_Jerk": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Split_Jump": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Split_Snatch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Split_Squat_with_Dumbbells": {
+  "left": 30,
+  "top": 0,
+  "width": 304,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Split_Squats": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Squat_Jerk": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Squat_with_Bands": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Squat_with_Chains": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Squat_with_Plate_Movers": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Squats_-_With_Bands": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Stairmaster": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Alternating_Dumbbell_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Barbell_Calf_Raise": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Barbell_Press_Behind_Neck": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Bent-Over_One-Arm_Dumbbell_Triceps_Extension": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Bent-Over_Two-Arm_Dumbbell_Triceps_Extension": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Biceps_Cable_Curl": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Biceps_Stretch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Bradford_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Cable_Chest_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Cable_Lift": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Cable_Wood_Chop": {
+  "left": 30,
+  "top": 0,
+  "width": 301,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Calf_Raises": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Concentration_Curl": {
+  "left": 31,
+  "top": 0,
+  "width": 299,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Dumbbell_Calf_Raise": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Dumbbell_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Dumbbell_Reverse_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Dumbbell_Straight-Arm_Front_Delt_Raise_Above_Head": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Dumbbell_Triceps_Extension": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Dumbbell_Upright_Row": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Elevated_Quad_Stretch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Front_Barbell_Raise_Over_Head": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Gastrocnemius_Calf_Stretch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Hamstring_and_Calf_Stretch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Hip_Circles": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Hip_Flexors": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Inner-Biceps_Curl": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Lateral_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Leg_Curl": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Long_Jump": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Low-Pulley_Deltoid_Raise": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Low-Pulley_One-Arm_Triceps_Extension": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Military_Press": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Olympic_Plate_Hand_Squeeze": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_One-Arm_Cable_Curl": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_One-Arm_Dumbbell_Curl_Over_Incline_Bench": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_One-Arm_Dumbbell_Triceps_Extension": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Overhead_Barbell_Triceps_Extension": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Palm-In_One-Arm_Dumbbell_Press": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Palms-In_Dumbbell_Press": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Palms-Up_Barbell_Behind_The_Back_Wrist_Curl": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Pelvic_Tilt": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Rope_Crunch": {
+  "left": 30,
+  "top": 0,
+  "width": 301,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Soleus_And_Achilles_Stretch": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Toe_Touches": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Towel_Triceps_Extension": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Standing_Two-Arm_Overhead_Throw": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Star_Jump": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Step-up_with_Knee_Raise": {
+  "left": 0,
+  "top": 38,
+  "width": 360,
+  "height": 100,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Step_Mill": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Stiff-Legged_Barbell_Deadlift": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Stiff-Legged_Dumbbell_Deadlift": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Stiff_Leg_Barbell_Good_Morning": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Stomach_Vacuum": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Straight-Arm_Dumbbell_Pullover": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Straight-Arm_Pulldown": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Straight_Bar_Bench_Mid_Rows": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Straight_Raises_on_Incline_Bench": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Stride_Jump_Crossover": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Sumo_Deadlift": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Sumo_Deadlift_with_Bands": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Sumo_Deadlift_with_Chains": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Superman": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Supine_Chest_Throw": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Supine_One-Arm_Overhead_Throw": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Supine_Two-Arm_Overhead_Throw": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Suspended_Fallout": {
+  "left": 0,
+  "top": 38,
+  "width": 360,
+  "height": 104,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Suspended_Push-Up": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Suspended_Reverse_Crunch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Suspended_Row": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Suspended_Split_Squat": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Svend_Press": {
+  "left": 31,
+  "top": 0,
+  "width": 299,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "T-Bar_Row_with_Handle": {
+  "left": 26,
+  "top": 0,
+  "width": 304,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Tate_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "The_Straddle": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Thigh_Abductor": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Thigh_Adductor": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Tire_Flip": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Toe_Touchers": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 128,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Torso_Rotation": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Trail_Running_Walking": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Trap_Bar_Deadlift": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Tricep_Dumbbell_Kickback": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Tricep_Side_Stretch": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Triceps_Overhead_Extension_with_Rope": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Triceps_Pushdown": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Triceps_Pushdown_-_Rope_Attachment": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Triceps_Pushdown_-_V-Bar_Attachment": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Triceps_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Tuck_Crunch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Two-Arm_Dumbbell_Preacher_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Two-Arm_Kettlebell_Clean": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Two-Arm_Kettlebell_Jerk": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Two-Arm_Kettlebell_Military_Press": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Two-Arm_Kettlebell_Row": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Underhand_Cable_Pulldowns": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Upper_Back-Leg_Grab": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Upper_Back_Stretch": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Upright_Barbell_Row": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Upright_Cable_Row": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Upright_Row_-_With_Bands": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Upward_Stretch": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "V-Bar_Pulldown": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "V-Bar_Pullup": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Vertical_Swing": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Walking_Treadmill": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Weighted_Ball_Hyperextension": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Weighted_Ball_Side_Bend": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Weighted_Bench_Dip": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Weighted_Crunches": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Weighted_Jump_Squat": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 118,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Weighted_Pull_Ups": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Weighted_Sissy_Squat": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Weighted_Sit-Ups_-_With_Bands": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Weighted_Squat": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Wide-Grip_Barbell_Bench_Press": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Wide-Grip_Decline_Barbell_Bench_Press": {
+  "left": 0,
+  "top": 27,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Wide-Grip_Decline_Barbell_Pullover": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Wide-Grip_Lat_Pulldown": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 123,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Wide-Grip_Pulldown_Behind_The_Neck": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Wide-Grip_Rear_Pull-Up": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 122,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Wide-Grip_Standing_Barbell_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Wide_Stance_Barbell_Squat": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Wide_Stance_Stiff_Legs": {
+  "left": 0,
+  "top": 31,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Wind_Sprints": {
+  "left": 30,
+  "top": 0,
+  "width": 300,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Windmills": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Worlds_Greatest_Stretch": {
+  "left": 0,
+  "top": 29,
+  "width": 360,
+  "height": 121,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Wrist_Circles": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Wrist_Roller": {
+  "left": 0,
+  "top": 28,
+  "width": 360,
+  "height": 124,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Wrist_Rotations_with_Straight_Bar": {
+  "left": 30,
+  "top": 0,
+  "width": 301,
+  "height": 180,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Yoke_Walk": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 119,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Zercher_Squats": {
+  "left": 0,
+  "top": 26,
+  "width": 360,
+  "height": 125,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Zottman_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ },
+ "Zottman_Preacher_Curl": {
+  "left": 0,
+  "top": 30,
+  "width": 360,
+  "height": 120,
+  "originalWidth": 360,
+  "originalHeight": 180
+ }
+}

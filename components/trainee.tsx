@@ -333,7 +333,7 @@ export function Trainee({
             </section>
             <div className="trainee-layout">
               <div id="training" className="trainee-training trainee-anchor">
-                <ProgramView section="training" focusToday nutrition={nutrition} program={publishedProgram} />
+                <ProgramView key={clientId} section="training" focusToday nutrition={nutrition} program={publishedProgram} clientId={clientId} />
               </div>
               <aside className="trainee-aside">
                 <div id="weight" className="trainee-weight trainee-anchor">
@@ -378,7 +378,33 @@ export function Trainee({
                     }}
                   />
                 </div>
-                <div className="trainee-side space-y-6">
+              </aside>
+              <div id="nutrition" className="trainee-nutrition trainee-anchor">
+                <ProgramView section="nutrition" nutrition={nutrition} program={publishedProgram} />
+                {!nutrition && !publishedProgram?.content.nutrition && <p className="card p-5 text-sm text-muted">{tr("لم يضف مدربك خطة تغذية بعد.")}</p>}
+              </div>
+            </div>
+          </>
+        )}
+        {client && (
+          <div className="mt-7 trainee-anchor">
+            <ClientHub
+              key={clientId}
+              clientId={clientId}
+              management={data.management}
+              weights={data.weights ?? []}
+              program={publishedProgram}
+              targetWeight={
+                data.client_goals?.find((goal) => goal.client_id === clientId)
+                  ?.target_weight
+              }
+              showRenewalRequest={subscriptions.length > 0}
+              coachName={coachName}
+            />
+          </div>
+        )}
+        {client && <>
+                <div className="trainee-side mt-7 space-y-6">
                   <section className="card p-6">
                     <h2 className="flex items-center gap-2">
                       <CalendarDays size={18} className="text-teal" />
@@ -469,31 +495,7 @@ export function Trainee({
                       ))}
                   </details>
                 </div>
-              </aside>
-              <div id="nutrition" className="trainee-nutrition trainee-anchor">
-                <ProgramView section="nutrition" nutrition={nutrition} program={publishedProgram} />
-                {!nutrition && !publishedProgram?.content.nutrition && <p className="card p-5 text-sm text-muted">{tr("لم يضف مدربك خطة تغذية بعد.")}</p>}
-              </div>
-            </div>
-          </>
-        )}
-        {client && (
-          <div className="mt-7 trainee-anchor">
-            <ClientHub
-              key={clientId}
-              clientId={clientId}
-              management={data.management}
-              weights={data.weights ?? []}
-              program={publishedProgram}
-              targetWeight={
-                data.client_goals?.find((goal) => goal.client_id === clientId)
-                  ?.target_weight
-              }
-              showRenewalRequest={subscriptions.length > 0}
-              coachName={coachName}
-            />
-          </div>
-        )}
+        </>}
       </main>
       <footer className="mx-auto max-w-6xl border-t px-5 py-6 text-xs text-muted">
         <Link href="/privacy" className="underline">

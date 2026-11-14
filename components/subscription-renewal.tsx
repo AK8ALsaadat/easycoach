@@ -1,4 +1,5 @@
 "use client";
+import { DateInput } from "./date-input";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, X } from "lucide-react";
@@ -53,7 +54,7 @@ export function SubscriptionRenewal({ client, subscriptions }: { client: Client;
           <label className="block">{tr("مدة الاشتراك")}<select className="field mt-2" value={months} disabled={busy} onChange={e => setMonths(Number(e.target.value))}>
             {[[1,"شهر"],[3,"3 أشهر"],[6,"6 أشهر"],[12,"سنة"],[0,"تاريخ نهاية مخصص"]].map(([value,label]) => <option key={value} value={value}>{tr(String(label))}</option>)}
           </select></label>
-          {!months && <label className="block">{tr("نهاية الاشتراك")}<input className="field mt-2" type="date" required min={period.start} value={customEnd} disabled={busy} onChange={e => setCustomEnd(e.target.value)} /></label>}
+          {!months && <label className="block">{tr("نهاية الاشتراك")}<DateInput className="field mt-2" type="date" required min={period.start} value={customEnd} disabled={busy} onChange={e => setCustomEnd(e.target.value)} /></label>}
           <label className="block">{tr("قيمة الاشتراك (ر.س)")}<input className="field mt-2" type="text" inputMode="decimal" dir="ltr" autoComplete="off" value={price} disabled={busy} aria-invalid={price !== "" && Boolean(blocker) && blocker !== "اختر تاريخ نهاية الاشتراك"} onChange={e => setPrice(e.target.value.replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[,،٫]/g, "."))} /></label>
           <div className="rounded-xl border bg-canvas p-4 text-sm space-y-2" aria-live="polite"><p>{tr("بداية الاشتراك")}: <strong>{formatDate(period.start, language)}</strong></p><p>{tr("نهاية الاشتراك")}: <strong>{end ? formatDate(end, language) : "—"}</strong></p></div>
           <p className="text-xs text-muted">{tr("يبدأ التجديد بعد نهاية اشتراكك الحالي، أو من اليوم إذا انتهى.")} {tr("هذا يسجل المدة والقيمة فقط ولا ينفذ عملية دفع.")}</p>

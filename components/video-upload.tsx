@@ -3,7 +3,6 @@ import { useLocale } from "./locale-provider";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { holdRefresh } from "@/lib/client-activity";
-import QRCode from "qrcode";
 import { Upload, QrCode, LoaderCircle, X, Check, RotateCcw } from "lucide-react";
 import {
   uploadTicket,
@@ -174,6 +173,7 @@ export function VideoUpload({
               try {
                 const r = await createPhoneUpload();
                 if (!r.ok || !r.url || !r.token) throw Error(r.error);
+                const QRCode = (await import("qrcode")).default;
                 setPhone({
                   token: r.token,
                   url: r.url,

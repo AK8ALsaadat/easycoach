@@ -132,25 +132,26 @@ export async function rpc<T>(
 export async function snapshot(): Promise<Snapshot> {
   const user = await actor();
   if (!user) redirect("/login");
-  let data = await retryOnce(() => rpc<Snapshot>("management_snapshot"));
+  // These tenant-scoped reads depend on the verified actor, not on each other.
+  // Keep promises request-local: no shared cache of private snapshots.
+  const read = () => Promise.all([
+    retryOnce(() => rpc<Snapshot>("management_snapshot")),
+    rpc<NonNullable<NonNullable<Snapshot["management"]>["schedules"]>>("client_schedules_snapshot").catch(() => []),
+    rpc<NonNullable<NonNullable<Snapshot["management"]>["photo_consents"]>>("photo_consent_snapshot").catch(() => undefined),
+    rpc<Snapshot["coach_branding"]>("coach_branding_snapshot").catch(() => undefined),
+  ] as const);
+  let [data, schedules, consents, branding] = await read();
   if (!data.profile) {
     await rpc("init_profile", {
       display_name: user.name || "مستخدم جديد",
       requested_role: user.role,
     });
-    data = await rpc<Snapshot>("management_snapshot");
+    // New profiles need a fresh read of the dependent tenant data as well.
+    [data, schedules, consents, branding] = await read();
   }
-  // These reads are independent, so one round trip instead of four in a row.
-  const [schedules, consents, paused, branding] = await Promise.all([
-    rpc<NonNullable<NonNullable<Snapshot["management"]>["schedules"]>>("client_schedules_snapshot").catch(() => []),
-    // Unknown (e.g. migration not applied yet): uploads stay locked and no notice is shown.
-    rpc<NonNullable<NonNullable<Snapshot["management"]>["photo_consents"]>>("photo_consent_snapshot").catch(() => undefined),
-    data.profile?.role !== "coach"
-      ? rpc<NonNullable<Snapshot["paused_access"]>>("trainee_access_status").catch(() => [] as NonNullable<Snapshot["paused_access"]>)
-      : Promise.resolve(undefined),
-    // Branding is decoration: a transient failure must not blank the page.
-    rpc<Snapshot["coach_branding"]>("coach_branding_snapshot").catch(() => undefined),
-  ]);
+  const paused = data.profile?.role !== "coach"
+    ? await rpc<NonNullable<Snapshot["paused_access"]>>("trainee_access_status").catch(() => [] as NonNullable<Snapshot["paused_access"]>)
+    : undefined;
   if (data.management) {
     data.management.schedules = schedules;
     data.management.photo_consents = consents;
@@ -168,7 +169,8 @@ export async function snapshot(): Promise<Snapshot> {
 export async function requireCoachIdentity() {
   const user = await actor();
   if (!user) throw sessionExpired();
-  if (user.role !== "coach") throw new Error("هذه العملية للمدرب فقط");
+  const coach = await rpc<{ id: string } | null>("current_coach_identity");
+  if (!coach || coach.id !== user.id) throw new Error("هذه العملية للمدرب فقط");
   return user;
 }
 export async function requireCoach() {

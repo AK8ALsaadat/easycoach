@@ -1,4 +1,5 @@
 "use client";
+import { DateInput } from "./date-input";
 import { useLocale } from "./locale-provider";
 import { formatNumber, formatSigned } from "@/lib/plural";
 import { useState } from "react";
@@ -54,7 +55,7 @@ export function ProgressChart({
       <div className="grid grid-cols-2 gap-3 mb-4">
         <label>
           {tr("من")}
-          <input
+          <DateInput
             className="field"
             aria-label={tr("مقارنة التقدم من")}
             type="date"
@@ -65,7 +66,7 @@ export function ProgressChart({
         </label>
         <label>
           {tr("إلى")}
-          <input
+          <DateInput
             className="field"
             aria-label={tr("مقارنة التقدم إلى")}
             type="date"

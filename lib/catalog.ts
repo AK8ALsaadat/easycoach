@@ -135,3 +135,16 @@ export function catalogSearch(e: CatalogExercise, query: string) {
     .split(/\s+/)
     .every((q) => text.includes(q) || text.includes(terms[q] ?? "\u0000"));
 }
+
+/** Rank the exercise name before incidental matches in muscle/equipment labels. */
+export function catalogSearchRank(e: CatalogExercise, query: string) {
+  const normalize = (value: string) => value.toLowerCase().replace(/[\u064B-\u065F\u0670]/g, "").replace(/[أإآ]/g, "ا").replace(/\s+/g, " ").trim();
+  const q = normalize(query);
+  if (!q) return 0;
+  const names = [normalize(e.name), normalize(exerciseName(e))];
+  if (names.includes(q)) return 100;
+  if (names.some(name => name.startsWith(q))) return 80;
+  if (names.some(name => name.includes(q))) return 60;
+  if (names.some(name => q.split(" ").every(term => name.includes(term)))) return 40;
+  return 0;
+}

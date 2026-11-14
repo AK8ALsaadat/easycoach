@@ -267,6 +267,7 @@ export type Template = {
   updated_at: string;
 };
 export type Program = Template & {
+  publication_number?: number | null;
   edit_revision?: number;
   client_id: string;
   published_at: string | null;

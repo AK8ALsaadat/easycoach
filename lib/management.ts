@@ -72,6 +72,7 @@ export const recordSchemas = {
               weight: z.number().min(0).max(1500).optional(),
               rpe: z.number().min(0).max(10).optional(),
               rir: z.number().int().min(0).max(20).optional(),
+              set_logs: z.array(z.object({ reps: z.number().int().min(1).max(100), weight: z.number().min(0).max(1500).optional() }).strict()).min(1).max(20).optional(),
             })
             .strict(),
         )

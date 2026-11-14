@@ -2167,8 +2167,52 @@ td { padding-block:18px; }
 .publish-issues button{text-align:start;text-decoration:underline;text-underline-offset:3px;color:inherit;min-height:32px}
 .header-notifications .header-notifications-count{top:1px;inset-inline-end:0;width:auto;min-width:17px;height:17px;padding:0 4px;display:grid;place-items:center;font-size:10px;font-weight:700;line-height:1;color:var(--ui-on-primary);border-radius:999px}
 /* Keep the program save bar's buttons clear of the floating support button (inline-end corner). */
-.program-savebar{padding-inline-end:84px}
-@media(max-width:600px){.program-savebar{padding-inline-end:76px}}
+.program-savebar{position:static!important;margin-block:24px 12px;padding:16px;clear:both}
+.weekly-quick-days{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.weekly-quick-days button{display:flex;flex-direction:column;align-items:flex-start;white-space:normal;text-align:start;min-height:68px}
+.weekly-quick-days small{font-size:12px;font-weight:400;opacity:.85}
+.weekly-day{scroll-margin-top:96px;overflow:hidden}
+.weekly-day.is-today{border-color:var(--ui-primary)}
+.weekly-day-heading{display:flex;justify-content:space-between;gap:12px;padding:20px;cursor:pointer;list-style:disclosure-closed}
+.weekly-day-heading>span:first-child{display:grid;gap:5px;min-width:0}
+.weekly-day-heading small,.weekly-day-preview{font-size:13px;color:var(--ui-text-muted);overflow-wrap:anywhere}
+.weekly-day-heading strong{font-size:18px}
+.weekly-day-heading{align-items:flex-start}
+.weekly-day-heading>.badge{align-self:flex-start;white-space:nowrap}
+.weekly-chevron{flex-shrink:0;align-self:center;margin-inline-start:auto;transition:transform .15s}
+.weekly-day[open]>.weekly-day-heading>.weekly-chevron,.weekly-exercise[open]>summary>.weekly-chevron{transform:rotate(180deg)}
+.weekly-day-content{border-top:1px solid var(--ui-line);padding:16px}
+.weekly-exercise{border-bottom:1px solid var(--ui-line);min-width:0}
+.weekly-exercise>summary{display:flex;gap:12px;align-items:center;min-height:78px;padding:14px 0;cursor:pointer}
+.weekly-exercise>summary>span:nth-child(2){display:grid;gap:8px;min-width:0;overflow-wrap:anywhere}
+.weekly-exercise summary small{display:flex;flex-wrap:wrap;align-items:center;gap:6px;color:var(--ui-text-muted)}
+.exercise-order{display:grid;place-items:center;gap:2px;min-width:44px;min-height:48px;border-radius:12px;background:var(--ui-surface-subtle);color:var(--ui-primary)}
+.weekly-exercise-body{display:grid;gap:16px;padding:4px 0 20px;min-width:0}
+.weekly-exercise-body>.exercise-visual-frame{max-width:600px;aspect-ratio:960/536}
+.exercise-art-fallback{display:grid;place-items:center;gap:12px;min-height:160px;padding:24px;border-radius:16px;background:var(--ui-surface-subtle);color:var(--ui-text-secondary);text-align:center}
+.set-log-row{display:grid;grid-template-columns:70px minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:center;margin-top:12px}
+.set-log-row label{min-width:0;font-size:12px}
+.date-input-wrap{position:relative;display:block;min-width:0;width:100%}
+.date-input-wrap>input[type=text]{padding-inline-end:48px;width:100%;min-width:0;text-align:left;min-height:44px}
+.date-calendar-button{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:40px;height:40px;border:0;background:transparent;color:var(--ui-text-muted);cursor:pointer}
+.weight-entry-form{grid-template-columns:minmax(0,1fr)}
+.weight-entry-form input{min-width:0;font-size:16px}
+@media(min-width:600px){.weight-entry-form{grid-template-columns:repeat(2,minmax(0,1fr))}.weight-entry-form>button{grid-column:1/-1}}
+.review-rating{display:grid;gap:10px;min-width:0}.review-rating>span{display:flex;justify-content:space-between}.review-rating input[type=range]{width:100%;min-height:44px;accent-color:var(--ui-primary)}
+.rating-choices{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.rating-choices label{position:relative;cursor:pointer}.rating-choices input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}.rating-choices span{display:grid;place-items:center;min-height:44px;border:1px solid var(--ui-line);border-radius:10px}.rating-choices label:has(:checked) span{background:var(--ui-primary);color:var(--ui-on-primary)}.rating-choices label:has(:focus-visible) span{outline:3px solid var(--ui-primary)}
+.trainee-layout{display:flex;flex-direction:column}.trainee-aside{display:contents}.trainee-training{order:1}.trainee-nutrition{order:2}.trainee-weight{order:3}
+.exercise-photo-crop{display:block;position:relative;width:100%;overflow:hidden;background:var(--ui-surface-muted);border-radius:inherit}
+.exercise-visual-frame{display:grid;align-items:center}
+.program-savebar > p{display:block!important}
+.program-day-nav{max-height:none;overflow:visible}
+.program-day-row{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;min-width:0}
+.program-day-tools{justify-content:flex-end}
+.program-day-item{min-width:0;min-height:64px}
+.program-day-item > span:nth-child(2){min-width:0;overflow-wrap:normal;word-break:normal}
+.program-exercise-card > :is(label,details,.program-exercise-actions){grid-column:1/-1;min-width:0}
+.program-exercise-notes textarea{font-size:16px;line-height:1.8;min-height:100px}
+@media(max-width:1100px){.program-day-list{display:grid;grid-template-columns:minmax(0,1fr);overflow:visible}.program-day-row{width:100%}.program-day-item{min-width:0;width:100%}}
+@media(max-width:600px){.program-day-row{grid-template-columns:minmax(0,1fr)}.program-day-tools{justify-content:flex-end}.program-day-tool,.program-repeat-day{min-width:44px;min-height:44px}.program-savebar>div{flex-wrap:wrap}.program-savebar button{min-height:44px}}
 /* "⋯" menu: floats in a portal so table overflow cannot clip it. */
 .actions-menu-trigger{min-width:44px;padding-inline:10px}
 .actions-menu-compact .actions-menu-trigger{min-height:40px}

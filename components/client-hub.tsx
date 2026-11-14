@@ -1,4 +1,10 @@
-﻿"use client";
+"use client";
+import { DateInput } from "./date-input";
+import dynamic from "next/dynamic";
+import { ChunkLoading } from "./chunk-loading";
+import { VisitedPanel } from "./visited-panel";
+import { ReviewRating } from "./review-rating";
+
 import Link from "next/link";
 import { useLocale } from "./locale-provider";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -20,12 +26,12 @@ import { formatNumber, formatSigned } from "@/lib/plural";
 import { displayDayName } from "@/lib/program-builder";
 import { Notice } from "./forms";
 import { ProgressChart } from "./progress-chart";
-import { ProgressPhotos } from "./progress-photo-panel";
 import { ManagementButton } from "./management-button";
 import { ProgressRecordControls } from "./progress-record-controls";
 import { MacroTargets, MacroSplitBar } from "./macro-targets";
 import { macroTargetErrors, type CaloriesMode } from "@/lib/macros";
 const emptyTargets = { calories: 0, protein: 0, carbs: 0, fat: 0, calories_mode: "auto" as CaloriesMode };
+const ProgressPhotos = dynamic(() => import("./progress-photo-panel").then(m => m.ProgressPhotos), { loading: ChunkLoading });
 const measurementLabels: Record<string, string> = {
   weight: "الوزن",
   body_fat: "نسبة الدهون",
@@ -85,6 +91,7 @@ export function ClientHub({
   const router = useRouter();
   const consent = management?.photo_consents?.find((state) => state.client_id === clientId);
   const tabList = useRef<HTMLDivElement>(null);
+  const [showProgressPhotos, setShowProgressPhotos] = useState(false);
   const [tab, setTab] = useState("progress"),
     [metric, setMetric] = useState("weight"),
     [exerciseName, setExerciseName] = useState("");
@@ -240,7 +247,10 @@ export function ClientHub({
             )
           : await manage(command, payload);
       setResult(response);
-      if (response.ok) await refresh();
+      // manage() already returns fresh RSC data via revalidatePath. A second
+      // router.refresh() repeats the entire private snapshot. Bearer portals
+      // own their client-fetched state and still need their update callback.
+      if (response.ok && onUpdate) await onUpdate();
       return response;
     } catch {
       const response = {
@@ -348,7 +358,7 @@ export function ClientHub({
           <div className="grid gap-3 mt-4 sm:grid-cols-2 lg:grid-cols-3">
             <label>
               {tr("تاريخ الميلاد")}
-              <input
+              <DateInput
                 type="date"
                 name="birth_date"
                 className="field"
@@ -394,7 +404,7 @@ export function ClientHub({
             </label>
             <label>
               {tr("تاريخ البداية")}
-              <input
+              <DateInput
                 name="start_date"
                 type="date"
                 className="field"
@@ -495,6 +505,8 @@ export function ClientHub({
             }
             title={tr("تطور القياسات عبر الزمن")}
           />
+          <details className="card p-5" data-testid="measurement-entry">
+          <summary>{tr("إضافة قياس مؤرخ")}</summary>
           <RecordForm
             clientId={clientId}
             kind="measurement"
@@ -504,13 +516,14 @@ export function ClientHub({
             onSubmit={(payload) => action("record_save", payload)}
             photos={management?.progress_photos ?? []}
           />
-          <details className="card p-5">
+          </details>
+          <details className="card p-5" onToggle={event => setShowProgressPhotos(event.currentTarget.open)}>
             <summary>{tr("إكمال تحديث التقدم بصور أمام وخلف وجانب (اختياري)")}</summary>
             <p className="my-3 text-sm text-muted">{tr("الوزن والقياسات والصور اختيارية، وتشترك في التاريخ المحدد. تُحفظ القياسات والصور كلٌ على حدة؛ عند فشل صورة تبقى القياسات المحفوظة متاحة ويمكن إعادة محاولة الصورة.")}</p>
-            <ProgressPhotos clientId={clientId} photos={management?.progress_photos ?? []} measurements={measurements} weights={weights} portalToken={portalToken} portalHash={portalHash} coach={coach} onUpdate={refresh} entryDate={progressDay} onEntryDateChange={setProgressDay} consent={consent} coachName={coachName} />
+            <VisitedPanel active={showProgressPhotos}><ProgressPhotos clientId={clientId} photos={management?.progress_photos ?? []} measurements={measurements} weights={weights} portalToken={portalToken} portalHash={portalHash} coach={coach} onUpdate={refresh} entryDate={progressDay} onEntryDateChange={setProgressDay} consent={consent} coachName={coachName} /></VisitedPanel>
           </details>
-          <section className="card p-5">
-            <h3>{tr("السجل التاريخي للقياسات")}</h3>
+          <details className="card p-5">
+            <summary>{tr("السجل التاريخي للقياسات")} · <bdi dir="ltr">{measurements.length}</bdi></summary>
             <p className="text-sm text-muted mt-1">
               {tr(
                 "السجلات الجديدة لا تستبدل القديمة. يتم عرض أحدث قيمة لكل يوم في الرسم.",
@@ -525,6 +538,7 @@ export function ClientHub({
                   </tr>
                 </thead>
                 <tbody>
+                  {!measurements.length && <tr><td colSpan={2} className="empty">{tr("لا توجد قياسات مسجلة بعد.")}</td></tr>}
                   {measurements
                     .slice(recordPage * 20, recordPage * 20 + 20)
                     .map((record) => (
@@ -553,7 +567,7 @@ export function ClientHub({
                 </tbody>
               </table>
             </div>
-            <div className="flex gap-2 mt-3">
+            {measurements.length > 20 && <div className="flex gap-2 mt-3">
               <button
                 className="btn-secondary"
                 disabled={!recordPage}
@@ -568,8 +582,8 @@ export function ClientHub({
               >
                 {tr("التالي")}
               </button>
-            </div>
-          </section>
+            </div>}
+          </details>
         </>
       )}
       {tab === "nutrition" && (
@@ -712,6 +726,7 @@ export function ClientHub({
           />
           <div className="card p-5">
             <h2>{tr("الحصص المسجلة")}</h2>
+            {!records.some(record => record.kind === "workout_log") && <p className="empty" role="status">{tr("لم تُسجّل أي حصة بعد. افتح يومًا من الجدول وسجّل حصتك الأولى.")}</p>}
             {records
               .filter((record) => record.kind === "workout_log")
               .slice(workoutPage * 20, workoutPage * 20 + 20)
@@ -732,18 +747,20 @@ export function ClientHub({
                       sets: number;
                       reps: string;
                       weight?: number;
+                      set_logs?: { reps: number; weight?: number }[];
                     }>) ?? []
                   ).map((exercise, index) => (
-                    <p key={index} className="text-sm mt-1">
-                      {exercise.name} · {exercise.sets} × {exercise.reps}
+                    <div key={index} className="text-sm mt-1">
+                      <p>{exercise.name} · <bdi dir="ltr">{exercise.sets} × {exercise.reps}</bdi>
                       {exercise.weight !== undefined
                         ? tr(" · {0} كجم", String(exercise.weight))
-                        : ""}
-                    </p>
+                        : ""}</p>
+                      {exercise.set_logs?.map((set, setIndex) => <p className="text-xs text-muted mt-1" key={setIndex}>{tr("المجموعة")} <bdi dir="ltr">{setIndex + 1}</bdi> · <bdi dir="ltr">{set.reps}</bdi> {tr("تكرار")}{set.weight !== undefined && <> · <bdi dir="ltr">{set.weight}</bdi> {tr("كجم")}</>}</p>)}
+                    </div>
                   ))}
                 </article>
               ))}
-            <div className="flex gap-2 my-4">
+            {records.filter(record => record.kind === "workout_log").length > 20 && <div className="flex gap-2 my-4">
               <button
                 className="btn-secondary"
                 disabled={!workoutPage}
@@ -761,7 +778,7 @@ export function ClientHub({
               >
                 {tr("التالي")}
               </button>
-            </div>
+            </div>}
             {records
               .filter((record) => record.kind === "program_history")
               .map((record) => (
@@ -1193,7 +1210,7 @@ function RecordForm({
           <input type="hidden" name="entry_date" value={riyadhToday()} />
         ) : <label>
           {tr("تاريخ السجل")}
-          <input
+          <DateInput
             aria-label={tr("تاريخ ") + tr(labels[kind])}
             name="entry_date"
             type="date"
@@ -1205,7 +1222,7 @@ function RecordForm({
             required
           />
         </label>}
-        {fields.map(([key, label, min, max]) => (
+        {fields.map(([key, label, min, max]) => kind === "checkin" && key !== "weight" ? <ReviewRating key={String(key)} name={String(key)} label={tr(String(label))} percent={String(key).endsWith("adherence")}/> : (
           <label key={String(key)}>
             {tr(label)}
             <input
@@ -1357,7 +1374,7 @@ function RecordForm({
       )}
       <button className="btn mt-4" disabled={busy}>
         {kind === "message" ? <Send size={17} /> : <Plus size={17} />}
-        {tr("حفظ")} {tr(labels[kind])}
+        {kind === "message" ? tr("إرسال") : <>{tr("حفظ")} {tr(labels[kind])}</>}
       </button>
       {localError && (
         <p role="alert" className="text-red-700 mt-3 text-sm">

@@ -61,7 +61,7 @@ it("explains a rest day for a one-day program and allows opening its assigned wo
   expect(html).toContain('aria-pressed="false"');
 });
 
-it("shows coach instructions and avoids a redundant day selector for a single active workout", () => {
+it("shows coach instructions and keeps quick navigation available for a single active workout", () => {
   const content = structuredClone(blankContent);
   content.days[0].weekday = new Date(riyadhToday() + "T12:00:00Z").getUTCDay();
   content.days[0].exercises[0].description = "LEGACY_LIBRARY_TEXT";
@@ -71,5 +71,19 @@ it("shows coach instructions and avoids a redundant day selector for a single ac
   expect(html).toContain("توقف ثانية أسفل الحركة.\nحافظ على وتيرة مريحة.");
   expect(html).not.toContain("LEGACY_LIBRARY_TEXT");
   expect(html).toContain("تم تحديد حصة اليوم حسب جدولك");
-  expect(html).not.toContain("aria-pressed");
+  expect(html).toContain('aria-pressed="true"');
+});
+
+it("keeps every day visible on rest days, including legacy empty days and LTR tempo", () => {
+  const content = structuredClone(blankContent);
+  content.days[0].weekday = (new Date(riyadhToday() + "T12:00:00Z").getUTCDay() + 1) % 7;
+  content.days[0].exercises[0].tempo = "3-1-1-0";
+  content.days.push({ name: "Empty legacy day", exercises: [] });
+  const program = { id: "synthetic", name: "برنامج", content, published_at: "2026-11-10T12:00:00Z", version: 95, publication_number: 2 } as Program;
+  const html = renderToStaticMarkup(createElement(ProgramView, { program, focusToday: true }));
+  expect(html).toContain('data-program-day="0"');
+  expect(html).toContain('data-program-day="1"');
+  expect(html).toContain("لا توجد تمارين لهذا اليوم بعد.");
+  expect(html).toContain('<bdi dir="ltr">3-1-1-0</bdi>');
+  expect(html).toContain('· النسخة <bdi dir="ltr">2</bdi>');
 });

@@ -1,0 +1,247 @@
+{
+  "date": "2026-11-14",
+  "bundleMethod": "Webpack production build client-reference chunks for Workspace/Trainee; excludes common framework/runtime and deferred imports; gzip computed with node:zlib, not measured CDN transfer",
+  "bundles": {
+    "before": {
+      "coach/[[...path]]": {
+        "bytes": 1148668,
+        "gzipBytes": 289780,
+        "chunks": 9
+      },
+      "me": {
+        "bytes": 938373,
+        "gzipBytes": 230842,
+        "chunks": 8
+      }
+    },
+    "after": {
+      "coach/[[...path]]": {
+        "bytes": 484235,
+        "gzipBytes": 148401,
+        "chunks": 9
+      },
+      "me": {
+        "bytes": 733498,
+        "gzipBytes": 172916,
+        "chunks": 10
+      }
+    }
+  },
+  "loginMethod": "One cold and one same-context warm visit per viewport in Edge headless; service workers blocked. Mobile 390x844, 150ms latency, 200000 bytes/s download, 93750 bytes/s upload, CPU 4x. Desktop 1440x900 unthrottled. Single lab samples, not p75 or INP.",
+  "localProductionLoginBefore": [
+    {
+      "mobile": false,
+      "visit": "cold",
+      "ttfb": 327.4,
+      "lcp": 592,
+      "cls": 0,
+      "requests": 24,
+      "transfer": 428699,
+      "js": 199751
+    },
+    {
+      "mobile": false,
+      "visit": "warm",
+      "ttfb": 14.8,
+      "lcp": 68,
+      "cls": 0,
+      "requests": 23,
+      "transfer": 3381,
+      "js": 199751
+    },
+    {
+      "mobile": true,
+      "visit": "cold",
+      "ttfb": 152.4,
+      "lcp": 1024,
+      "cls": 0.012096488768048958,
+      "requests": 23,
+      "transfer": 428389,
+      "js": 199751
+    },
+    {
+      "mobile": true,
+      "visit": "warm",
+      "ttfb": 152.4,
+      "lcp": 360,
+      "cls": 0,
+      "requests": 23,
+      "transfer": 3382,
+      "js": 199751
+    }
+  ],
+  "localProductionLoginAfter": [
+    {
+      "base": "http://127.0.0.1:3201",
+      "mobile": false,
+      "visit": "cold",
+      "status": 200,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "ttfb": 465.2999999988824,
+      "dom": 610.6999999992549,
+      "lcp": 812,
+      "cls": 0,
+      "requests": 24,
+      "transfer": 429064,
+      "js": 200112
+    },
+    {
+      "base": "http://127.0.0.1:3201",
+      "mobile": false,
+      "visit": "warm",
+      "status": 200,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "ttfb": 19.40000000037253,
+      "dom": 54.40000000037253,
+      "lcp": 72,
+      "cls": 0,
+      "requests": 23,
+      "transfer": 3384,
+      "js": 200112
+    },
+    {
+      "base": "http://127.0.0.1:3201",
+      "mobile": true,
+      "visit": "cold",
+      "status": 200,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "ttfb": 153,
+      "dom": 989.7999999988824,
+      "lcp": 1016,
+      "cls": 0.012096488768048958,
+      "requests": 23,
+      "transfer": 428754,
+      "js": 200112
+    },
+    {
+      "base": "http://127.0.0.1:3201",
+      "mobile": true,
+      "visit": "warm",
+      "status": 200,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "ttfb": 152.5,
+      "dom": 368.5,
+      "lcp": 284,
+      "cls": 0,
+      "requests": 23,
+      "transfer": 3379,
+      "js": 200112
+    }
+  ],
+  "liveProductionLoginBaseline": [
+    {
+      "base": "https://easycoach.space",
+      "mobile": false,
+      "visit": "cold",
+      "status": 200,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "ttfb": 420.5,
+      "dom": 4049.0999999996275,
+      "lcp": 4240,
+      "cls": 0,
+      "requests": 24,
+      "transfer": 437259,
+      "js": 206387
+    },
+    {
+      "base": "https://easycoach.space",
+      "mobile": false,
+      "visit": "warm",
+      "status": 200,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "ttfb": 63.59999999962747,
+      "dom": 542.5,
+      "lcp": 580,
+      "cls": 0,
+      "requests": 23,
+      "transfer": 3300,
+      "js": 206387
+    },
+    {
+      "base": "https://easycoach.space",
+      "mobile": true,
+      "visit": "cold",
+      "status": 200,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "ttfb": 261.09999999962747,
+      "dom": 2168.699999999255,
+      "lcp": 2176,
+      "cls": 0,
+      "requests": 23,
+      "transfer": 436949,
+      "js": 206387
+    },
+    {
+      "base": "https://easycoach.space",
+      "mobile": true,
+      "visit": "warm",
+      "status": 200,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "ttfb": 152.69999999925494,
+      "dom": 438.19999999925494,
+      "lcp": 420,
+      "cls": 0,
+      "requests": 23,
+      "transfer": 3302,
+      "js": 206387
+    }
+  ],
+  "messageSave": {
+    "before": {
+      "environment": "warmed development / synthetic local data",
+      "requests": [
+        {
+          "method": "POST",
+          "rsc": false
+        },
+        {
+          "method": "GET",
+          "rsc": true
+        }
+      ],
+      "updatedMessageVisible": true
+    },
+    "after": {
+      "environment": "warmed development / synthetic local data",
+      "requests": [
+        {
+          "method": "POST",
+          "rsc": false
+        }
+      ],
+      "updatedMessageVisible": true
+    }
+  },
+  "databaseHistoricalStats": [
+    {
+      "operation": "management_snapshot",
+      "calls": 544,
+      "meanMs": 544.97,
+      "maxMs": 7876.76
+    },
+    {
+      "operation": "photo_consent_snapshot",
+      "calls": 268,
+      "meanMs": 44.04,
+      "maxMs": 1751.87
+    },
+    {
+      "operation": "client_schedules_snapshot",
+      "calls": 268,
+      "meanMs": 34.78,
+      "maxMs": 1134.92
+    },
+    {
+      "operation": "coach_branding_snapshot",
+      "calls": 306,
+      "meanMs": 29.4,
+      "maxMs": 1941.6
+    }
+  ],
+  "limits": [
+    "Historical pg_stat_statements, not a controlled SQL before/after",
+    "Remote read-only role cannot SET ROLE authenticated or execute private.session_uid; authenticated production EXPLAIN unavailable",
+    "No production user credentials used; authenticated workflows tested only with isolated local synthetic data",
+    "No field p75, INP, real iPhone/Android or authenticated production CWV claim"
+  ]
+}

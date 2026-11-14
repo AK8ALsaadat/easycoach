@@ -2,13 +2,13 @@
 import {useMemo,useRef,useState} from "react";
 import { countLabel, nouns } from "@/lib/plural";
 import {Search,Plus,X,Check,ArrowLeft,ChevronLeft,ChevronRight,SlidersHorizontal,Expand,Dumbbell} from "lucide-react";
-import {catalog,catalogSearch,customCatalogEntries,isCustomExercise,muscles,equipment,exerciseName,type PickerExercise} from "@/lib/catalog";
+import {catalog,catalogSearch,catalogSearchRank,customCatalogEntries,isCustomExercise,muscles,equipment,exerciseName,type PickerExercise} from "@/lib/catalog";
 import {ExerciseVisual} from "./exercise-visual";
 import {useLocale} from "./locale-provider";
 import {useDialog} from "./use-dialog";
 
 const pageSize=24;
-export function ExerciseCatalog({onConfirm,onClose,embedded=false,dropDays=[],initialDropDay=0,custom=[]}:{onConfirm:(exercises:PickerExercise[],day:number)=>boolean|void;onClose?:()=>void;embedded?:boolean;dropDays?:{name:string;count:number}[];initialDropDay?:number;custom?:{id:string;name:string;description:string;video:string;media_id?:string|null}[]}){
+export function ExerciseCatalog({onConfirm,onClose,embedded=false,dropDays=[],initialDropDay=0,custom=[]}:{onConfirm:(exercises:PickerExercise[],day:number)=>boolean|void;onClose?:()=>void;embedded?:boolean;dropDays?:{name:string;count:number;weekday?:number}[];initialDropDay?:number;custom?:{id:string;name:string;description:string;video:string;media_id?:string|null}[]}){
   const {t:tr,language}=useLocale();
   const [query,setQuery]=useState("");const [muscle,setMuscle]=useState("");const [tool,setTool]=useState("");
   const [page,setPage]=useState(0);const [visuals,setVisuals]=useState(true);const [target,setTarget]=useState(initialDropDay);
@@ -19,7 +19,7 @@ export function ExerciseCatalog({onConfirm,onClose,embedded=false,dropDays=[],in
   // The coach library sits in the same list as the built-in guide, searched
   // by the same box, so a custom exercise is not invisible outside its tab.
   const entries=useMemo<PickerExercise[]>(()=>[...customCatalogEntries(custom),...catalog],[custom]);
-  const found=useMemo(()=>entries.filter(e=>(isCustomExercise(e)?!muscle&&!tool:(!muscle||e.primaryMuscles.includes(muscle))&&(!tool||e.equipment===tool))&&catalogSearch(e,query)),[entries,query,muscle,tool]);
+  const found=useMemo(()=>entries.filter(e=>(isCustomExercise(e)?!muscle&&!tool:(!muscle||e.primaryMuscles.includes(muscle))&&(!tool||e.equipment===tool))&&catalogSearch(e,query)).sort((a,b)=>catalogSearchRank(b,query)-catalogSearchRank(a,query)),[entries,query,muscle,tool]);
   const pages=Math.max(1,Math.ceil(found.length/pageSize)),current=Math.min(page,pages-1);
   const selected=new Set(chosen.map(e=>e.id));const full=chosen.length>=available;
   function toggle(exercise:PickerExercise){committed.current=false;setError("");setChosen(rows=>rows.some(e=>e.id===exercise.id)?rows.filter(e=>e.id!==exercise.id):rows.length<available?[...rows,exercise]:rows);}
@@ -32,7 +32,7 @@ export function ExerciseCatalog({onConfirm,onClose,embedded=false,dropDays=[],in
   const clearFilters=()=>{setQuery("");setMuscle("");setTool("");setPage(0);};
   return <section className={`exercise-picker ${builder?"is-builder":"is-library"}`} aria-label={tr("اختيار التمارين")}>
     <header className="picker-heading"><div><span className="eyebrow">{tr("مكتبتك التدريبية")}</span><h2>{tr("اختر تمارين الحصة")}</h2><p>{tr("حدد التمارين بالترتيب الذي تريده، ثم أضف المجموعة مرة واحدة.")}</p></div>{onClose&&<button type="button" className="icon-button" aria-label={tr("إغلاق اختيار التمارين")} onClick={onClose}><X size={21}/></button>}</header>
-    {builder&&<div className="picker-destination"><div><Dumbbell size={17}/><span>{tr("أضف إلى حصة")}</span></div><div className="picker-day-tabs" role="group" aria-label={tr("اليوم المستهدف")}>{dropDays.map((day,index)=><button type="button" key={index} className={targetIndex===index?"selected":""} aria-pressed={targetIndex===index} onClick={()=>{setTarget(index);setError("");committed.current=false;}}><span>{day.name}</span><small>{day.count}/40</small></button>)}</div></div>}
+    {builder&&<div className="picker-destination"><div><Dumbbell size={17}/><span>{tr("أضف إلى حصة")}</span></div><div className="picker-day-tabs" role="group" aria-label={tr("اليوم المستهدف")}>{dropDays.map((day,index)=><button type="button" key={index} className={targetIndex===index?"selected":""} aria-pressed={targetIndex===index} onClick={()=>{setTarget(index);setError("");committed.current=false;}}><span>{day.name}{day.weekday===undefined?"":" · "+tr(["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"][day.weekday])}</span><small>{day.count}/40</small></button>)}</div></div>}
     <div className="picker-tools"><div className="picker-search"><Search size={20}/><input data-picker-search aria-label={tr("ابحث في التمارين")} placeholder={tr("ابحث باسم التمرين بالعربية أو الإنجليزية…")} value={query} onChange={event=>{setQuery(event.target.value);setPage(0);}}/>{query&&<button type="button" aria-label={tr("مسح البحث")} onClick={()=>{setQuery("");setPage(0);}}><X size={17}/></button>}</div><select className="field" aria-label={tr("العضلة")} value={muscle} onChange={event=>{setMuscle(event.target.value);setPage(0);}}><option value="">{tr("كل العضلات")}</option>{Object.entries(muscles).map(([key,name])=><option value={key} key={key}>{tr(name)}</option>)}</select><select className="field" aria-label={tr("المعدات")} value={tool} onChange={event=>{setTool(event.target.value);setPage(0);}}><option value="">{tr("كل المعدات")}</option>{Object.entries(equipment).map(([key,name])=><option value={key} key={key}>{tr(name)}</option>)}</select></div>
     <div className="picker-scroll"><div className="picker-results"><span>{tr("النتائج: {0}",countLabel(language,found.length,nouns.exercise))}</span><div>{(query||muscle||tool)&&<button type="button" onClick={clearFilters}>{tr("مسح الفلاتر")}</button>}<label><input type="checkbox" checked={visuals} onChange={event=>setVisuals(event.target.checked)}/>{tr("عرض الصور")}</label></div></div>
       {!found.length?<div className="empty"><SlidersHorizontal size={30}/><h3>{tr("لا توجد تمارين مطابقة")}</h3><button className="btn-soft" type="button" onClick={clearFilters}>{tr("عرض جميع التمارين")}</button></div>:<div className={`picker-grid ${visuals?"":"compact"}`}>{found.slice(current*pageSize,(current+1)*pageSize).map(exercise=>{

@@ -1,4 +1,5 @@
 "use client";
+import { DateInput } from "./date-input";
 import { uploadProgressPhoto } from "@/lib/upload-progress-photo";
 import { useLocale } from "./locale-provider";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -356,7 +357,7 @@ function ProgressPhotosPanel({
       <div className="grid gap-3 sm:grid-cols-2">
         <label>
           {tr("تاريخ الصور")}
-          <input className="field" type="date" value={day} disabled={busy} max={riyadhToday()} onChange={(event) => setDay(event.target.value)} />
+          <DateInput className="field" type="date" value={day} disabled={busy} max={riyadhToday()} onChange={(event) => setDay(event.target.value)} />
         </label>
         <p className="self-end text-xs leading-6 text-muted">
           {tr("حافظ على الإضاءة والمسافة والوقفة نفسها قدر الإمكان. لا تحتاج إلى ملابس كاشفة.")}

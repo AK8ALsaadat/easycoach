@@ -1,4 +1,5 @@
 "use client";
+import { DateInput } from "./date-input";
 import { useLocale } from "./locale-provider";
 import { useState } from "react";
 import { Scale, TrendingDown, Plus, Trash2 } from "lucide-react";
@@ -119,10 +120,11 @@ export function WeightPanel({
       )}
       {onSave ? (
         <form
-          className="mt-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
+          className="weight-entry-form mt-5 grid gap-3"
           noValidate
           onSubmit={async (e) => {
             e.preventDefault();
+            if (!e.currentTarget.reportValidity()) return;
             const value = Number(weight.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[,،٫]/g, "."));
             if (!day) { setError("اختر تاريخ الوزن"); return; }
             if (day > riyadhToday()) { setError("لا يمكن تسجيل وزن بتاريخ قادم"); return; }
@@ -147,7 +149,7 @@ export function WeightPanel({
         >
           <label className="text-xs">
             {tr("اليوم")}
-            <input
+            <DateInput
               aria-label={tr("تاريخ الوزن")}
               disabled={busy}
               className="field mt-1"
@@ -179,7 +181,7 @@ export function WeightPanel({
               ? tr("نحفظ…")
               : ordered.some((w) => w.entry_date === day)
                 ? tr("تصحيح الوزن")
-                : tr("تسجيل")}
+                : tr("تسجيل الوزن")}
           </button>
         </form>
       ) : null}

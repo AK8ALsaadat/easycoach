@@ -10,7 +10,7 @@ export function appendExercises(plan:Content,day:number,exercises:ProgramExercis
 }
 
 export function repeatProgramDay(plan: Content, source: number, name: string, weekday?: number): Content {
-  if (!plan.days[source] || plan.days.length >= 14 || !name.trim() || name.trim().length > 100 || plan.days.some(day=>day.name===name.trim()) || (weekday!==undefined&&(!Number.isInteger(weekday)||weekday<0||weekday>6))) return plan;
+  if (!plan.days[source] || plan.days.length >= 14 || !name.trim() || name.trim().length > 100 || plan.days.some(day=>dayNameKey(day.name)===dayNameKey(name.trim())) || (weekday!==undefined&&(!Number.isInteger(weekday)||weekday<0||weekday>6))) return plan;
   const copy={...structuredClone(plan.days[source]),name:name.trim(),weekday,exercises:plan.days[source].exercises.map(exercise=>({...structuredClone(exercise),rowId:crypto.randomUUID()}))};
   return {...plan,days:[...plan.days.slice(0,source+1),copy,...plan.days.slice(source+1)]};
 }
@@ -33,6 +33,16 @@ export function appendExercise(plan: Content, day: number, exercise: ProgramExer
   return { ...plan, days: plan.days.map((item,index) => index === day ? { ...item, exercises: [...rows, { ...exercise, rowId: crypto.randomUUID() }] } : item) };
 }
 
+export function copyExerciseAfter(plan: Content, day: number, row: number): Content {
+  const session = plan.days[day];
+  if (!session?.exercises[row] || session.exercises.length >= 40) return plan;
+  const exercises = [...session.exercises];
+  exercises.splice(row + 1, 0, { ...structuredClone(exercises[row]), rowId: crypto.randomUUID() });
+  return { ...plan, days: plan.days.map((item, index) => index === day ? { ...item, exercises } : item) };
+}
+
+export const dayNameKey = (name: string) => displayDayName(name, "ar").trim().replace(/\s+/g, " ").toLowerCase();
+
 export function transferExercise(plan: Content, source: number, row: number, target: number): Content {
   if (source === target || !plan.days[source]?.exercises[row] || !plan.days[target]) return plan;
   const exercise = plan.days[source].exercises[row];
@@ -49,6 +59,8 @@ export function dayName(index: number, language: "ar" | "en" = "ar") {
 }
 /** Shows older generic names ("اليوم 2", "Day 2") with the same ordinal wording. */
 export function displayDayName(name: string, language: "ar" | "en" = "ar") {
+  const ordinal = ORDINALS.findIndex(value => name.trim() === `اليوم ${value}`);
+  if (ordinal >= 0) return dayName(ordinal, language);
   const match = /^(?:اليوم|يوم|Day)\s+([0-9٠-٩]{1,2})$/i.exec(name.trim());
   if (!match) return name;
   const number = Number(match[1].replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))));
@@ -62,7 +74,7 @@ export function withTrainingDays(plan: Content, count: number | null | undefined
   const days = [...plan.days];
   for (let index = days.length; index < target; index++) {
     let name = dayName(index);
-    for (let n = 2; days.some((day) => day.name === name); n++) name = `${dayName(index)} (${n})`;
+    for (let n = 2; days.some((day) => dayNameKey(day.name) === dayNameKey(name)); n++) name = `${dayName(index)} (${n})`;
     days.push({ name, exercises: [{ ...starter }] });
   }
   return { ...plan, days };

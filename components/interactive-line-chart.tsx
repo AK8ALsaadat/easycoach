@@ -63,7 +63,7 @@ export function InteractiveLineChart({
   const values = sorted.map((point) => point.value);
   const lowest = Math.min(...values, ...(target != null ? [target] : [])),
     highest = Math.max(...values, ...(target != null ? [target] : []));
-  const padding = Math.max((highest - lowest) * 0.1, 0.5);
+  const padding = Math.max((highest - lowest) * 0.1, Math.abs(highest) * 0.05, 0.5);
   const min = lowest - padding,
     max = highest + padding,
     span = max - min;

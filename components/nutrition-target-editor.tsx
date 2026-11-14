@@ -1,4 +1,5 @@
 "use client";
+import { DateInput } from "./date-input";
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -92,7 +93,7 @@ export function NutritionTargetEditor({ data, client }: { data: Snapshot; client
         />
         <label className="block max-w-sm">
           {tr("تاريخ سريان السعرات")}
-          <input className="field mt-2" type="date" value={day} disabled={busy} onChange={(event) => { setDay(event.target.value); changed(); }} />
+          <DateInput className="field mt-2" type="date" value={day} disabled={busy} onChange={(event) => { setDay(event.target.value); changed(); }} />
         </label>
         <p className="text-xs text-muted">{tr("الهدف المؤرخ مستقبلًا يبدأ في تاريخه؛ يبقى الهدف الحالي فعالًا حتى ذلك الوقت.")}</p>
         <label className="block">

@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Dumbbell, Plus, Trash2, Video, X } from "lucide-react";
 import { mutate, type Result } from "@/app/actions";
 import type { Snapshot } from "@/lib/model";
@@ -19,7 +18,6 @@ import { showToast } from "./toast";
  */
 export function CustomExercises({ data }: { data: Snapshot }) {
   const { t: tr } = useLocale();
-  const router = useRouter();
   const [editing, setEditing] = useState("");
   const current = data.exercises.find((item) => item.id === editing);
   const [name, setName] = useState("");
@@ -65,7 +63,6 @@ export function CustomExercises({ data }: { data: Snapshot }) {
         // An empty form is the signal that the save landed; leaving the old
         // values in place made a successful save look like nothing happened.
         clear();
-        router.refresh();
       }
     } catch {
       setResult({ ok: false, message: "تعذر الاتصال. حافظ على الصفحة مفتوحة وأعد المحاولة." });
@@ -83,7 +80,6 @@ export function CustomExercises({ data }: { data: Snapshot }) {
       if (response.ok) {
         if (editing === id) clear();
         showToast({ message: tr("تم حذف التمرين من مكتبتك"), tone: "success" });
-        router.refresh();
       }
     } catch {
       setResult({ ok: false, message: "تعذر الاتصال. أعد المحاولة." });
@@ -160,6 +156,7 @@ export function CustomExercises({ data }: { data: Snapshot }) {
             void save();
           }}
         >
+          <fieldset disabled={busy} className="min-w-0 space-y-4">
           <label>
             {tr("اسم التمرين")}
             <input
@@ -214,6 +211,7 @@ export function CustomExercises({ data }: { data: Snapshot }) {
           <button className="btn w-full" disabled={busy || name.trim().length < 2}>
             {busy ? tr("جارٍ الحفظ…") : current ? tr("حفظ التعديل") : tr("إضافة إلى مكتبتي")}
           </button>
+          </fieldset>
         </form>
         <Notice result={result} />
       </section>

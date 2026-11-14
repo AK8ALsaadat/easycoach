@@ -1,5 +1,6 @@
 "use client";
 import { useLocale } from "./locale-provider";
+import { DateInput } from "./date-input";
 import { useId, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { mutate, type Result } from "@/app/actions";
@@ -116,6 +117,8 @@ export function DataForm({
                   </option>
                 ))}
               </select>
+            ) : field.type === "date" ? (
+              <DateInput id={`${prefix}-${field.name}`} name={field.name} defaultValue={field.value} className="field" required={field.required}/>
             ) : (
               <input
                 id={`${prefix}-${field.name}`}

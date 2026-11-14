@@ -12,6 +12,7 @@ export default async function CoachPage({
     add?: string;
     q?: string;
     tab?: string;
+    template?: string;
   }>;
 }) {
   const data = await snapshot();
@@ -42,6 +43,7 @@ export default async function CoachPage({
       }
       initialTab={editing ? search.tab === "nutrition" ? "nutrition" : "program" : search.tab ?? "overview"}
       initialQuery={search.q ?? ""}
+      initialTemplate={search.template}
       appUrl={process.env.APP_URL ?? "http://127.0.0.1:3200"}
       local={localMode()}
       supportOwner={isSupportOwner}

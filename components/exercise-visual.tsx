@@ -3,6 +3,7 @@ import { useLocale } from "./locale-provider";
 import { useState } from "react";
 import { ImageOff, Maximize2, Play } from "lucide-react";
 import { Modal } from "./modal";
+import { CroppedExercisePhoto, photoCrops } from "./cropped-exercise-photo";
 import {
   exerciseImageUrl,
   exerciseMedia,
@@ -44,6 +45,7 @@ function ExerciseVisualContent({ exercise, className, playable, portalHash }: {
       className={`exercise-visual-frame ${available ? "visual-available" : "visual-unavailable"} ${className}`}
       data-exercise-id={exercise.id}
       data-media-status={available ? "reviewed-photo" : "unavailable"}
+      style={photoCrops[exercise.id] && !playing ? { aspectRatio: `${photoCrops[exercise.id].width}/${photoCrops[exercise.id].height}` } : undefined}
     >
       {available ? (
         playing && asset ? (
@@ -65,8 +67,8 @@ function ExerciseVisualContent({ exercise, className, playable, portalHash }: {
         ) : (
           <>
             {/* Authenticated private media cannot go through the public Next image optimizer. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <CroppedExercisePhoto
+              exerciseId={exercise.id}
               key={retry}
               ref={(image) => {
                 if (image?.complete && image.naturalWidth === 0)
@@ -114,8 +116,7 @@ function ExerciseVisualContent({ exercise, className, playable, portalHash }: {
       )}
       {playable && available && (
         <Modal open={zoomed} onClose={() => setZoomed(false)} title={exerciseName(exercise, locale)} className="max-w-3xl">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={poster} alt={tr("صورة توضح أداء {0}", String(exerciseName(exercise, locale)))} className="max-h-[75dvh] w-full rounded-lg object-contain" />
+          <CroppedExercisePhoto exerciseId={exercise.id} src={poster} alt={tr("صورة توضح أداء {0}", String(exerciseName(exercise, locale)))}/>
         </Modal>
       )}
     </div>
