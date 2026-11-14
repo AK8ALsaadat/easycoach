@@ -23,11 +23,11 @@ export const metadata: Metadata = {
   // Next emits the generic tag; older iOS versions still read the Apple-prefixed one.
   other: { "apple-mobile-web-app-capable": "yes" },
 };
-// The browser chrome follows the chosen theme (dark by default); viewport-fit
+// The browser chrome follows the chosen theme (light by default); viewport-fit
 // exposes the safe-area insets used by the bottom navigation.
 export async function generateViewport(): Promise<Viewport> {
-  const light = (await cookies()).get("ec_theme")?.value === "light";
-  return { themeColor: light ? PWA_THEME.light : PWA_THEME.dark, viewportFit: "cover", width: "device-width", initialScale: 1 };
+  const dark = (await cookies()).get("ec_theme")?.value === "dark";
+  return { themeColor: dark ? PWA_THEME.dark : PWA_THEME.light, viewportFit: "cover", width: "device-width", initialScale: 1 };
 }
 export default async function RootLayout({
   children,
@@ -36,8 +36,8 @@ export default async function RootLayout({
 }) {
   const preferences=await cookies();
   const language = preferences.get("ec_language")?.value === "en" ? "en" : "ar";
-  // Dark is the first-visit default; keep an explicit light-mode choice.
-  const theme=preferences.get("ec_theme")?.value === "light" ? "light" : "dark";
+  // Light is the first-visit default; keep an explicit dark-mode choice.
+  const theme=preferences.get("ec_theme")?.value === "dark" ? "dark" : "light";
   return (
     <html lang={language} dir={language === "en" ? "ltr" : "rtl"} data-theme={theme}>
       <body className={font.className}>

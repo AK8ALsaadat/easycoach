@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
         const role = requestedRole === "coach" ? "coach" : "trainee";
         const name = String(meta.display_name ?? meta.full_name ?? meta.name ?? "").trim().slice(0, 120);
         await client.auth.updateUser({ data: { role, ...(name.length >= 2 && !meta.display_name ? { display_name: name } : {}) } });
+        // A brand-new coach picks a plan (free trial) first; invites and explicit targets win.
+        if (role === "coach" && safeNext(params.get("next")) === "/coach") return NextResponse.redirect(new URL("/start", request.url));
       }
       return NextResponse.redirect(new URL(safeNext(params.get("next")), request.url));
     }

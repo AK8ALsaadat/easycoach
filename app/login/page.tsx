@@ -32,8 +32,8 @@ export default async function Login({
     );
   }
   return (
-    <main className="grid min-h-screen lg:grid-cols-2">
-      <section className="flex flex-col px-6 py-8 sm:px-16 lg:px-24">
+    <main className="auth-page grid min-h-screen lg:grid-cols-2">
+      <section className="auth-panel flex flex-col px-6 py-8 sm:px-16 lg:px-24">
         <div className="flex justify-between gap-3">
           <Brand />
           <LanguageSwitch />
@@ -42,7 +42,7 @@ export default async function Login({
           <p className="mb-3 text-sm font-medium text-teal">
             {tr("مرحبًا بك في إيزي كوتش")}
           </p>
-          <h1 className="text-3xl">
+          <h1 className="auth-title">
             {tr("خطط أقوى.")}
             <br />
             {tr("نتائج تُتابَع.")}
@@ -63,17 +63,17 @@ export default async function Login({
           {tr("إشعار الخصوصية")}
         </Link>
       </section>
-      <aside className="relative hidden overflow-hidden bg-ink p-16 text-white lg:flex lg:flex-col lg:justify-center">
-        <div className="absolute -left-28 -top-32 size-[500px] rounded-full border-[60px] border-white/[.025]" />
-        <p className="eyebrow !text-accent">
+      <aside className="auth-aside hidden lg:flex">
+        <div className="auth-aside-glow" aria-hidden="true" />
+        <p className="auth-aside-eyebrow">
           {tr("إدارة احترافية. تجربة تدريب أفضل.")}
         </p>
-        <h2 className="mt-6 max-w-lg text-4xl leading-[1.6] font-semibold">
+        <h2 className="auth-aside-title">
           {tr("كل جولة محسوبة.")}
           <br />
-          <span className="text-accent">{tr("وكل متدرب له خطته.")}</span>
+          <span className="auth-aside-accent">{tr("وكل متدرب له خطته.")}</span>
         </h2>
-        <div className="mt-12 grid max-w-lg gap-4">
+        <div className="auth-features">
           {[
             [Users, "الهدف والوزن ومسار التقدم"],
             [Layers3, "876 حركة. جدولك بتفاصيله."],
@@ -83,15 +83,15 @@ export default async function Login({
             return (
               <div
                 key={i}
-                className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-5"
+                className="auth-feature"
               >
-                <I className="text-accent" size={22} />
+                <I className="auth-feature-icon" size={20} />
                 <span>{tr(String(text))}</span>
               </div>
             );
           })}
         </div>
-        <p className="mt-12 text-xs text-white/40">
+        <p className="auth-aside-note">
           {tr("ويب عربي · توقيت الرياض · خصوصية من البداية")}
         </p>
       </aside>

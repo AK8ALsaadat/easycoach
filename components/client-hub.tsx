@@ -100,7 +100,7 @@ export function ClientHub({
     const active = tabList.current?.querySelector<HTMLElement>('[aria-selected="true"]');
     const strip = tabList.current;
     if (!active || !strip || strip.scrollWidth <= strip.clientWidth) return;
-    strip.scrollTo({ left: active.offsetLeft - (strip.clientWidth - active.clientWidth) / 2, behavior: "smooth" });
+    strip.scrollTo({ left: active.offsetLeft - (strip.clientWidth - active.clientWidth) / 2, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
   }, [tab]);
   const [result, setResult] = useState<Result | null>(null),
     [busy, setBusy] = useState(false),

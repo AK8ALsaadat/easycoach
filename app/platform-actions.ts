@@ -1,7 +1,10 @@
 "use server";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { rpc, readableError, requireCoachIdentity } from "@/lib/server";
+import { redirect } from "next/navigation";
+import { rpc, readableError, requireCoachIdentity, actor, isSessionExpired } from "@/lib/server";
+import { isPaidPlan } from "@/lib/platform/plans";
+import { startPlatformTrial } from "@/lib/platform/server";
 import type { Result } from "./actions";
 import { draftContent, id } from "@/lib/model";
 
@@ -38,3 +41,21 @@ export async function publishTeamProgram(owner:string,program:string,revision:nu
   }catch(error){return {ok:false,message:readableError(error)};}
 }
 
+
+/** Starts the signed-in owner's card-less free trial for the chosen paid plan, then opens the workspace. */
+export async function startTrialAction(form: FormData) {
+  const plan = String(form.get("plan") ?? "");
+  const back = isPaidPlan(plan) ? `/start?plan=${plan}` : "/start";
+  if (!isPaidPlan(plan)) redirect("/start?error=plan");
+  if (!(await actor())) redirect(`/login?register=1&next=${encodeURIComponent(back)}`);
+  let failure: string | null = null;
+  try {
+    await startPlatformTrial(plan);
+  } catch (error) {
+    if (isSessionExpired(error)) redirect(`/login?next=${encodeURIComponent(back)}`);
+    failure = error instanceof Error ? error.message : "تعذر بدء التجربة";
+  }
+  if (failure) redirect(`${back}&error=${encodeURIComponent(failure.slice(0, 160))}`);
+  revalidatePath("/", "layout");
+  redirect("/coach?trial=started");
+}

@@ -46,6 +46,8 @@ import { financeSummary, latestSubscription } from "@/lib/subscription-period";
 import { withTrainingDays } from "@/lib/program-builder";
 import { auditLabel } from "@/lib/audit-labels";
 import { Brand } from "./brand";
+import { Sparkles } from "lucide-react";
+import type { PlatformState } from "@/lib/platform/plans";
 import { ActionButton, DataForm, Notice, type Field } from "./forms";
 import { ClientProgress, PortalControl } from "./client-progress";
 import { ClientRoster } from "./client-roster";
@@ -234,8 +236,10 @@ export function Workspace({
   appUrl,
   local,
   supportOwner = false,
+  platform = null,
 }: {
   data: Snapshot;
+  platform?: (PlatformState & { trial_offer: boolean }) | null;
   section: string;
   clientId?: string;
   initialFilter?: string;
@@ -369,6 +373,18 @@ export function Workspace({
             </button>
           </form>
           <div className="header-tools">
+            {platform?.status === "trialing" && platform.trial_end ? (
+              <Link href="/subscription" className="trial-pill" title={tr("تفاصيل التجربة المجانية")}>
+                <Sparkles size={14} aria-hidden="true" />
+                <span>{tr("تجربة مجانية")}</span>
+                {(() => { const days = Math.max(0, Math.ceil((Date.parse(platform.trial_end) - Date.parse(platform.server_now)) / 86_400_000)); return tr("{0} يومًا متبقية", formatNumber(days)); })()}
+              </Link>
+            ) : platform?.trial_offer ? (
+              <Link href="/start" className="trial-pill is-offer">
+                <Sparkles size={14} aria-hidden="true" />
+                <span>{tr("جرّب أي باقة")}</span>{tr("14 يومًا مجانًا")}
+              </Link>
+            ) : null}
             <LanguageSwitch />
             <span className="header-date">
               <CalendarDays size={16} />

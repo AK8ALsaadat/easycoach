@@ -20,7 +20,7 @@ import { localPreview as localMode } from "./runtime";
 export const hash = (v: string) => createHash("sha256").update(v).digest("hex");
 export function safeNext(value: unknown) {
   return typeof value === "string" &&
-    /^\/(coach(?:\/[^\\]*)?|me|invite\/[a-f0-9]{64})$/.test(value)
+    /^\/(coach(?:\/[^\\]*)?|me|start(?:\?plan=(?:starter|pro|business))?|invite\/[a-f0-9]{64})$/.test(value)
     ? value
     : "/coach";
 }

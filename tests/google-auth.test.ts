@@ -17,7 +17,7 @@ vi.mock("next/headers", () => ({
 }));
 vi.mock("@/lib/server", () => ({
   localMode: () => false,
-  safeNext: (value: unknown) => (typeof value === "string" && /^\/(coach|me|invite\/[a-f0-9]{64})$/.test(value) ? value : "/coach"),
+  safeNext: (value: unknown) => (typeof value === "string" && /^\/(coach|me|start(?:\?plan=(?:starter|pro|business))?|invite\/[a-f0-9]{64})$/.test(value) ? value : "/coach"),
   readableError: (error: { message?: string }) => error.message ?? "خطأ",
   supabase: async () => ({
     auth: {
@@ -47,7 +47,7 @@ it("gives a new Google account the role chosen before sign-in and its Google nam
   state.jar.set("ec_oauth_role", "coach");
   state.user = { user_metadata: { full_name: "سارة المدربة", email: "sara@example.test" } };
   const response = await callback("code=abc&next=%2Fcoach");
-  expect(response.headers.get("location")).toBe("https://coach.example/coach");
+  expect(response.headers.get("location")).toBe("https://coach.example/start");
   expect(state.updateUser).toHaveBeenCalledWith({ data: { role: "coach", display_name: "سارة المدربة" } });
   expect(state.jar.has("ec_oauth_role")).toBe(false);
 });

@@ -22,7 +22,7 @@ export function discountedPrice(halalas: number) {
 export type PlatformState = {
   mode: "legacy" | "managed"; status: "free" | "trialing" | "active" | "past_due" | "expired";
   billing_plan: PlanCode; effective_plan: PlanCode; cancel_at_period_end: boolean;
-  trial_end: string | null; period_end: string | null; trial_used_at: string | null;
+  trial_end: string | null; period_end: string | null; trial_used_at: string | null; has_payment_method?: boolean;
   locked_price_halalas: number | null; total_halalas: number | null; currency: "SAR";
   usage: { clients: number; templates: number; coaches: number };
   limits: { clients: number | null; templates: number | null; coaches: number };
@@ -34,5 +34,22 @@ export type PlatformQuote = {
   limits: PlatformState["limits"];
   plan: PlanCode; base_halalas: number; net_halalas: number; vat_halalas: number | null;
   total_halalas: number | null; tax_mode: string; discount: boolean; campaign_active: boolean; trial_available: boolean;
+  trial_campaign_active: boolean; trial_campaign_end: string | null; trial_days: number; trial_used: boolean;
   provider_ready: boolean; server_now: string;
 };
+export const TRIAL_DAYS = 14;
+export const paidPlans = ["starter", "pro", "business"] as const;
+export type PaidPlan = typeof paidPlans[number];
+export function isPaidPlan(value: unknown): value is PaidPlan { return paidPlans.includes(value as PaidPlan); }
+/** Monthly price for display: whole riyals when exact ("299"), otherwise two decimals. */
+export function riyals(halalas: number) { return halalas % 100 === 0 ? String(halalas / 100) : sar(halalas); }
+export function riyadhDate(iso: string, style: "long" | "medium" = "long") {
+  return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { dateStyle: style, timeZone: "Asia/Riyadh" }).format(new Date(iso));
+}
+export function limitLabel(limits: PlatformState["limits"]) {
+  return [
+    limits.clients === null ? "متدربون نشطون بلا حد" : `حتى ${limits.clients} متدربًا نشطًا`,
+    limits.coaches === 1 ? "حساب مدرب واحد" : `${limits.coaches} حسابات مدربين شاملة المالك`,
+    limits.templates === null ? "قوالب خاصة بلا حد" : limits.templates === 0 ? "بدون قوالب خاصة" : `${limits.templates} قوالب خاصة`,
+  ];
+}

@@ -30,6 +30,7 @@ try {
   // 1. The local preview offers no registration path, so nothing here can
   // create a half-real account or send an email.
   await page.goto(base + "/login");
+  await page.waitForLoadState("networkidle");
   await page.locator("#auth-email").waitFor();
   assert.equal(await page.getByRole("button", { name: "جديد هنا؟ أنشئ حسابك", exact: true }).count(), 0, "Local preview must not offer registration");
   assert.equal(await page.locator("#auth-password-confirmation").count(), 0);
@@ -105,6 +106,8 @@ try {
   for (const path of ["/coach", "/attendance", "/subscription", "/pricing"]) {
     await page.goto(base + path);
     await page.locator("h1,h2").first().waitFor();
+    await page.waitForLoadState("networkidle");
+    await page.screenshot({ path: dir + "/mobile-" + path.slice(1) + ".png", fullPage: true });
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), path + " overflows on mobile");
   }
   await page.screenshot({ path: dir + "/coach-mobile.png", fullPage: true });

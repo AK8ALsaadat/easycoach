@@ -6,11 +6,11 @@ const page = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b1220">
+<meta name="theme-color" content="#f5f5f7">
 <title>غير متصل | إيزي كوتش</title>
 <style>
-:root{--bg:#f0f2f3;--card:#fafbfa;--text:#202a35;--muted:#63707c;--line:#dce2e4;--primary:#2858a6;--on:#fff}
-:root[data-theme="dark"]{--bg:#0b1220;--card:#111c2c;--text:#e6edf8;--muted:#a8b8cf;--line:#31435b;--primary:#2a63d4}
+:root{--bg:#f5f5f7;--card:#ffffff;--text:#1d1d1f;--muted:#6e6e73;--line:#e0e0e5;--primary:#0071e3;--on:#fff}
+:root[data-theme="dark"]{--bg:#000000;--card:#1c1c1e;--text:#f5f5f7;--muted:#98989d;--line:#38383a;--primary:#0a84ff}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.7 system-ui,"Segoe UI",Tahoma,sans-serif;padding:16px 16px calc(24px + env(safe-area-inset-bottom))}
 main{max-width:640px;margin:0 auto}h1{font-size:1.35rem;margin:.5rem 0}h2{font-size:1.05rem;margin:0 0 .5rem}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}

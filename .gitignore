@@ -14,3 +14,6 @@ next-env.d.ts
 /seed-credentials.json
 outputs/
 test-results/
+
+# Local preview servers started with EASYCOACH_EVIDENCE_DIST_DIR
+.next-preview*/

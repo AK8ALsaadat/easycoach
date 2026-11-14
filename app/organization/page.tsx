@@ -41,8 +41,8 @@ export default async function OrganizationPage({ searchParams }: {
   if (nullable(search.branch)) filteredParams.set("branch", search.branch!);
   if (nullable(search.member)) filteredParams.set("member", search.member!);
   const lastTask = org?.tasks.at(-1);
-  return <main dir="rtl" className="max-w-6xl mx-auto p-6 space-y-7">
-    <div className="flex justify-between"><Link href="/coach">← مساحة المدرب</Link><Link href="/subscription">الاشتراك</Link></div>
+  return <main dir="rtl" className="platform-page platform-page-wide">
+    <div className="flex justify-between"><Link href="/coach" className="platform-back">← مساحة المدرب</Link><Link href="/subscription" className="btn-secondary">الاشتراك</Link></div>
     <h1>الفريق والفروع والمتابعات</h1>
     {homes.length > 0 && <section className="space-y-3"><h2>مساحات الفريق</h2>{homes.map(home => <div key={home.owner} className="border p-3 rounded-xl">
       <Link href={`/organization?owner=${home.owner}`}>{home.name}</Link>
@@ -51,8 +51,8 @@ export default async function OrganizationPage({ searchParams }: {
     {!org ? <p className="border p-5 rounded-xl">هذه المساحة تحتاج باقة تدعم الفريق أو دعوة فريق مقبولة. <Link href="/pricing">عرض الباقات</Link></p> : <>
       <form className="flex flex-wrap gap-3">
         <input type="hidden" name="owner" value={owner} />
-        {business && <label>الفرع<select name="branch" className="input" defaultValue={search.branch ?? ""}><option value="">الجميع</option>{branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label>}
-        <label>المدرب<select name="member" className="input" defaultValue={search.member ?? ""}><option value="">الجميع</option>{members.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}</select></label>
+        {business && <label>الفرع<select name="branch" className="field" defaultValue={search.branch ?? ""}><option value="">الجميع</option>{branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label>}
+        <label>المدرب<select name="member" className="field" defaultValue={search.member ?? ""}><option value="">الجميع</option>{members.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}</select></label>
         <button className="btn">تصفية</button><Link className="btn" href={`/reports?${filteredParams}`}>التقارير</Link>
       </form>
       <section className="space-y-3"><h2>المتدربون في نطاق صلاحياتك</h2>

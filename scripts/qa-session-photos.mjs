@@ -12,10 +12,12 @@ const errors = [];
 page.on('pageerror', error => errors.push(error.message));
 async function login(email) {
   await page.goto(base + '/login');
+  await page.waitForLoadState('networkidle');
   await page.locator('#auth-email').fill(email);
   await page.locator('#auth-password').fill('CoachPreview!2026');
   await page.locator('button[type="submit"]').click();
   await page.waitForURL(email.startsWith('trainee') ? '**/me' : '**/coach');
+  await page.waitForLoadState('networkidle');
 }
 async function logout() {
   await context.request.post(base + '/logout', {headers: {origin: base}});
@@ -43,6 +45,7 @@ try {
   });
   await page.getByRole('tab', {name:'صور التقدم', exact: true}).click();
   const enable = page.getByRole('button', {name:'تفعيل صور التقدم', exact: true});
+  await enable.or(page.locator('input[id^="progress-photo-"]').first()).waitFor({state:'attached'});
   if (await enable.isVisible()) {
     await enable.click();
     await page.getByRole('button', {name:'موافق، أبي أرفع صور', exact: true}).click();

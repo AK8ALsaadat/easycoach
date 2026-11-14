@@ -7,7 +7,7 @@ const state = vi.hoisted(() => ({
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/server", () => ({
   localMode: () => false,
-  safeNext: (next: unknown) => typeof next === "string" && /^\/(coach|me|invite\/[a-f0-9]{64})$/.test(next) ? next : "/coach",
+  safeNext: (next: unknown) => typeof next === "string" && /^\/(coach|me|start(?:\?plan=(?:starter|pro|business))?|invite\/[a-f0-9]{64})$/.test(next) ? next : "/coach",
   actor: state.actor, snapshot: state.snapshot,
   supabase: async () => ({ auth: { verifyOtp: state.verify, resend: state.resend } }),
 }));
@@ -34,9 +34,14 @@ it("normalizes pasted Arabic/Persian digits and whitespace, retaining leading ze
 it("verifies the cookie's email with type email, then requires a verified server identity", async () => {
   const result = await verifySignupCode(codeForm("٠٠١٢٣٤"));
   expect(state.verify).toHaveBeenCalledWith({ email: "otp@example.test", token: "001234", type: "email" });
-  expect(result).toMatchObject({ ok: true, url: "/coach" });
+  expect(result).toMatchObject({ ok: true, url: "/start" });
   expect(state.actor).toHaveBeenCalledTimes(2);
   expect(state.clear).toHaveBeenCalledTimes(1);
+});
+
+it.each(["starter", "pro", "business"])("preserves the selected %s plan after email verification", async plan => {
+  state.pending!.next = `/start?plan=${plan}`;
+  expect(await verifySignupCode(codeForm("001234"))).toMatchObject({ ok: true, url: `/start?plan=${plan}` });
 });
 
 it("refuses to replace a different account's live session with the new one", async () => {
@@ -76,7 +81,7 @@ describe("OTP rejection paths", () => {
   });
   it("preserves safe invitation redirects, denies external redirects, and routes trainees to me", async () => {
     state.pending!.next = "https://attacker.example";
-    expect(await verifySignupCode(codeForm("001234"))).toMatchObject({ url: "/coach" });
+    expect(await verifySignupCode(codeForm("001234"))).toMatchObject({ url: "/start" });
     state.snapshot.mockResolvedValue({ profile: { role: "trainee" } });
     expect(await verifySignupCode(codeForm("001234"))).toMatchObject({ url: "/me" });
     state.pending!.next = "/invite/" + "a".repeat(64);

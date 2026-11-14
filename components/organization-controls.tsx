@@ -10,7 +10,7 @@ export function OrganizationForm({operation,fields,defaults={},label="حفظ"}:{
     for(const field of fields){const v=String(form.get(field.name)??"");input[field.name]=field.optional&&!v?null:field.type==="number"?Number(v):field.type==="datetime-local"?new Date(v).toISOString():v;}
     const result=await organizationAction(operation,input);setMessage(result.message);
   })}>
-    {fields.map(field=><label className="block text-sm" key={field.name}>{field.label}{field.options?<select className="input w-full" name={field.name} required={!field.optional}>{field.optional&&<option value="">بدون</option>}{field.options.map(option=><option key={option.id} value={option.id}>{option.name}</option>)}</select>:<input className="input w-full" type={field.type??"text"} name={field.name} required={!field.optional}/>}</label>)}
+    {fields.map(field=><label className="block text-sm" key={field.name}>{field.label}{field.options?<select className="field w-full" name={field.name} required={!field.optional}>{field.optional&&<option value="">بدون</option>}{field.options.map(option=><option key={option.id} value={option.id}>{option.name}</option>)}</select>:<input className="field w-full" type={field.type??"text"} name={field.name} required={!field.optional}/>}</label>)}
     <button className="btn" disabled={pending}>{label}</button><p role="status" className="text-sm">{message}</p>
   </form>;
 }
@@ -23,9 +23,9 @@ export function BulkOperations({clients,members,branches,templates}:{clients:Opt
       const result=await organizationAction("ec_bulk_preview",{operation:form.get("operation"),body});setMessage(result.message);
       setPreview(result.ok?result.data as {id:string;count:number;operation:string}:null);
     })} onChange={()=>setPreview(null)}>
-      <label className="block">العملية<select className="input w-full" name="operation"><option value="assign">نقل وإسناد</option><option value="program">إنشاء برامج من قالب</option><option value="notify">إضافة إشعارات إلى طابور البريد</option></select></label>
-      {([{key:"member",label:"المدرب",items:members},{key:"branch",label:"الفرع",items:branches},{key:"template",label:"قالب البرنامج",items:templates}]).map(f=><label className="block" key={f.key}>{f.label}<select className="input w-full" name={f.key}><option value="">بدون</option>{f.items.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></label>)}
-      <label className="block">نص الإشعار<textarea className="input w-full" name="message" maxLength={2000}/></label><button className="btn" disabled={pending}>معاينة العملية</button>
+      <label className="block">العملية<select className="field w-full" name="operation"><option value="assign">نقل وإسناد</option><option value="program">إنشاء برامج من قالب</option><option value="notify">إضافة إشعارات إلى طابور البريد</option></select></label>
+      {([{key:"member",label:"المدرب",items:members},{key:"branch",label:"الفرع",items:branches},{key:"template",label:"قالب البرنامج",items:templates}]).map(f=><label className="block" key={f.key}>{f.label}<select className="field w-full" name={f.key}><option value="">بدون</option>{f.items.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></label>)}
+      <label className="block">نص الإشعار<textarea className="field w-full" name="message" maxLength={2000}/></label><button className="btn" disabled={pending}>معاينة العملية</button>
     </form>
     {preview&&<div className="border p-4 rounded-xl space-y-3"><p>عدد المتدربين: {preview.count} · العملية: {({assign:"نقل وإسناد",program:"برامج جديدة",notify:"طابور بريد"})[preview.operation as "assign"]}</p><button className="btn btn-primary" disabled={pending} onClick={()=>start(async()=>{const r=await organizationAction("ec_bulk_apply",{preview:preview.id});setMessage(r.message);if(r.ok)setPreview(null);})}>تأكيد تنفيذ العملية</button></div>}
     <p role="status">{message}</p>

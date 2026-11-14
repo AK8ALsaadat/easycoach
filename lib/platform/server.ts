@@ -7,6 +7,11 @@ export async function platformState() {
   return rpc<PlatformState>("ec_subscription");
 }
 export function platformQuote(plan: PlanCode) { return rpc<PlatformQuote>("ec_quote", { plan_code: plan }, true); }
+/** The owner's own card-less trial. SQL enforces the campaign window, one trial per account and paid plans only. */
+export async function startPlatformTrial(plan: PlanCode) {
+  await requireCoachIdentity();
+  return rpc<PlatformState>("ec_start_trial", { plan_code: plan });
+}
 export async function requireFeature(feature: string) {
   await requireCoachIdentity();
   await rpc("ec_require", { feature });

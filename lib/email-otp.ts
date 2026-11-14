@@ -15,5 +15,8 @@ export function validEmailOtp(value: string) {
 
 export function signupDestination(role: string | undefined, next: string) {
   // next is always passed through safeNext on the server before this function.
-  return next.startsWith("/invite/") ? next : role === "coach" ? next : "/me";
+  if (next.startsWith("/invite/")) return next;
+  if (role !== "coach") return "/me";
+  // A new coach chooses a plan (free trial) right after verifying the email.
+  return next === "/coach" ? "/start" : next;
 }

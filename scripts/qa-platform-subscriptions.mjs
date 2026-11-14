@@ -20,6 +20,7 @@ try{
  await page.screenshot({path:dir+"/pricing-mobile.png",fullPage:true});
  assert.equal((await page.request.post(base+"/api/platform/checkout")).status(),401);
  await page.goto(base+"/login");
+ await page.waitForLoadState("networkidle");
  await page.locator("#auth-email").fill("coach@example.test");
  await page.locator("#auth-password").fill("CoachPreview!2026");
  await page.locator('button[type="submit"]').click();await page.waitForURL("**/coach");
