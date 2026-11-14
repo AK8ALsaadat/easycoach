@@ -20,6 +20,7 @@ import { getLocalDatabase } from "@/lib/local-db";
 import { arabicIssues } from "@/lib/form-errors";
 import { registrationPasswordIssue } from "@/lib/password";
 import { beginPendingSignup } from "@/lib/pending-signup";
+import { emailHasAccount } from "@/lib/registered-email";
 import { cleanPendingPhotos } from "@/lib/photo-cleanup";
 
 export type Result = {
@@ -131,6 +132,11 @@ export async function registerAction(form: FormData): Promise<Result> {
       .parse(Object.fromEntries(form));
     const passwordIssue = registrationPasswordIssue(input.password, input.password_confirmation);
     if (passwordIssue) return { ok: false, message: passwordIssue };
+    // Say that the address is taken instead of sending another confirmation
+    // email: Auth hides the duplicate to prevent enumeration, and init_profile
+    // would refuse the second account only after the owner entered the code.
+    if (await emailHasAccount(input.email))
+      throw new Error("هذا البريد مسجل مسبقًا. سجّل دخولك بنفس طريقة إنشاء الحساب، أو استخدم «الدخول برابط على الإيميل».");
     const client = await supabase();
     const { data, error } = await client.auth.signUp({
       email: input.email,
@@ -148,7 +154,7 @@ export async function registerAction(form: FormData): Promise<Result> {
       if (error.code === "weak_password")
         throw new Error("كلمة المرور لا تحقق شروط الخادم. استخدم كلمة أطول وأعقد ثم أعد المحاولة.");
       if (error.code === "user_already_exists" || error.code === "email_exists")
-        throw new Error("هذا البريد مسجل مسبقًا. سجل دخولك أو استخدم استعادة كلمة المرور.");
+        throw new Error("هذا البريد مسجل مسبقًا. سجّل دخولك بنفس طريقة إنشاء الحساب، أو استخدم «الدخول برابط على الإيميل».");
       if (/confirmation email|error sending/i.test(error.message))
         throw new Error("تعذر إرسال رسالة التأكيد لبريدك. حاول بعد قليل، وإذا استمرت المشكلة تواصل مع الدعم.");
       throw new Error("تعذر إنشاء الحساب. حاول مرة أخرى بعد قليل.");

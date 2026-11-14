@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { passwordStrength, registrationPasswordIssue } from "@/lib/password";
 
-const state = vi.hoisted(() => ({ signUp: vi.fn(), signOut: vi.fn(), beginPendingSignup: vi.fn() }));
+const state = vi.hoisted(() => ({ signUp: vi.fn(), signOut: vi.fn(), beginPendingSignup: vi.fn(), emailHasAccount: vi.fn() }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/pending-signup", () => ({ beginPendingSignup: state.beginPendingSignup }));
+vi.mock("@/lib/registered-email", () => ({ emailHasAccount: state.emailHasAccount }));
 vi.mock("@/lib/server", () => ({
   localMode: () => false,
   safeNext: () => "/coach",
@@ -15,6 +16,7 @@ import { registerAction } from "@/app/actions";
 beforeEach(() => {
   state.signUp.mockReset().mockResolvedValue({ error: null });
   state.beginPendingSignup.mockReset();
+  state.emailHasAccount.mockReset().mockResolvedValue(false);
   state.signOut.mockReset().mockResolvedValue({ error: null });
   vi.stubEnv("APP_URL", "https://coach.example");
 });
@@ -69,6 +71,16 @@ describe("server registration password policy", () => {
     state.signUp.mockResolvedValue({ data: { user: { id: "test" }, session: { access_token: "synthetic" } }, error: null });
     expect((await registerAction(form("Abcdefg!", "Abcdefg!"))).ok).toBe(false);
     expect(state.signOut).toHaveBeenCalledWith({ scope: "local" });
+    expect(state.beginPendingSignup).not.toHaveBeenCalled();
+  });
+
+  it("refuses an address that already has an account instead of mailing it again", async () => {
+    state.emailHasAccount.mockResolvedValue(true);
+    const result = await registerAction(form("Abcdefg!", "Abcdefg!"));
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain("مسجل مسبقًا");
+    expect(state.emailHasAccount).toHaveBeenCalledWith("registration@example.test");
+    expect(state.signUp).not.toHaveBeenCalled();
     expect(state.beginPendingSignup).not.toHaveBeenCalled();
   });
 
