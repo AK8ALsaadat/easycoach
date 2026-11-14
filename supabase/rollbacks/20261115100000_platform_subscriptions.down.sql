@@ -2,6 +2,12 @@
 -- Refuses to discard any attendance, subscription, team or operational history.
 -- Export/reconcile those records first; never use CASCADE to bypass this guard.
 begin;
+do $$ declare evidence boolean; begin
+ if to_regclass('public.ec_trial_consents') is not null then
+  execute 'select exists(select 1 from public.ec_trial_consents)' into evidence;
+  if evidence then raise exception 'Export trial consent evidence before rollback; no data was removed'; end if;
+ end if;
+end $$;
 do $$ begin
  if exists(select 1 from public.session_attendance) or exists(select 1 from public.subscriptions where session_limit is not null) or exists(select 1 from public.ec_invoices)
  or exists(select 1 from public.ec_consents) or exists(select 1 from public.ec_team)
@@ -35,6 +41,7 @@ do $$ declare t record; p record; f record; backup record; begin
  where n.nspname in ('public','private') and proc.proname like 'ec_%' loop execute format('drop function %s',f.signature); end loop;
 end $$;
 drop table public.ec_report_schedules,public.ec_bulk_previews,public.ec_team_audit,public.ec_rules,public.ec_tasks,public.ec_assignments,public.ec_team,public.ec_branches;
+drop table if exists public.ec_trial_consents;
 drop table public.ec_email_outbox,public.ec_events,public.ec_invoices,public.ec_consents,public.ec_accounts,public.ec_config,public.ec_plans;
 drop table public.session_attendance;
 alter table public.subscriptions drop column session_limit;

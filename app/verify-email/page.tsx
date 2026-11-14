@@ -5,6 +5,7 @@ import { SignupVerification } from "@/components/signup-verification";
 import { readPendingSignup } from "@/lib/pending-signup";
 import { actor, safeNext, snapshot } from "@/lib/server";
 import { signupDestination } from "@/lib/email-otp";
+import { LegalLinks } from "@/components/legal-links";
 
 export const metadata: Metadata = { title: "تأكيد بريدك | إيزي كوتش", robots: { index: false, follow: false } };
 export default async function VerifyEmailPage() {
@@ -18,5 +19,6 @@ export default async function VerifyEmailPage() {
     <Brand />
     <SignupVerification email={pending.email} resendAt={pending.resendAt} />
     <p className="mt-6 text-center text-xs text-muted">حسابك وبياناتك محميّة إلى أن يكتمل تأكيد بريدك.</p>
+    <LegalLinks className="mt-6 justify-center" />
   </main>;
 }

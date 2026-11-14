@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { passwordStrength, registrationPasswordIssue } from "@/lib/password";
+import { POLICY_VERSION } from "@/lib/legal";
 
 const state = vi.hoisted(() => ({ signUp: vi.fn(), signOut: vi.fn(), beginPendingSignup: vi.fn(), emailHasAccount: vi.fn() }));
 vi.mock("server-only", () => ({}));
@@ -25,10 +26,19 @@ function form(password: string, confirmation?: string) {
   const result = new FormData();
   for (const [key, value] of Object.entries({ name: "حساب اختبار", email: "registration@example.test", role: "coach", password })) result.set(key, value);
   if (confirmation !== undefined) result.set("password_confirmation", confirmation);
+  result.set("terms_acceptance", POLICY_VERSION);
   return result;
 }
 
 describe("server registration password policy", () => {
+  it("rejects missing or obsolete policy acceptance before contacting Auth", async () => {
+    for (const version of [null, "old"]) {
+      const value = form("Abcdefg!", "Abcdefg!");
+      if (version === null) value.delete("terms_acceptance"); else value.set("terms_acceptance", version);
+      expect(await registerAction(value)).toMatchObject({ ok: false, message: expect.stringContaining("الشروط") });
+    }
+    expect(state.signUp).not.toHaveBeenCalled();
+  });
   it.each([
     ["Abcdef!", "Abcdef!"],
     ["abcdefg!", "abcdefg!"],

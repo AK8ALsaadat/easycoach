@@ -1,9 +1,9 @@
 "use client";
+import { LegalLinks } from "./legal-links";
 import { useLocale } from "./locale-provider";
 import { LanguageSwitch } from "./language-switch";
 import { useState, useEffect, useCallback } from "react";
 import { LockKeyhole, RefreshCw, Check } from "lucide-react";
-import Link from "next/link";
 import { accessPortal, optionalPortalAccount } from "@/app/studio-actions";
 import type { PortalData } from "@/lib/model";
 import { ProgramView } from "./program-view";
@@ -262,7 +262,7 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
           />
         )}
         <footer className="mt-8 border-t py-5 text-xs text-muted">
-          {tr("إيزي كوتش ·")} <Link href="/privacy">{tr("الخصوصية")}</Link>
+          {tr("إيزي كوتش ·")} <LegalLinks />
         </footer>
       </main>
     </div>

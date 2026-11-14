@@ -1,7 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Headset, Lightbulb, Bug, X, ImagePlus, Send, RefreshCw } from "lucide-react";
+import { Headset, Lightbulb, Bug, ImagePlus, Send, RefreshCw } from "lucide-react";
+import { Modal } from "./modal";
+import Link from "next/link";
 
 type Ticket = { id:string; kind:string; title:string; description:string; attachment_path?:string|null; status:string; created_at:string; author_name?:string; profiles?:{name?:string} };
 export function SupportDesk({ owner = false }: { owner?:boolean }) {
@@ -10,13 +12,13 @@ export function SupportDesk({ owner = false }: { owner?:boolean }) {
  return <>
   {owner&&<SupportInbox/>}
   <button type="button" onClick={()=>setOpen(true)} aria-label="الدعم والاقتراحات" title="الدعم والاقتراحات" className="support-fab"><Headset size={23}/></button>
-  {open&&<div className="support-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)setOpen(false)}}><section role="dialog" aria-modal="true" aria-labelledby="support-title" className="support-dialog">
-    <header className="flex items-start justify-between gap-4"><div><h2 id="support-title">كيف نقدر نساعدك؟</h2><p className="text-sm text-muted mt-1">أرسل اقتراح ميزة أو بلاغًا عن مشكلة، ويمكنك إرفاق صورة.</p></div><button className="icon-button" aria-label="إغلاق" onClick={()=>setOpen(false)}><X size={19}/></button></header>
+  <Modal open={open} onClose={()=>setOpen(false)} dismissible={!busy} title="كيف نقدر نساعدك؟" className="support-dialog" initialFocus="input[name=title]">
+    <p className="text-sm text-muted">أرسل اقتراحًا أو مشكلة أو استفسارًا عن حسابك. لا ترفق كلمة مرور أو رمز تحقق أو بيانات بطاقة. <Link className="underline" href="/privacy" target="_blank" rel="noopener">سياسة الخصوصية</Link></p>
     <div className="support-types"><button type="button" className={kind==="bug"?"selected":""} onClick={()=>setKind("bug")}><Bug size={17}/> بلاغ عن مشكلة</button><button type="button" className={kind==="suggestion"?"selected":""} onClick={()=>setKind("suggestion")}><Lightbulb size={17}/> اقتراح ميزة</button></div>
     <form onSubmit={submit} className="support-form"><label>عنوان مختصر<input name="title" required minLength={4} maxLength={120} placeholder="مثال: لا أستطيع حفظ التمرين" /></label><label>التفاصيل<textarea name="description" required minLength={10} maxLength={5000} rows={5} placeholder="اشرح ما حدث والخطوات التي أوصلتك للمشكلة..." /></label>
       <label className="support-attach"><ImagePlus size={18}/><span>{file?file.name:"إرفاق صورة (اختياري)"}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>setFile(e.target.files?.[0]??null)} /></label>{file&&<button type="button" className="text-xs underline" onClick={()=>setFile(null)}>إزالة الصورة</button>}
       {message&&<p role="status" className="text-sm">{message}</p>}<button className="btn" disabled={busy}>{busy?<RefreshCw className="animate-spin" size={17}/>:<Send size={17}/>} {busy?"جارٍ الإرسال…":"إرسال الطلب"}</button></form>
-  </section></div>}
+  </Modal>
  </>;
 }
 function SupportInbox(){const [tickets,setTickets]=useState<Ticket[]>([]);const [loaded,setLoaded]=useState(false);const [error,setError]=useState("");const [busy,setBusy]=useState(false);

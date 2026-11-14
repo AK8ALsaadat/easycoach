@@ -1,6 +1,15 @@
 import { readFile } from "node:fs/promises";
 import { expect,it } from "vitest";
 import { coach,fixtureDatabase } from "./helpers/db";
+import { POLICY_VERSION } from "@/lib/legal";
+it("preserves recorded trial acceptance even if an operator has reset the account to Free", async () => {
+ const fx=await fixtureDatabase({platformManaged:true});
+ try {
+  await fx.call(coach,"ec_start_trial_accepted",{plan_code:"pro",accepted_version:POLICY_VERSION});
+  await fx.db.query("update public.ec_accounts set status='free' where owner_id=$1",[coach]);
+  await expect(fx.db.exec(await readFile("supabase/rollbacks/20261115100000_platform_subscriptions.down.sql","utf8"))).rejects.toThrow(/consent evidence/);
+ } finally {await fx.db.close();}
+});
 it("rolls an unused rollout back transactionally, preserving old RPC behavior",async()=>{
  const fx=await fixtureDatabase({platformManaged:true});
  try{

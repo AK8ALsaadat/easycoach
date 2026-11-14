@@ -64,7 +64,11 @@ try {
   await screen(trial.page, "start-mobile");
   assert.equal(await trial.page.locator(".plan-card").count(), 4);
   assert.equal(await trial.page.getByText(/2099|31 ديسمبر 2026/).count(), 0);
-  await trial.page.locator(".plan-card.is-featured").getByRole("button", { name: "ابدأ 14 يومًا مجانًا", exact: true }).click();
+  await trial.page.locator(".plan-card.is-featured").getByRole("link", { name: "ابدأ 14 يومًا مجانًا", exact: true }).click();
+  await trial.page.waitForURL("**/subscription/confirm?plan=pro");
+  await screen(trial.page, "trial-review-mobile");
+  await trial.page.locator('[name="terms_acceptance"]').check();
+  await trial.page.getByRole("button", { name: "ابدأ 14 يومًا مجانًا الآن", exact: true }).click();
   await trial.page.waitForURL("**/coach?trial=started");
   await trial.page.getByText("بدأت تجربتك المجانية", { exact: false }).first().waitFor();
   await trial.page.goto(base + "/subscription");
@@ -81,7 +85,7 @@ try {
   const data = await snapshot(coach.page);
   const client = data.clients.find(c => c.email === "trainee@example.test");
   assert(client);
-  const routes = ["/coach", "/coach/clients", "/coach/library", "/coach/finance", "/coach/settings", `/coach/clients/${client.id}`, `/coach/clients/${client.id}/edit`, "/pricing", "/subscription", "/organization", "/attendance", "/reports", "/subscription/confirm?plan=pro"];
+  const routes = ["/coach", "/coach/clients", "/coach/library", "/coach/finance", "/coach/settings", `/coach/clients/${client.id}`, `/coach/clients/${client.id}/edit`, "/pricing", "/subscription", "/organization", "/attendance", "/reports", "/subscription/confirm?plan=pro", "/privacy", "/terms", "/contact"];
   for (const theme of process.env.QA_SKIP_SCREENSHOTS === "true" ? [] : ["light", "dark"]) {
     console.log("Reviewing coach screens: " + theme);
     await coach.context.addCookies([{ name: "ec_theme", value: theme, url: base }]);

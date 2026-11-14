@@ -12,7 +12,7 @@ const port = await new Promise(resolve => {
   socket.listen(0, "127.0.0.1", () => { const port = socket.address().port; socket.close(() => resolve(port)); });
 });
 const base = `http://127.0.0.1:${port}`;
-const allScripts = ["qa-design-browser.mjs", "qa-import-browser.mjs", "qa-session-photos.mjs", "qa-paylink-browser-check.mjs", "qa-platform-subscriptions.mjs", "qa-coach-journey.mjs"];
+const allScripts = ["qa-design-browser.mjs", "qa-policy-dialogs.mjs", "qa-import-browser.mjs", "qa-session-photos.mjs", "qa-paylink-browser-check.mjs", "qa-platform-subscriptions.mjs", "qa-coach-journey.mjs"];
 const selectedScripts = process.argv.length > 2 ? process.argv.slice(2) : allScripts;
 if (selectedScripts.some(script => !allScripts.includes(script))) throw Error("Unknown QA script");
 const env = {

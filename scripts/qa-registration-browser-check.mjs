@@ -1,7 +1,7 @@
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
 const base = process.env.TEST_BASE_URL ?? "http://127.0.0.1:3218";
-assert.equal(new URL(base).hostname, "127.0.0.1");
+assert(["127.0.0.1", "easycoach.space"].includes(new URL(base).hostname), "Only local QA or the official site; this script never submits an account");
 const browser = await chromium.launch({ headless: true, ...(process.platform === "win32" ? { channel: "msedge" } : {}) });
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
@@ -12,6 +12,11 @@ try {
   const password = page.locator("#auth-password");
   const confirmation = page.locator("#auth-password-confirmation");
   const submit = page.getByRole("button", { name: "إنشاء حساب", exact: true });
+  const acceptance = page.locator('[name="terms_acceptance"]');
+  assert(await acceptance.evaluate(input => input.required && !input.checked && input.validity.valueMissing));
+  await acceptance.check();
+  assert.equal(await page.locator('a[href="/terms"]').count() > 0, true);
+  assert.equal(await page.locator('a[href="/privacy"]').count() > 0, true);
   const meter = page.getByRole("meter", { name: "قوة كلمة المرور" });
   assert(await submit.isDisabled());
   await password.fill("abcdefgh");

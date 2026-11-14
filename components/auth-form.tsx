@@ -1,4 +1,6 @@
 "use client";
+import Link from "next/link";
+import { POLICY_VERSION } from "@/lib/legal";
 import { useLocale } from "./locale-provider";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -142,6 +144,7 @@ export function AuthForm({ next, local, google = false, initialRegister = false 
             </div>
           </>
         ) : null}
+        {register && <label className="policy-acceptance"><input type="checkbox" name="terms_acceptance" value={POLICY_VERSION} required /><span>أوافق على <Link href="/terms" target="_blank" rel="noopener">الشروط والأحكام</Link> و<Link href="/privacy" target="_blank" rel="noopener">سياسة الخصوصية</Link>. الموافقة لا تشمل صور التقدم الاختيارية أو أي تفويض دفع.</span></label>}
         <button disabled={busy || (register && Boolean(registrationPasswordIssue(password, confirmation)))} className="btn w-full" type="submit">
           {busy
             ? tr("نتحقق من بياناتك…")
@@ -175,6 +178,8 @@ export function AuthForm({ next, local, google = false, initialRegister = false 
               disabled={busy}
               className="btn-secondary auth-google w-full"
               onClick={async () => {
+                const acceptance = formRef.current?.querySelector<HTMLInputElement>('[name="terms_acceptance"]');
+                if (register && !acceptance?.checked) { acceptance?.reportValidity(); setResult({ ok: false, message: "وافق على الشروط وسياسة الخصوصية قبل إنشاء حسابك." }); return; }
                 setBusy(true);
                 setResult(null);
                 try {

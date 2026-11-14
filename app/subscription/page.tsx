@@ -4,6 +4,7 @@ import { platformQuote, platformState } from "@/lib/platform/server";
 import { plans, riyadhDate, sar } from "@/lib/platform/plans";
 import { rpc } from "@/lib/server";
 import { Brand } from "@/components/brand";
+import { LegalLinks } from "@/components/legal-links";
 import { PlatformResourceSelection } from "@/components/platform-resource-selection";
 import { OrganizationForm } from "@/components/organization-controls";
 import { z } from "zod";
@@ -25,6 +26,7 @@ export default async function SubscriptionPage({searchParams}:{searchParams:Prom
   return <main dir="rtl" className="subscription-page">
     <div className="plans-topbar"><Brand /><Link href="/coach" className="btn-secondary"><ArrowLeft size={16} aria-hidden="true" />مساحة المدرب</Link></div>
     <h1>اشتراك EasyCoach</h1>
+    <Link href="/pricing" className="subscription-compare">مقارنة الباقات والأسعار</Link>
     {state.status==="trialing"&&state.trial_end&&<PlatformTrialCountdown key={state.server_now} end={state.trial_end} serverNow={state.server_now} plan={state.billing_plan} limits={state.billing_limits} hasPaymentMethod={Boolean(state.has_payment_method)}/>}
     <section className="subscription-status">
       {state.mode==="legacy"
@@ -43,9 +45,10 @@ export default async function SubscriptionPage({searchParams}:{searchParams:Prom
       return <div key={kind} className="usage-card"><h2>{({clients:"المتدربون النشطون",coaches:"حسابات المدربين",templates:"القوالب الخاصة"})[kind]}</h2><p><bdi dir="ltr">{state.usage[kind]} / {limit??"∞"}</bdi></p>{limit!==null&&limit>0&&<progress max={limit} value={Math.min(state.usage[kind],limit)} aria-label="نسبة الاستخدام"/>}</div>;
     })}</section>
     {state.features.includes("branding")&&<section className="subscription-section"><h2>لون بوابة المتدرب</h2><OrganizationForm operation="ec_brand_color" fields={[{name:"color",label:"اللون الأساسي",type:"color"}]} label="حفظ لون البوابة"/></section>}
-    <section className="subscription-section"><h2>الدفع والتجديد</h2><p>التجربة المجانية لا تحتاج بطاقة ولا تتجدد تلقائيًا. تفعيل الدفع والتجديد الآلي للاشتراكات المدفوعة قيد التحقق لدى مزود الدفع، وسنعرض الطريقة هنا عند اكتماله؛ لا يُخصم أي مبلغ دون تأكيدك.</p></section>
+    <section className="subscription-section" id="payment-method"><h2>البطاقة والدفع والتجديد</h2><p>لا توجد بطاقة محفوظة لاشتراك EasyCoach. التجربة المجانية لا تحتاج بطاقة ولا تتجدد تلقائيًا. إضافة البطاقة والدفع لاشتراك المنصة غير متاحين حاليًا؛ لن يُخصم أي مبلغ قبل إتاحة الدفع وعرض تفاصيله والحصول على موافقتك.</p><Link href="/terms#cancellation" className="subscription-compare">الإلغاء والاسترداد</Link></section>
     {exceeded&&<section className="subscription-section"><h2>اختر السجلات التي ستبقى نشطة ضمن حدود باقتك</h2><PlatformResourceSelection clients={resources.clients} templates={resources.templates} selectedClients={state.locked_clients} selectedTemplates={state.locked_templates} nextClient={resources.next_client} nextTemplate={resources.next_template}/></section>}
     {state.usage.coaches>state.limits.coaches&&<section className="subscription-section"><h2>اختر أعضاء الفريق الذين سيبقون نشطين</h2><p>المالك يحتسب ضمن الحد. تبقى بيانات الأعضاء الموقوفين محفوظة.</p>{team.map(member=><div className="border p-4 rounded-xl" key={member.id}><p>{member.name}</p><OrganizationForm operation="ec_team_deactivate" defaults={{member:member.id}} fields={[]} label="إيقاف العضو"/></div>)}</section>}
     <section className="subscription-section"><h2>فواتير اشتراك EasyCoach</h2><p>هذه لا تشمل دفعات المتدربين لمدربهم.</p>{invoices.length?<ul>{invoices.map(i=><li key={i.id}><span>{sar(i.amount_halalas)} ريال</span><span className="text-muted">{i.status}</span></li>)}</ul>:<p>لا توجد فواتير مسجلة.</p>}{invoices.length===50&&<Link className="btn-secondary" href={`/subscription?before=${encodeURIComponent(invoices.at(-1)!.created_at)}&id=${invoices.at(-1)!.id}`}>الفواتير الأقدم</Link>}</section>
+    <LegalLinks />
   </main>;
 }

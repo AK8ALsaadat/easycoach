@@ -7,6 +7,7 @@ import { isPaidPlan } from "@/lib/platform/plans";
 import { startPlatformTrial } from "@/lib/platform/server";
 import type { Result } from "./actions";
 import { draftContent, id } from "@/lib/model";
+import { POLICY_VERSION } from "@/lib/legal";
 
 export async function selectPlatformResources(input: unknown): Promise<Result> {
   try {
@@ -48,6 +49,7 @@ export async function startTrialAction(form: FormData) {
   const back = isPaidPlan(plan) ? `/start?plan=${plan}` : "/start";
   if (!isPaidPlan(plan)) redirect("/start?error=plan");
   if (!(await actor())) redirect(`/login?register=1&next=${encodeURIComponent(back)}`);
+  if (form.get("terms_acceptance") !== POLICY_VERSION) redirect(`/subscription/confirm?plan=${plan}&error=terms`);
   let failure: string | null = null;
   try {
     await startPlatformTrial(plan);

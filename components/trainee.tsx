@@ -1,4 +1,5 @@
 "use client";
+import { LegalLinks } from "./legal-links";
 import { useLocale } from "./locale-provider";
 import { LanguageSwitch } from "./language-switch";
 import Link from "next/link";
@@ -498,9 +499,7 @@ export function Trainee({
         </>}
       </main>
       <footer className="mx-auto max-w-6xl border-t px-5 py-6 text-xs text-muted">
-        <Link href="/privacy" className="underline">
-          {tr("الخصوصية")}
-        </Link>{" "}
+        <LegalLinks />{" "}
         {tr("· جميع التواريخ بتوقيت الرياض")}
       </footer>
       {client && <BottomNav />}

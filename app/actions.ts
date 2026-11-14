@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
+import { POLICY_VERSION } from "@/lib/legal";
 import { commands, type Command, email, phone, id } from "@/lib/model";
 import {
   actor,
@@ -132,6 +133,7 @@ export async function registerAction(form: FormData): Promise<Result> {
       .parse(Object.fromEntries(form));
     const passwordIssue = registrationPasswordIssue(input.password, input.password_confirmation);
     if (passwordIssue) return { ok: false, message: passwordIssue };
+    if (form.get("terms_acceptance") !== POLICY_VERSION) return { ok: false, message: "وافق على الشروط والأحكام وسياسة الخصوصية لإنشاء حسابك." };
     // Say that the address is taken instead of sending another confirmation
     // email: Auth hides the duplicate to prevent enumeration, and init_profile
     // would refuse the second account only after the owner entered the code.
@@ -143,7 +145,7 @@ export async function registerAction(form: FormData): Promise<Result> {
       password: input.password,
       options: {
         emailRedirectTo: `${process.env.APP_URL}/auth/callback?next=${encodeURIComponent(safeNext(form.get("next")))}`,
-        data: { display_name: input.name, role: input.role },
+        data: { display_name: input.name, role: input.role, policy_version: POLICY_VERSION, policy_accepted_at: new Date().toISOString() },
       },
     });
     if (error) {

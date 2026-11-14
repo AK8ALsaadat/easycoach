@@ -46,6 +46,7 @@ import { financeSummary, latestSubscription } from "@/lib/subscription-period";
 import { withTrainingDays } from "@/lib/program-builder";
 import { auditLabel } from "@/lib/audit-labels";
 import { Brand } from "./brand";
+import { LegalLinks } from "./legal-links";
 import { Sparkles } from "lucide-react";
 import type { PlatformState } from "@/lib/platform/plans";
 import { ActionButton, DataForm, Notice, type Field } from "./forms";
@@ -305,6 +306,7 @@ export function Workspace({
             </Link>
           ))}
           <Link href="/subscription" className="nav-item"><FileText size={19} /><span>اشتراك EasyCoach</span></Link>
+          <Link href="/pricing" className="nav-item" onClick={() => setMobile(false)}><Sparkles size={19} /><span>الباقات والأسعار</span></Link>
           <Link href="/attendance" className="nav-item"><CalendarDays size={19} /><span>الحضور والحصص</span></Link>
           <Link href="/organization" className="nav-item"><Users size={19} /><span>الفريق والمتابعات</span></Link>
           <Link href="/reports" className="nav-item"><LayoutDashboard size={19} /><span>التقارير</span></Link>
@@ -458,9 +460,7 @@ export function Workspace({
         </main>
         <footer className="flex flex-wrap justify-between gap-3 border-t px-5 py-5 text-xs text-muted lg:px-9">
           <span>{tr("إيزي كوتش · بوابتك لإدارة التدريب")}</span>
-          <Link href="/privacy" className="underline">
-            {tr("الخصوصية")}
-          </Link>
+          <LegalLinks />
         </footer>
       </div>
       <SupportDesk />

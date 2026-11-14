@@ -4,6 +4,7 @@ import { PlanCards, TrialHero } from "@/components/plan-cards";
 import { planCodes } from "@/lib/platform/plans";
 import { platformQuote, platformState } from "@/lib/platform/server";
 import { actor } from "@/lib/server";
+import { LegalLinks } from "@/components/legal-links";
 
 export const dynamic = "force-dynamic";
 export default async function PricingPage() {
@@ -22,5 +23,6 @@ export default async function PricingPage() {
       <div><h3>هل الاشتراك مرتبط بما أحصّله من متدربيّ؟</h3><p>لا. اشتراك EasyCoach مستقل تمامًا عن باقات الحصص التي تبيعها للمتدربين ودفعاتهم.</p></div>
     </section>
     <p className="plans-note">يُعرض الخصم فقط أثناء حملة معتمدة ومحددة المواعيد، وتظهر المعالجة الضريبية والإجمالي قبل أي تأكيد. تفعيل الدفع والتجديد الآلي للاشتراكات المدفوعة قيد التحقق لدى مزود الدفع.</p>
+    <p className="plans-note">التجربة مرة واحدة للحسابات المؤهلة على الباقات المدفوعة. اختيار الباقة يفتح صفحة المراجعة؛ لا يبدأ الخصم بمجرد الاختيار.</p><LegalLinks />
   </main>;
 }

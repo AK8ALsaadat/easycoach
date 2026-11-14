@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   // Development action logs include arguments (credentials and private records).
   logging: false,
+  // The development overlay otherwise covers the support button during local QA.
+  devIndicators: process.env.EASYCOACH_EVIDENCE_DIST_DIR ? false : undefined,
   distDir: process.env.EASYCOACH_EVIDENCE_DIST_DIR || ".next",
   serverExternalPackages: ["@electric-sql/pglite", "exceljs"],
   experimental: { serverActions: { bodySizeLimit: "6mb" } },

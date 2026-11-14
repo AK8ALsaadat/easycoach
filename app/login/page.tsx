@@ -7,6 +7,7 @@ import { AuthForm } from "@/components/auth-form";
 import { actor, localMode, safeNext, snapshot } from "@/lib/server";
 import { SignedInNotice } from "@/components/signed-in-notice";
 import { Check, Layers3, Users, Wallet } from "lucide-react";
+import { LegalLinks } from "@/components/legal-links";
 export default async function Login({
   searchParams,
 }: {
@@ -34,9 +35,9 @@ export default async function Login({
   return (
     <main className="auth-page grid min-h-screen lg:grid-cols-2">
       <section className="auth-panel flex flex-col px-6 py-8 sm:px-16 lg:px-24">
-        <div className="flex justify-between gap-3">
+        <div className="auth-topbar flex justify-between gap-3">
           <Brand />
-          <LanguageSwitch />
+          <div className="flex flex-wrap items-center gap-3"><Link className="auth-pricing-link" href="/pricing">الباقات والأسعار</Link><LanguageSwitch /></div>
         </div>
         <div className="my-auto w-full max-w-md self-center py-14">
           <p className="mb-3 text-sm font-medium text-teal">
@@ -59,9 +60,7 @@ export default async function Login({
           ) : null}
           <AuthForm next={safeNext(params.next)} local={localMode()} initialRegister={params.register === "1"} google={!localMode() && process.env.AUTH_GOOGLE_ENABLED === "true"} />
         </div>
-        <Link href="/privacy" className="text-xs text-muted underline">
-          {tr("إشعار الخصوصية")}
-        </Link>
+        <LegalLinks />
       </section>
       <aside className="auth-aside hidden lg:flex">
         <div className="auth-aside-glow" aria-hidden="true" />

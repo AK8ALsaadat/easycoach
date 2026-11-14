@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Check, Sparkles } from "lucide-react";
-import { startTrialAction } from "@/app/platform-actions";
 import { TRIAL_DAYS, limitLabel, planCodes, plans, riyadhDate, riyals, type PlanCode, type PlatformQuote, type PlatformState } from "@/lib/platform/plans";
 
 /** Campaign facts shared by the hero and the cards, derived from the quote only (never invented). */
@@ -15,7 +14,7 @@ export function trialOffer(quotes: (PlatformQuote | null)[]) {
 export function TrialHero({ quotes, title, lead }: { quotes: (PlatformQuote | null)[]; title?: string; lead?: string }) {
   const offer = trialOffer(quotes);
   return <header className="plans-hero">
-    {offer.active && <p className="trial-ribbon"><Sparkles size={15} aria-hidden="true" />عرض لفترة محدودة · {offer.days} يومًا مجانًا على كل الباقات</p>}
+    {offer.active && <p className="trial-ribbon"><Sparkles size={15} aria-hidden="true" />عرض لفترة محدودة · {offer.days} يومًا مجانًا على كل الباقات المدفوعة</p>}
     <h1>{title ?? (offer.active ? `جرّب أي باقة ${offer.days} يومًا مجانًا` : "باقة تناسب مساحة تدريبك")}</h1>
     <p className="plans-lead">{lead ?? (offer.active
       ? "بدون بطاقة وبدون التزام. خلال التجربة تحصل على كل مزايا باقة الأعمال، وبعدها تعود للباقة المجانية حتى تفعّل اشتراكك، مع بقاء بياناتك محفوظة."
@@ -37,7 +36,7 @@ export function PlanCards({ quotes, state, signedIn, highlight, context }: {
       return <article key={code} className={`plan-card${featured ? " is-featured" : ""}${isCurrent ? " is-current" : ""}`} aria-labelledby={`plan-${code}`}>
         <div className="plan-card-head">
           <h2 id={`plan-${code}`}>{plan.name}</h2>
-          {isCurrent ? <span className="plan-tag plan-tag-current">باقتك الحالية</span> : featured && code === "pro" ? <span className="plan-tag">الأكثر اختيارًا</span> : null}
+          {isCurrent ? <span className="plan-tag plan-tag-current">باقتك الحالية</span> : featured && code === "pro" ? <span className="plan-tag">للعمل مع فريقك</span> : null}
         </div>
         <div className="plan-price">
           {quote ? code === "free"
@@ -45,6 +44,7 @@ export function PlanCards({ quotes, state, signedIn, highlight, context }: {
             : <>{quote.discount && quote.campaign_active && <del>{riyals(quote.base_halalas)}</del>}<strong>{riyals(quote.net_halalas)}</strong><span>ريال / شهر</span></>
             : <p role="status" className="text-muted">يتعذر تحميل السعر حاليًا</p>}
           {code !== "free" && offer.active && <p className="plan-trial-line">أول {offer.days} يومًا مجانًا</p>}
+          {code !== "free" && quote && <p className="plan-tax-note">{quote.total_halalas === null ? "يُعرض الإجمالي بعد تحديد الضريبة وقبل أي دفع" : `الإجمالي الشهري${quote.tax_mode === "inclusive" || quote.tax_mode === "exclusive" ? " مع الضريبة" : ""}: ${riyals(quote.total_halalas)} ريال`}</p>}
         </div>
         {quote && <ul className="plan-limits">{limitLabel(quote.limits).map(line => <li key={line}>{line}</li>)}</ul>}
         <ul className="plan-features">{plan.features.map(feature => <li key={feature}><Check size={15} aria-hidden="true" />{feature}</li>)}</ul>
@@ -58,6 +58,7 @@ function PlanAction({ code, quote, state, signedIn, offer, context, isCurrent }:
   code: PlanCode; quote: PlatformQuote | null; state: PlatformState | null; signedIn: boolean;
   offer: ReturnType<typeof trialOffer>; context: "start" | "pricing"; isCurrent: boolean;
 }) {
+  if (signedIn && !state) return <p className="plan-note">هذه باقات أدوات المدرب. <Link href="/coach" className="underline">افتح مساحتك لعرض خيارات حسابك.</Link></p>;
   if (code === "free") {
     if (!signedIn) return <Link className="btn-secondary w-full" href="/login?register=1">ابدأ مجانًا</Link>;
     return <Link className="btn-secondary w-full" href="/coach">{context === "start" ? "المتابعة بالباقة المجانية" : "مساحة المدرب"}</Link>;
@@ -69,7 +70,7 @@ function PlanAction({ code, quote, state, signedIn, offer, context, isCurrent }:
       : <Link className="btn-secondary w-full" href={`/subscription/confirm?plan=${code}`}>تفاصيل الباقة</Link>;
   }
   if (quote?.trial_available) {
-    return <form action={startTrialAction}><input type="hidden" name="plan" value={code} /><button className="btn w-full">ابدأ {offer.days} يومًا مجانًا</button></form>;
+    return <Link className="btn w-full" href={`/subscription/confirm?plan=${code}`}>ابدأ {offer.days} يومًا مجانًا</Link>;
   }
   if (state?.mode === "legacy") return <p className="plan-note">حسابك سابق ويملك كل المزايا بالفعل.</p>;
   if (state && (state.status === "trialing" || state.status === "active")) return <p className="plan-note">يمكنك تغيير باقتك من صفحة الاشتراك بعد نهاية الفترة الحالية.</p>;

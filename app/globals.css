@@ -2619,3 +2619,37 @@ input[type="color"] { width: 64px; height: 44px; padding: 4px; border: 1px solid
 .platform-page form.flex { align-items: flex-end; }
 .platform-page form.flex > label { display: grid; gap: 6px; min-width: 160px; }
 .platform-page form.flex > .btn, .platform-page form.flex > .btn-secondary { min-height: 44px; }
+
+/* Readable public policies and a clear review before starting a trial. */
+.legal-page { width: 100%; max-width: 960px; margin-inline: auto; padding: 28px 24px 64px; display: grid; gap: 28px; }
+.legal-document { padding: clamp(24px, 5vw, 48px); border: 1px solid var(--ui-line-soft); border-radius: 28px; background: var(--ui-surface); box-shadow: var(--ui-shadow-soft); min-width: 0; }
+.legal-document > header { display: grid; gap: 14px; }
+.legal-document h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1.4; letter-spacing: 0; }
+.legal-lead { color: var(--ui-text-secondary); font-size: 1.0625rem; line-height: 1.9; max-width: 65ch; }
+.legal-updated { font-size: .8125rem; color: var(--ui-text-muted); }
+.legal-document section { display: grid; gap: 14px; padding-top: 28px; margin-top: 28px; border-top: 1px solid var(--ui-line-soft); scroll-margin-top: 100px; min-width: 0; }
+.legal-document section h2 { font-size: 1.2rem; line-height: 1.6; letter-spacing: 0; }
+.legal-document section p { font-size: 1rem; line-height: 2; color: var(--ui-text-secondary); overflow-wrap: anywhere; }
+.legal-contents { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 20px; padding: 20px; margin-top: 28px; background: var(--ui-surface-subtle); border-radius: 18px; }
+.legal-contents a, .legal-sources a, .legal-back, .subscription-compare { color: var(--ui-link); font-size: .9375rem; text-underline-offset: 4px; }
+.legal-contents a { padding-block: 5px; line-height: 1.8; }
+.legal-links { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: .8125rem; line-height: 1.8; color: var(--ui-text-muted); }
+.legal-links a { display: inline-flex; align-items: center; min-height: 32px; text-decoration: underline; text-decoration-color: var(--ui-line); text-underline-offset: 4px; }
+.legal-links a:hover { color: var(--ui-link); }
+.legal-email { direction: ltr; text-align: start; overflow-wrap: anywhere; color: var(--ui-link); }
+.trial-confirm-form { display: grid; gap: 20px; }
+.plan-tax-note { margin-top: 6px; color: var(--ui-text-muted); font-size: .75rem; line-height: 1.8; }
+.policy-acceptance { display: flex; align-items: flex-start; gap: 12px; font-size: .875rem; line-height: 1.9; color: var(--ui-text-secondary); cursor: pointer; }
+.policy-acceptance input { appearance: auto; accent-color: var(--ui-primary); flex: 0 0 20px; width: 20px; height: 20px; margin-top: 4px; }
+.policy-acceptance a { color: var(--ui-link); text-decoration: underline; text-underline-offset: 3px; }
+.payment-availability { padding: 20px; border-radius: 18px; background: var(--ui-surface-subtle); border: 1px solid var(--ui-line-soft); }
+.payment-availability h2 { font-size: 1rem; }
+.payment-availability p { margin-top: 8px; font-size: .875rem; line-height: 1.9; color: var(--ui-text-secondary); }
+.auth-topbar { flex-wrap: wrap; align-items: center; }
+.auth-pricing-link { min-height: 44px; display: inline-flex; align-items: center; font-size: .875rem; color: var(--ui-link); }
+@media(max-width: 640px) {
+  .legal-page { padding: 16px 16px 40px; gap: 20px; }
+  .legal-document { padding: 22px 20px; border-radius: 22px; }
+  .legal-contents { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  .legal-links { gap: 6px 16px; }
+}

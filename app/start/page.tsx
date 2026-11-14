@@ -6,6 +6,7 @@ import { PlanCards, TrialHero, trialOffer } from "@/components/plan-cards";
 import { isPaidPlan, planCodes, plans } from "@/lib/platform/plans";
 import { platformQuote, platformState } from "@/lib/platform/server";
 import { actor, snapshot } from "@/lib/server";
+import { LegalLinks } from "@/components/legal-links";
 
 export const metadata: Metadata = { title: "اختر باقتك", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -36,5 +37,6 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
     {plan && offer.active && <p className="plans-focus">اخترت باقة <strong>{plans[plan].name}</strong>؛ أكّد البدء من بطاقتها أو اختر باقة أخرى.</p>}
     <PlanCards quotes={quotes} state={state} signedIn highlight={plan} context="start" />
     <p className="plans-note">لا نطلب بطاقة ولا نخصم شيئًا خلال التجربة. عند انتهائها تعود صلاحياتك إلى الباقة المجانية إلى أن تفعّل اشتراكك، وتبقى سجلاتك ومتدربوك كما هم. التجربة مرة واحدة لكل حساب.</p>
+    <LegalLinks />
   </main>;
 }
