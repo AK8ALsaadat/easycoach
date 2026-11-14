@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { autoCaloriesIssue, caloriesMode, content, id, date, grams, kcal } from "./model";
+import { autoCaloriesIssue, caloriesMode, content, draftContent, id, date, grams, kcal } from "./model";
 import { riyadhToday } from "./dates";
 import { templateName, templateTags } from "./template-names";
 
@@ -96,7 +96,7 @@ export const recordSchemas = {
   note: z.object({ text: z.string().trim().min(1).max(4000) }).strict(),
   message: z.object({ text: z.string().trim().min(1).max(4000) }).strict(),
   program_history: z
-    .object({ name: z.string().min(2).max(140), content })
+    .object({ name: z.string().min(2).max(140), content: draftContent })
     .strict(),
   goal_history: z
     .object({
@@ -135,7 +135,7 @@ export const recordInput = z
 export const managementCommands = {
   // Updates keep a legacy name until it changes; the database re-checks any changed name.
   template_save_typed: z
-    .object({ id: id.optional(), name: z.string().trim().min(2).max(140), content, kind: z.enum(["workout", "nutrition", "nutrition_targets"]), description: z.string().max(2000).default(""), archived: z.boolean().default(false), ...templateTags })
+    .object({ id: id.optional(), name: z.string().trim().min(2).max(140), content: draftContent, kind: z.enum(["workout", "nutrition", "nutrition_targets"]), description: z.string().max(2000).default(""), archived: z.boolean().default(false), ...templateTags })
     .superRefine((value, ctx) => {
       if (value.id) return;
       const checked = templateName.safeParse(value.name);

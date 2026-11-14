@@ -41,7 +41,7 @@ export const validReps = (value: string) => parseReps(value).value !== undefined
 
 export type PublishIssue = {
   key: string;
-  kind: "exercise" | "meal";
+  kind: "exercise" | "meal" | "day";
   /** Day index for exercises. */
   day?: number;
   /** Exercise row or meal index. */
@@ -57,6 +57,11 @@ export const emptyMeal = (meal: Meal) =>
 /** Problems that block publishing a program to the trainee. */
 export function publishIssues(content: Content): PublishIssue[] {
   const issues: PublishIssue[] = [];
+  // An empty day is fine in a draft and never fine in a published program.
+  content.days.forEach((day, dayIndex) => {
+    if (!day.exercises.length)
+      issues.push({ key: `day-${dayIndex}`, kind: "day", day: dayIndex, index: 0, message: `${day.name}: ما فيه أي تمرين. أضف تمرينًا أو احذف اليوم` });
+  });
   content.days.forEach((day, dayIndex) =>
     day.exercises.forEach((exercise, index) => {
       if (exercise.name.trim() === DEFAULT_EXERCISE_NAME)

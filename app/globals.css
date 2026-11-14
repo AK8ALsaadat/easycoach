@@ -1690,6 +1690,12 @@ html[data-theme="dark"] :is(.weight-chart svg,svg[role="img"]) > path[stroke] { 
 .program-day-row .program-day-item { flex:1; min-width:0; }
 .program-repeat-day { display:grid; place-items:center; min-width:44px; min-height:44px; border-radius:8px; color:var(--ui-text-muted); }
 .program-repeat-day:hover:not(:disabled) { background:var(--ui-accent); color:var(--ui-link); }
+/* Day tools: reorder, repeat and delete sit beside each day, finger-sized. */
+.program-day-tools { display:flex; align-items:center; gap:2px; }
+.program-day-tool { display:grid; place-items:center; min-width:36px; min-height:44px; border-radius:8px; color:var(--ui-text-muted); }
+.program-day-tool:hover:not(:disabled) { background:var(--ui-accent); color:var(--ui-link); }
+.program-day-tool:disabled { opacity:.35; }
+.program-day-delete:hover:not(:disabled) { background:color-mix(in srgb,#b91c1c 12%,transparent); color:#b91c1c; }
 .program-session-actions { display:flex; flex-wrap:wrap; gap:8px; }
 @media(max-width:1100px) { .program-day-row { flex-shrink:0; width:220px; } }
 :root { --ui-shadow-soft:0 8px 28px #14263a06; --ui-shadow-float:0 22px 65px #14263a12; }
@@ -1744,6 +1750,10 @@ td { padding-block:18px; }
 .program-exercise-card > .exercise-row-heading { grid-column:2; margin:0; min-width:0; }
 .program-exercise-card:not(:has(> .exercise-visual)) > .exercise-row-heading { grid-column:1/-1; }
 .program-exercise-card > :is(.grid,.program-exercise-more,.program-exercise-actions) { grid-column:1/-1; }
+/* The instructions field was landing in the 76px thumbnail column, which wrapped
+   the label one word per line and squeezed the textarea to nothing. */
+.program-exercise-card > .program-exercise-notes { grid-column:1/-1; }
+.program-exercise-card > .program-exercise-notes textarea { width:100%; min-height:84px; resize:vertical; }
 .exercise-row-heading > .field { font-size:15px; border-color:transparent; background:var(--ui-surface-subtle); }
 .program-exercise-card > .grid { padding:14px; border-radius:14px; background:var(--ui-surface-subtle); }
 .program-exercise-actions .field { border-color:var(--ui-line-soft); }
@@ -2070,7 +2080,11 @@ td { padding-block:18px; }
 .weight-axis-label { font-size:11px; fill:currentColor; opacity:.65; }
 .offline-banner, .sync-chip { display:flex; align-items:center; gap:8px; margin-bottom:12px; padding:10px 12px; border-radius:12px; background:var(--ui-warning-surface); color:var(--ui-warning-text); font-size:.875rem; }
 .sync-chip { margin-bottom:8px; }
-.pwa-update { position:fixed; z-index:75; top:calc(12px + env(safe-area-inset-top)); inset-inline:16px; margin-inline:auto; max-width:460px; display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:14px; border:1px solid var(--ui-line); background:var(--ui-surface); box-shadow:0 12px 30px rgb(0 0 0 / .2); }
+/* A small toast in the corner. It used to sit across the top of every page,
+   covering the search bar until it was acted on. */
+.pwa-update { position:fixed; z-index:75; bottom:calc(14px + env(safe-area-inset-bottom)); inset-inline-end:14px; inset-inline-start:auto; max-width:320px; display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px; border:1px solid var(--ui-line); background:var(--ui-surface); box-shadow:var(--ui-shadow-float); font-size:.85rem; }
+.pwa-update .btn { padding:6px 10px; font-size:.8rem; }
+@media(max-width:600px) { .pwa-update { inset-inline:12px; max-width:none; bottom:calc(76px + env(safe-area-inset-bottom)); } }
 .pwa-update p { flex:1; margin:0; font-size:.9rem; font-weight:600; }
 .install-banner { position:fixed; z-index:60; inset-inline:12px; bottom:calc(84px + env(safe-area-inset-bottom)); margin-inline:auto; max-width:520px; display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:16px; border:1px solid var(--ui-line); background:var(--ui-surface); box-shadow:0 14px 34px rgb(0 0 0 / .22); }
 .install-banner > div { flex:1; min-width:0; }
@@ -2159,3 +2173,25 @@ td { padding-block:18px; }
 .actions-menu-trigger{min-width:44px;padding-inline:10px}
 .actions-menu-compact .actions-menu-trigger{min-height:40px}
 .actions-menu-list.actions-menu-floating{position:fixed;inset-inline-end:auto;z-index:120}
+
+/* Exercise clips are usually filmed in portrait on a phone. The player takes
+   its ratio from the file, so a portrait clip is tall and capped by height
+   instead of being pillarboxed inside a 16:9 box. */
+.exercise-video { margin:16px 0 0; display:flex; flex-direction:column; gap:6px; }
+.exercise-video-media { width:100%; max-height:70vh; border-radius:12px; background:#000; display:block; }
+.exercise-video.is-portrait .exercise-video-media { width:auto; max-width:100%; max-height:min(70vh,560px); margin-inline:auto; }
+.exercise-video.is-embed .exercise-video-media { aspect-ratio:16/9; border:0; }
+.exercise-video-bar { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; }
+.exercise-video-duration { font-variant-numeric:tabular-nums; color:var(--ui-text-muted); }
+.exercise-video-embed { position:relative; display:block; width:100%; max-width:480px; border-radius:12px; overflow:hidden; background:#000; }
+.exercise-video-embed img { width:100%; aspect-ratio:16/9; object-fit:cover; display:block; opacity:.85; }
+.exercise-video-embed:hover img { opacity:1; }
+.exercise-video-embed small { position:absolute; inset-inline-start:10px; bottom:8px; color:#fff; font-size:11px; text-shadow:0 1px 3px #000; }
+.exercise-video-play { position:absolute; inset:0; display:grid; place-items:center; color:#fff; }
+.exercise-video-play svg { background:#0009; border-radius:999px; padding:10px; width:48px; height:48px; }
+
+/* Save state in the sticky bar: the coach should never have to guess. */
+.program-save-state { font-weight:600; }
+.program-save-state[data-state="unsaved"] { color:#b45309; }
+.program-save-state[data-state="saved"] { color:var(--ui-link); }
+.program-save-state[data-state="saving"] { color:var(--ui-text-muted); }

@@ -10,6 +10,7 @@ import {
   localMode,
   readableError,
   requireCoach,
+  requireCoachIdentity,
   rpc,
 } from "@/lib/server";
 import { adminClient } from "@/lib/supabase/admin";
@@ -22,7 +23,7 @@ const metadata = z.object({
     .number()
     .int()
     .min(1)
-    .max(50 * 1024 * 1024),
+    .max(200 * 1024 * 1024),
   mime: z.enum(["video/mp4", "video/webm", "video/quicktime"]),
 });
 type Asset = {
@@ -142,7 +143,7 @@ export async function uploadTicket(input: unknown, phoneToken?: string) {
       if (!asset || asset.status === "ready")
         throw Error("رابط الرفع استُخدم بالفعل");
     } else {
-      await requireCoach();
+      await requireCoachIdentity();
       asset = await rpc<Asset>("app_command", {
         command: "media_reserve",
         payload: { ...meta, id: randomUUID() },
@@ -158,6 +159,11 @@ export async function uploadTicket(input: unknown, phoneToken?: string) {
       ok: true,
       id: asset.id,
       url: signed?.data?.signedUrl ?? `/api/local-upload/${asset.id}`,
+      resumable: signed?.data ? {
+        endpoint: new URL("/storage/v1/upload/resumable/sign", process.env.NEXT_PUBLIC_SUPABASE_URL!).href,
+        token: signed.data.token,
+        path: asset.path,
+      } : undefined,
     };
   } catch (e) {
     return { ok: false, error: readableError(e) };
@@ -177,29 +183,42 @@ export async function completeUpload(assetId: string, phoneToken?: string) {
       asset = r.asset;
       if (asset?.id !== assetId) throw Error("الفيديو غير متاح");
     } else {
-      await requireCoach();
+      await requireCoachIdentity();
       asset = await rpc<Asset>("media_access", { asset: assetId });
     }
     if (!localMode()) {
       const admin = adminClient();
-      const { data, error } = await admin.storage
-        .from("coach-videos")
-        .info(asset.path);
-      if (error || !data || data.size !== Number(asset.size))
-        throw Error("لم يكتمل رفع الملف");
+      // Storage metadata can lag a moment behind the PUT that created the
+      // object, so a single info() right after the upload reports the wrong
+      // size or nothing at all. Poll briefly, then say which it was.
+      let info: { size: number } | null = null;
+      for (let attempt = 0; attempt < 6 && !info; attempt++) {
+        if (attempt) await new Promise((resolve) => setTimeout(resolve, 400 * attempt));
+        const { data } = await admin.storage.from("coach-videos").info(asset.path);
+        if (data && data.size === Number(asset.size)) info = { size: data.size };
+      }
+      if (!info) throw Error("وصل الملف لكن ما اكتمل تأكيده. أعد المحاولة؛ الملف المرفوع محفوظ.");
       const signed = await admin.storage
         .from("coach-videos")
         .createSignedUrl(asset.path, 60);
       if (signed.error) throw signed.error;
-      const response = await fetch(signed.data.signedUrl, {
-        headers: { Range: "bytes=0-31" },
-        cache: "no-store",
-      });
-      const reader = response.body?.getReader();
-      if (!response.ok || !reader) throw Error("تعذر فحص الفيديو");
-      const chunk = await reader.read();
-      await reader.cancel();
-      const bytes = chunk.value ?? new Uint8Array();
+      // Bounded: a hanging storage read must surface as an error with a retry,
+      // not as a progress bar frozen at 95% with nothing happening.
+      let bytes = new Uint8Array();
+      try {
+        const response = await fetch(signed.data.signedUrl, {
+          headers: { Range: "bytes=0-31" },
+          cache: "no-store",
+          signal: AbortSignal.timeout(8000),
+        });
+        const reader = response.body?.getReader();
+        if (!response.ok || !reader) throw Error("read failed");
+        const chunk = await reader.read();
+        await reader.cancel();
+        bytes = chunk.value ?? new Uint8Array();
+      } catch {
+        throw Error("تعذر فحص الفيديو الآن. أعد المحاولة بعد لحظة؛ الملف المرفوع محفوظ.");
+      }
       const signature = String.fromCharCode(...bytes.slice(4, 8));
       const webm =
         bytes[0] === 0x1a &&

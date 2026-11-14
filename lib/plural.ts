@@ -38,6 +38,7 @@ export const nouns = {
   activeSubscription: { ar: { zero: "لا توجد اشتراكات نشطة", one: "اشتراك نشط واحد", two: "اشتراكان نشطان", few: "{n} اشتراكات نشطة", many: "{n} اشتراكًا نشطًا", other: "{n} اشتراك نشط" }, en: ["active subscription", "active subscriptions"] },
   copy: { ar: { zero: "بدون نسخ", one: "نسخة مستقلة واحدة", two: "نسختان مستقلتان", few: "{n} نسخ مستقلة", many: "{n} نسخة مستقلة", other: "{n} نسخة مستقلة" }, en: ["independent copy", "independent copies"] },
   row: { ar: { zero: "بدون صفوف", one: "صف واحد", two: "صفان", few: "{n} صفوف", many: "{n} صفًا", other: "{n} صف" }, en: ["row", "rows"] },
+  issue: { ar: { zero: "لا توجد ملاحظات", one: "ملاحظة واحدة", two: "ملاحظتان", few: "{n} ملاحظات", many: "{n} ملاحظة", other: "{n} ملاحظة" }, en: ["issue", "issues"] },
   trainee: { ar: { zero: "لا يوجد متدربون", one: "متدرب واحد", two: "متدربان", few: "{n} متدربين", many: "{n} متدربًا", other: "{n} متدرب" }, en: ["trainee", "trainees"] },
 } satisfies Record<string, Noun>;
 

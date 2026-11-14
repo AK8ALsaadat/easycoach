@@ -10,6 +10,7 @@ import type { Snapshot } from "@/lib/model";
 import { Notice } from "./forms";
 import { TemplateNameDialog } from "./template-name-dialog";
 import { isUnnamedTemplate, suggestCopyName } from "@/lib/template-names";
+import { riyadhToday } from "@/lib/dates";
 
 export function TemplateTools({ data }: { data: Snapshot }) {
   const { t: tr, language } = useLocale();
@@ -18,6 +19,8 @@ export function TemplateTools({ data }: { data: Snapshot }) {
   const [selected, setSelected] = useState("");
   const [clients, setClients] = useState<string[]>([]);
   const [query, setQuery] = useState("");
+  const [packageName, setPackageName] = useState("");
+  const [status, setStatus] = useState("");
   const [replace, setReplace] = useState(false);
   const [publish, setPublish] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -29,11 +32,22 @@ export function TemplateTools({ data }: { data: Snapshot }) {
   const metadata = data.management?.template_metadata.find(
     (m) => m.template_id === selected,
   );
-  const available = data.clients.filter(
-    (c) =>
-      !c.archived &&
-      `${c.name} ${c.email}`.toLowerCase().includes(query.toLowerCase()),
-  );
+  const today = riyadhToday();
+  const packages = [...new Set(data.subscriptions.map((item) => item.name))].sort();
+  const subscriptionsOf = (clientId: string) => data.subscriptions.filter((item) => item.client_id === clientId);
+  const available = data.clients.filter((c) => {
+    if (c.archived) return false;
+    if (!`${c.name} ${c.email}`.toLowerCase().includes(query.toLowerCase())) return false;
+    const mine = subscriptionsOf(c.id);
+    if (packageName && !mine.some((item) => item.name === packageName)) return false;
+    if (status === "active" && !mine.some((item) => item.end_date >= today)) return false;
+    if (status === "expired" && mine.some((item) => item.end_date >= today)) return false;
+    if (status === "none" && mine.length) return false;
+    return true;
+  });
+  // What the assignment would overwrite, counted before it runs.
+  const draftOwners = new Set(data.programs.filter((program) => !program.published_at).map((program) => program.client_id));
+  const replacing = clients.filter((id) => draftOwners.has(id)).length;
   async function action(
     command: Parameters<typeof manage>[0],
     payload: unknown,
@@ -203,6 +217,26 @@ export function TemplateTools({ data }: { data: Snapshot }) {
               </p>
             )}
             {metadata?.kind === "nutrition_targets" && <p className="text-sm text-muted mt-2">{tr("هذا قالب جانبي يتضمن أهدافًا مقترحة. سيستبدل الأهداف الحالية للمتدربين المحددين؛ راجع مناسبتها لكل متدرب أولًا.")}</p>}
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label>
+                {tr("الباقة")}
+                <select className="field" value={packageName} onChange={(event) => setPackageName(event.target.value)}>
+                  <option value="">{tr("كل الباقات")}</option>
+                  {packages.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {tr("حالة الاشتراك")}
+                <select className="field" value={status} onChange={(event) => setStatus(event.target.value)}>
+                  <option value="">{tr("الكل")}</option>
+                  <option value="active">{tr("اشتراك ساري")}</option>
+                  <option value="expired">{tr("منتهي")}</option>
+                  <option value="none">{tr("بدون اشتراك")}</option>
+                </select>
+              </label>
+            </div>
             <input
               aria-label={tr("بحث قائمة التعيين")}
               className="field my-3"
@@ -263,6 +297,17 @@ export function TemplateTools({ data }: { data: Snapshot }) {
                 )}
               </label>
             </div>}
+            {clients.length ? (
+              <p className="assign-preview mb-3 text-sm" role="status">
+                {tr("سيتم إنشاء {0} لـ {1}.", countLabel(language, clients.length, nouns.copy), countLabel(language, clients.length, nouns.trainee))}
+                {" "}
+                {replacing
+                  ? (metadata?.kind ?? "workout") === "workout" && replace
+                    ? tr("سيُستبدل المسودة الحالية لـ {0}.", countLabel(language, replacing, nouns.trainee))
+                    : tr("{0} عندهم مسودة حالية؛ بدون خيار الاستبدال ما تتغير.", countLabel(language, replacing, nouns.trainee))
+                  : tr("ما فيه مسودات حالية تتأثر.")}
+              </p>
+            ) : null}
             {unnamed && <p className="field-error mb-2">{tr("سمِّ القالب قبل استخدامه في برنامج متدرب.")}</p>}
             <button
               className="btn"

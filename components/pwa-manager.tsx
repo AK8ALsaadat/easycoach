@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, X } from "lucide-react";
 import { useLocale } from "./locale-provider";
 import { PLAN_CACHE, SW_URL } from "@/lib/pwa";
+import { refreshHeld } from "@/lib/client-activity";
 
 const BUILD = process.env.NEXT_PUBLIC_APP_BUILD ?? "dev";
 
@@ -20,6 +21,7 @@ export function clearPrivateCaches() {
 export function PwaManager() {
   const { t: tr } = useLocale();
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
+  const [hidden, setHidden] = useState(false);
   const requested = useRef(false);
   useEffect(() => {
     if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) return;
@@ -53,10 +55,23 @@ export function PwaManager() {
       if (check) document.removeEventListener("visibilitychange", check);
     };
   }, []);
-  if (!waiting) return null;
+  // Apply the update on the way out instead of interrupting the work in
+  // progress: when the tab is hidden and nothing is mid-save, the new worker
+  // takes over and the page the coach comes back to is already current.
+  useEffect(() => {
+    if (!waiting) return;
+    const apply = () => {
+      if (document.visibilityState !== "hidden" || refreshHeld()) return;
+      requested.current = true;
+      waiting.postMessage({ type: "SKIP_WAITING" });
+    };
+    document.addEventListener("visibilitychange", apply);
+    return () => document.removeEventListener("visibilitychange", apply);
+  }, [waiting]);
+  if (!waiting || hidden) return null;
   return (
     <div className="pwa-update" role="status">
-      <p>{tr("تحديث متوفر — اضغط للتحديث")}</p>
+      <p>{tr("فيه تحديث جاهز")}</p>
       <button
         type="button"
         className="btn"
@@ -67,6 +82,9 @@ export function PwaManager() {
       >
         <RefreshCw size={16} aria-hidden="true" />
         {tr("تحديث")}
+      </button>
+      <button type="button" className="icon-button" aria-label={tr("إخفاء إشعار التحديث")} onClick={() => setHidden(true)}>
+        <X size={16} />
       </button>
     </div>
   );

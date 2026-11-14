@@ -2,6 +2,8 @@
 import { useLocale } from "./locale-provider";
 import { LanguageSwitch } from "./language-switch";
 import { useState } from "react";
+import { SessionGuard } from "./session-guard";
+import { CustomExercises } from "./custom-exercises";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -60,7 +62,7 @@ import { NotificationSettings } from "./notification-settings";
 import { AccountSettings } from "./account-settings";
 import { CoachBrandingSettings } from "./coach-branding-settings";
 import { PaylinkSettings } from "./paylink-settings";
-import { exerciseName } from "@/lib/catalog";
+import { exerciseName, isCustomExercise } from "@/lib/catalog";
 import { CoachToday } from "./coach-today";
 import { useDialog } from "./use-dialog";
 import {
@@ -247,6 +249,7 @@ export function Workspace({
   const visibleNav = nav.filter((item) => item.key !== "support" || supportOwner);
   return (
     <div className="portal-shell">
+      {data.profile?.id && <SessionGuard userId={data.profile.id} />}
       <a className="skip-link" href="#portal-content">
         {tr("انتقل إلى المحتوى")}
       </a>
@@ -420,7 +423,7 @@ export function Workspace({
               />
             )
           ) : section === "library" ? (
-            <Library data={data} />
+            <Library data={data} initialTab={initialTab} />
           ) : section === "finance" ? (
             <Finance data={data} />
           ) : (
@@ -909,20 +912,31 @@ function SubscriptionCard({
     </section>
   );
 }
-function Library({ data }: { data: Snapshot }) {
+const LIBRARY_TABS = ["catalog", "templates", "exercises"] as const;
+function Library({ data, initialTab }: { data: Snapshot; initialTab?: string }) {
   const { t: tr, language: locale } = useLocale();
   const router = useRouter();
   const [deletingTemplate, setDeletingTemplate] = useState("");
   const [templateResult, setTemplateResult] = useState<Result | null>(null);
   const templateKind = (id: string) => data.management?.template_metadata.find(meta => meta.template_id === id)?.kind ?? "workout";
 
-  const [tab, setTab] = useState("catalog");
+  // The tab lives in the URL. Saving a template revalidates the layout, and a
+  // tab kept only in component state was lost on that re-render, dropping the
+  // coach back into the exercise guide right after a successful save.
+  const [tab, setTab] = useState(() =>
+    LIBRARY_TABS.includes((initialTab ?? "") as (typeof LIBRARY_TABS)[number]) ? initialTab! : "catalog",
+  );
+  const openTab = (next: string) => {
+    setTab(next);
+    const url = new URL(window.location.href);
+    if (next === "catalog") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", next);
+    window.history.replaceState(null, "", url.toString());
+  };
   const [template, setTemplate] = useState<Template | null>(null);
   const [editor, setEditor] = useState(false);
-  const [exerciseId, setExerciseId] = useState("");
   const [templateRevision, setTemplateRevision] = useState(0);
   const [nameDialog, setNameDialog] = useState<null | { key: number; mode: "create" | "copy" | "rename"; initial: Partial<TemplateDetails>; seed?: Template["content"]; source?: Template }>(null);
-  const ex = data.exercises.find((e) => e.id === exerciseId);
   const templates = availableTemplates(
     data.templates,
     data.management?.template_metadata,
@@ -931,14 +945,14 @@ function Library({ data }: { data: Snapshot }) {
   const metaFor = (id: string) => data.management?.template_metadata.find((meta) => meta.template_id === id);
   // Nothing is created until the coach names the template.
   const createTemplate = (seed = blankContent, suggested = "") => {
-    setTab("templates");
+    openTab("templates");
     setNameDialog({ key: Date.now(), mode: "create", initial: { name: suggested }, seed: structuredClone(seed) });
   };
   const openEditor = (next: Template) => {
     setTemplate(next);
     setTemplateRevision((value) => value + 1);
     setEditor(true);
-    setTab("templates");
+    openTab("templates");
   };
   async function submitName(details: TemplateDetails): Promise<Result> {
     if (!nameDialog) return { ok: false, message: "" };
@@ -1033,7 +1047,7 @@ function Library({ data }: { data: Snapshot }) {
           tabIndex={tab === "catalog" ? 0 : -1}
           className={tab === "catalog" ? "library-tab-active" : ""}
           onClick={() => {
-            setTab("catalog");
+            openTab("catalog");
           }}
         >
           {tr("دليل التمارين · 876")}
@@ -1046,7 +1060,7 @@ function Library({ data }: { data: Snapshot }) {
           tabIndex={tab === "templates" ? 0 : -1}
           className={tab === "templates" ? "library-tab-active" : ""}
           onClick={() => {
-            setTab("templates");
+            openTab("templates");
           }}
         >
           {tr("قوالب البرامج")}
@@ -1058,7 +1072,7 @@ function Library({ data }: { data: Snapshot }) {
           aria-selected={tab === "exercises"}
           tabIndex={tab === "exercises" ? 0 : -1}
           className={tab === "exercises" ? "library-tab-active" : ""}
-          onClick={() => setTab("exercises")}
+          onClick={() => openTab("exercises")}
         >
           {tr("تماريني الخاصة")}
         </button>
@@ -1071,10 +1085,14 @@ function Library({ data }: { data: Snapshot }) {
       >
         <ExerciseCatalog
           embedded
+          custom={data.exercises}
           onConfirm={(exercises) => {
             const seed = structuredClone(blankContent);
-            seed.days[0].exercises = exercises.map(exercise=>({name:exerciseName(exercise,locale),catalogId:exercise.id,description:"",video:"",sets:3,reps:"10–12",rest:90}));
-            const suggested = ("برنامج " + exerciseName(exercises[0],locale)).slice(0, 60).trim();
+            seed.days[0].exercises = exercises.map(exercise=>isCustomExercise(exercise)
+              ? {name:exercise.name,description:exercise.custom.description,video:exercise.custom.video,...(exercise.custom.mediaId?{mediaId:exercise.custom.mediaId}:{}),sets:3,reps:"10–12",rest:90}
+              : {name:exerciseName(exercise,locale),catalogId:exercise.id,description:"",video:"",sets:3,reps:"10–12",rest:90});
+            const first = exercises[0];
+            const suggested = ("برنامج " + (isCustomExercise(first) ? first.name : exerciseName(first,locale))).slice(0, 60).trim();
             createTemplate(seed, templateNameError(suggested, data.templates) ? "" : suggested);
           }}
         />
@@ -1199,73 +1217,7 @@ function Library({ data }: { data: Snapshot }) {
         aria-labelledby="library-tab-exercises"
         hidden={tab !== "exercises"}
       >
-        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,1fr)]">
-          <section className="card divide-y divide-line">
-            {data.exercises.length ? (
-              data.exercises.map((e) => (
-                <article key={e.id} className="flex items-start gap-3 p-5">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-canvas text-muted">
-                    <Dumbbell size={18} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-medium">{e.name}</h3>
-                    {e.video ? (
-                      <a
-                        className="mt-2 inline-block text-xs text-teal underline"
-                        href={e.video}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {tr("رابط الفيديو")}
-                      </a>
-                    ) : null}
-                  </div>
-                  <button
-                    className="text-xs text-teal"
-                    onClick={() => setExerciseId(e.id)}
-                  >
-                    {tr("تعديل")}
-                  </button>
-                </article>
-              ))
-            ) : (
-              <div className="empty">{tr("أضف أول تمرين لمكتبتك.")}</div>
-            )}
-          </section>
-          <section className="card p-6">
-            <div className="section-title">
-              <h2>{ex ? tr("تعديل التمرين") : tr("تمرين جديد")}</h2>
-              {ex ? (
-                <button
-                  className="text-xs text-teal"
-                  onClick={() => setExerciseId("")}
-                >
-                  {tr("إضافة جديد")}
-                </button>
-              ) : null}
-            </div>
-            <DataForm
-              key={ex?.id ?? "new"}
-              command="exercise_save"
-              base={{...(ex ? { id: ex.id } : {}),description:ex?.description??""}}
-              fields={[
-                {
-                  name: "name",
-                  label: "اسم التمرين",
-                  value: ex?.name,
-                  required: true,
-                },
-                {
-                  name: "video",
-                  label: "فيديو اختياري",
-                  type: "url",
-                  value: ex?.video,
-                  hint: "رابط https فقط، بدون رفع ملفات",
-                },
-              ]}
-            />
-          </section>
-        </div>
+        <CustomExercises data={data} />
       </div>
     </>
   );

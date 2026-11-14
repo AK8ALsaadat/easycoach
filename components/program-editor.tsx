@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import {
   content as contentSchema,
+  draftContent as draftSchema,
   type Content,
   type Exercise,
   blankContent,
@@ -28,9 +29,11 @@ import type { TemplateMeta } from "@/lib/management";
 import { mutate, type Result } from "@/app/actions";
 import { Notice } from "./forms";
 import { ExerciseCatalog } from "./exercise-catalog";
+import { ConfirmDialog } from "./modal";
 import { useDialog } from "./use-dialog";
 import { useUnsavedChanges } from "./use-unsaved-changes";
 import { VideoUpload } from "./video-upload";
+import { ExerciseVideo } from "./exercise-video";
 import { MealEditor } from "./meal-editor";
 import { ExerciseField } from "./exercise-field";
 import { showToast } from "./toast";
@@ -53,9 +56,11 @@ function withRowIds(value: Content): Content {
   };
 }
 import {
+  catalog,
   catalogById,
   exerciseName,
-  type CatalogExercise,
+  isCustomExercise,
+  type PickerExercise,
 } from "@/lib/catalog";
 
 export function ProgramEditor({
@@ -84,6 +89,9 @@ export function ProgramEditor({
 
   const router = useRouter();
   const [name, setName] = useState(initialName);
+  // A suggested name is selected on first focus; after the coach has touched the
+  // field we never re-select, so returning to it keeps the caret where it was.
+  const touchedName = useRef(false);
   // A legacy template name is only re-checked once the coach edits it.
   const nameError = clientId
     ? name.trim().length < 2 ? "اكتب اسم البرنامج" : null
@@ -95,6 +103,7 @@ export function ProgramEditor({
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [day, setDay] = useState(0);
+  const [deleteDay, setDeleteDay] = useState<number | null>(null);
   const [templateKind, setTemplateKind] = useState<TemplateMeta["kind"]>(templateMeta?.kind ?? "workout");
   const [tab, setTab] = useState<"training" | "nutrition">(templateMeta?.kind && templateMeta.kind !== "workout" ? "nutrition" : "training");
   const showTargets = Boolean(clientId) || templateKind === "nutrition_targets";
@@ -136,7 +145,9 @@ export function ProgramEditor({
   }
   const save = useCallback(async () => {
     if (lock.current) return null;
-    const check = contentSchema.safeParse(!clientId && templateKind !== "workout" ? { ...plan, days: blankContent.days } : plan);
+    // A draft always saves. Empty days and unfinished exercises are the normal
+    // state of work in progress; only publishing demands a complete program.
+    const check = draftSchema.safeParse(!clientId && templateKind !== "workout" ? { ...plan, days: blankContent.days } : plan);
     if (nameError) {
       setResult({ ok: false, message: nameError });
       return null;
@@ -146,9 +157,13 @@ export function ProgramEditor({
       return null;
     }
     if (!check.success) {
+      // Only reachable for a value no field editor can produce; name the field.
+      const issue = check.error.issues[0];
       setResult({
         ok: false,
-        message: "أكمل اسم البرنامج وأسماء التمارين والمجموعات قبل الحفظ.",
+        message: issue?.message
+          ? `تعذر الحفظ: ${issue.message}`
+          : "تعذر حفظ المسودة. راجع القيم المظللة وحاول مرة أخرى.",
       });
       return null;
     }
@@ -180,7 +195,9 @@ export function ProgramEditor({
     }
   }, [plan, name, clientId, templateKind, templateMeta, nameError]);
   useEffect(() => {
-    if (!dirty || busy || result?.ok === false || nameError || invalidCount || !contentSchema.safeParse(!clientId && templateKind !== "workout" ? { ...plan, days: blankContent.days } : plan).success) return;
+    // Autosave follows the same rule as the save button: an incomplete draft is
+    // still saved, so a closed tab never costs the coach their work.
+    if (!dirty || busy || result?.ok === false || nameError || invalidCount || !draftSchema.safeParse(!clientId && templateKind !== "workout" ? { ...plan, days: blankContent.days } : plan).success) return;
     const timer = setTimeout(() => {
       void save();
     }, 1200);
@@ -207,9 +224,14 @@ export function ProgramEditor({
       ),
     }));
   }
-  function addCatalog(exercises:CatalogExercise[],targetDay:number) {
+  function addCatalog(exercises:PickerExercise[],targetDay:number) {
     if(!plan.days[targetDay]||plan.days[targetDay].exercises.length+exercises.length>40)return false;
-    edit(current=>appendExercises(current,targetDay,exercises.map(ex=>({...customExercise(exerciseName(ex,locale)),catalogId:ex.id}))));
+    // A guide movement is linked by catalogId (that is where its image comes
+    // from). An exercise from the coach library has no catalog entry, so its
+    // instructions, link and uploaded clip are copied into the row instead.
+    edit(current=>appendExercises(current,targetDay,exercises.map(ex=>isCustomExercise(ex)
+      ? {...customExercise(ex.name),description:ex.custom.description,coachNotes:ex.custom.description,video:ex.custom.video,...(ex.custom.mediaId?{mediaId:ex.custom.mediaId}:{})}
+      : {...customExercise(exerciseName(ex,locale)),catalogId:ex.id})));
     setDay(targetDay);setFeedback(tr("تمت إضافة المجموعة ({0}) إلى {1}",String(exercises.length),plan.days[targetDay].name));
     return true;
   }
@@ -219,6 +241,37 @@ export function ProgramEditor({
     edit(current=>{let name=dayName(next,locale);for(let n=2;current.days.some(item=>item.name===name);n++)name=`${dayName(next,locale)} (${n})`;return {...current,days:[...current.days,{name,exercises:[]}]};});
     setDay(next); setCustomName(""); setFeedback("");
   }
+  /** Removing a day with exercises in it is asked about first; the undo bar
+   *  still covers an accidental confirm. */
+  function removeDay(index: number) {
+    if (plan.days.length === 1) return;
+    if (plan.days[index]?.exercises.length) {
+      setDeleteDay(index);
+      return;
+    }
+    commitRemoveDay(index);
+  }
+  function commitRemoveDay(index: number) {
+    const previous = { plan: structuredClone(plan), day };
+    const name = plan.days[index]?.name ?? "";
+    edit((current) => ({ ...current, days: current.days.filter((_, i) => i !== index) }));
+    setDay((current) => (current >= index && current > 0 ? current - 1 : current));
+    setUndo(previous);
+    setDeleteDay(null);
+    setFeedback(tr("تم حذف {0}. يمكنك التراجع.", name));
+  }
+  function moveDay(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= plan.days.length) return;
+    const previous = { plan: structuredClone(plan), day };
+    edit((current) => {
+      const days = [...current.days];
+      [days[index], days[target]] = [days[target], days[index]];
+      return { ...current, days };
+    });
+    setDay(target);
+    setUndo(previous);
+  }
   function openRepeat(index:number){
     if(plan.days.length>=14)return;
     const source=plan.days[index];if(!source)return;
@@ -226,11 +279,31 @@ export function ProgramEditor({
     do {const suffix=` · ${tr("نسخة {0}",String(count++))}`;name=source.name.slice(0,100-suffix.length)+suffix;}while(plan.days.some(day=>day.name===name));
     setRepeatName(name);setRepeatWeekday("");setRepeatError("");setRepeatSource(index);
   }
+  /** Normalised for matching: spacing and Arabic diacritics ignored. */
+  const nameKey = (value: string) => value.trim().replace(/[\u064B-\u065F\u0670]/g, "").replace(/\s+/g, " ").toLowerCase();
   function addCustom() {
-    const title=customName.trim();
-    if(title.length<2 || active.exercises.length>=40) return;
-    edit(current=>appendExercise(current,day,customExercise(title)));
-    setCustomName("");setFeedback(tr("تمت إضافة {0} إلى {1}",title,active.name));
+    const title = customName.trim();
+    if (title.length < 2 || active.exercises.length >= 40) return;
+    // Typing a name that the coach already has in their library, or that
+    // matches a guide movement, carries that record with it: instructions,
+    // link, uploaded clip and the guide image. Without this the trainee saw
+    // the name as plain text with nothing behind it.
+    const own = library.find((item) => nameKey(item.name) === nameKey(title));
+    const fromCatalog = catalog.find(
+      (item) => nameKey(exerciseName(item, locale)) === nameKey(title) || nameKey(item.name) === nameKey(title),
+    );
+    const row = {
+      ...customExercise(title),
+      ...(own ? { description: own.description, coachNotes: own.description, video: own.video, ...(own.media_id ? { mediaId: own.media_id } : {}) } : {}),
+      ...(!own && fromCatalog ? { catalogId: fromCatalog.id } : {}),
+    };
+    edit((current) => appendExercise(current, day, row));
+    setCustomName("");
+    setFeedback(
+      own
+        ? tr("تمت إضافة {0} إلى {1} مع تعليماته وفيديوه", title, active.name)
+        : tr("تمت إضافة {0} إلى {1}", title, active.name),
+    );
     customInput.current?.focus();
   }
   function moveExercise(index: number, direction: number) {
@@ -261,7 +334,17 @@ export function ProgramEditor({
             maxLength={140}
             aria-invalid={Boolean(nameError)}
             aria-describedby={nameError ? "plan-name-error" : undefined}
+            placeholder={clientId ? tr("مثال: برنامج تضخيم 4 أيام") : tr("مثال: دفع/سحب/أرجل")}
+            // A suggested name arrives selected, so typing replaces it instead
+            // of appending at a caret parked after the suggestion.
+            onFocus={(event) => {
+              if (!touchedName.current) {
+                event.currentTarget.select();
+                touchedName.current = true;
+              }
+            }}
             onChange={(e) => {
+              touchedName.current = true;
               setName(e.target.value);
               changed();
             }}
@@ -334,7 +417,7 @@ export function ProgramEditor({
         </div>
       ) : (
         <div className="program-builder-grid">
-          <ProgramDayNav days={plan.days} selected={day} onSelect={index=>{setDay(index);setFeedback("");}} onAdd={addDay} onRepeat={openRepeat}/>
+          <ProgramDayNav days={plan.days} selected={day} onSelect={index=>{setDay(index);setFeedback("");}} onAdd={addDay} onRepeat={openRepeat} onDelete={removeDay} onMove={moveDay}/>
           <section className="program-session" aria-label={tr("إعداد الحصة التدريبية")}>
           <div className="session-toolbar">
             <div>
@@ -484,11 +567,7 @@ export function ProgramEditor({
               type="button"
               className="btn-secondary text-red-700"
               disabled={plan.days.length === 1}
-              onClick={() => {
-                const previous={plan:structuredClone(plan),day};
-                edit((c) => ({ ...c, days: c.days.filter((_, i) => i !== day) }));
-                setDay(0); setUndo(previous);
-              }}
+              onClick={() => removeDay(day)}
             >
               <Trash2 size={16} />
               {tr("حذف اليوم")}
@@ -594,9 +673,9 @@ export function ProgramEditor({
                     />
                   ))}
                 </div>
-                <label className="mt-3 block">
+                <label className="program-exercise-notes mt-3 block">
                   {tr("توجيهات المدرب لهذا التمرين (تظهر للمتدرب)")}
-                  <textarea className="field mt-1" maxLength={2000} value={e.coachNotes ?? ""} onChange={(event) => updateExercise(i, "coachNotes", event.target.value)} />
+                  <textarea className="field mt-1" rows={3} maxLength={2000} value={e.coachNotes ?? ""} onChange={(event) => updateExercise(i, "coachNotes", event.target.value)} />
                 </label>
                 <details className="program-exercise-more"><summary>{tr(clientId ? "الفيديو والأوزان المتقدمة" : "فيديو شرح التمرين")}</summary>
                 <div className="mt-4 border-t pt-4">
@@ -619,11 +698,9 @@ export function ProgramEditor({
                   />
                   {e.mediaId ? (
                     <div className="mt-3">
-                      <video
-                        controls
-                        preload="none"
-                        className="max-h-64 w-full rounded bg-black"
+                      <ExerciseVideo
                         src={"/api/media/" + e.mediaId}
+                        label={tr("فيديو ") + (e.name || tr("التمرين"))}
                       />
                       <button
                         type="button"
@@ -756,6 +833,18 @@ export function ProgramEditor({
       )}
       <div className="program-savebar sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white/95 p-4 shadow-lg backdrop-blur">
         <p className="max-w-md text-xs text-muted">
+          {/* Autosave runs 1.2s after the last edit; the state is said out loud
+              so nobody has to guess whether their work is safe. */}
+          <span className="program-save-state" data-state={busy ? "saving" : dirty ? "unsaved" : hasSaved ? "saved" : "idle"}>
+            {busy
+              ? tr("جارٍ الحفظ…")
+              : dirty
+                ? tr("فيه تعديلات غير محفوظة")
+                : hasSaved
+                  ? tr("كل التعديلات محفوظة ✓")
+                  : tr("ما فيه تعديلات بعد")}
+          </span>
+          <br />
           {clientId
             ? tr("جاهز؟ انشر التحديث على رابط المتدرب.")
             : tr("احفظه في مكتبتك للبرامج القادمة.")}
@@ -765,7 +854,11 @@ export function ProgramEditor({
             type="button"
             className="btn-secondary"
             disabled={busy}
-            onClick={() => void save()}
+            onClick={async () => {
+              // Stays in the editor on purpose: the coach is mid-edit.
+              const saved = await save();
+              if (saved) showToast({ message: tr("تم حفظ المسودة ✓"), tone: "success" });
+            }}
           >
             <Save size={16} />
             {tr("حفظ المسودة")}
@@ -776,8 +869,15 @@ export function ProgramEditor({
               className="btn"
               disabled={busy}
               onClick={async () => {
+                // Publishing is the strict gate: the full schema plus the
+                // semantic checks the trainee would otherwise see.
+                const complete = contentSchema.safeParse(plan);
                 const found = publishIssues(plan);
                 setCheckPublish(true);
+                if (!complete.success && !found.length) {
+                  setResult({ ok: false, message: `تعذر النشر: ${complete.error.issues[0]?.message ?? "راجع القيم المظللة"}` });
+                  return;
+                }
                 if (found.length) {
                   setResult(null);
                   window.requestAnimationFrame(() => document.getElementById("publish-issues")?.focus());
@@ -815,15 +915,16 @@ export function ProgramEditor({
       </div>
       {issues.length > 0 && (
         <section id="publish-issues" tabIndex={-1} className="publish-issues" role="alert" aria-labelledby="publish-issues-title">
-          <h3 id="publish-issues-title">{tr("قبل النشر، أصلح هذه النقاط:")}</h3>
+          <h3 id="publish-issues-title">{tr("{0} تمنع النشر — المسودة محفوظة:", countLabel(locale, issues.length, nouns.issue))}</h3>
           <ul>
             {issues.map((issue) => (
               <li key={issue.key}>
                 <button
                   type="button"
                   onClick={() => {
-                    const target = issue.kind === "exercise" ? `ex-${issue.index}-name` : `meal-${issue.index}-name`;
-                    if (issue.kind === "exercise") { setTab("training"); setDay(issue.day ?? 0); }
+                    const target =
+                      issue.kind === "exercise" ? `ex-${issue.index}-name` : issue.kind === "day" ? "program-custom-exercise" : `meal-${issue.index}-name`;
+                    if (issue.kind === "exercise" || issue.kind === "day") { setTab("training"); setDay(issue.day ?? 0); }
                     else setTab("nutrition");
                     window.setTimeout(() => {
                       const element = document.getElementById(target) as HTMLInputElement | null;
@@ -833,16 +934,34 @@ export function ProgramEditor({
                     }, 60);
                   }}
                 >
-                  {issue.kind === "exercise"
-                    ? tr("{0}: التمرين {1} ما زال باسم «تمرين جديد»", plan.days[issue.day ?? 0]?.name ?? "", String(issue.index + 1))
-                    : tr("{0}: الوجبة فارغة وكل قيمها صفر", plan.nutrition.meals?.[issue.index]?.name ?? "")}
+                  {issue.kind === "day"
+                    ? tr("{0}: ما فيه أي تمرين. أضف تمرينًا أو احذف اليوم", plan.days[issue.day ?? 0]?.name ?? "")
+                    : issue.kind === "exercise"
+                      ? tr("{0}: التمرين {1} ما زال باسم «تمرين جديد»", plan.days[issue.day ?? 0]?.name ?? "", String(issue.index + 1))
+                      : tr("{0}: الوجبة فارغة وكل قيمها صفر", plan.nutrition.meals?.[issue.index]?.name ?? "")}
                 </button>
               </li>
             ))}
           </ul>
         </section>
       )}
-      {plan.days.some(d=>!d.exercises.length) && <p className="text-sm text-amber-800" role="status">{tr("أضف تمرينًا واحدًا على الأقل لكل يوم حتى تُحفظ المسودة وتصبح جاهزة للنشر.")}</p>}
+      {plan.days.some((d) => !d.exercises.length) && (
+        <p className="text-sm text-amber-800" role="status">
+          {tr("فيه يوم بدون تمارين. المسودة تُحفظ عادي، لكن النشر يحتاج تمرينًا واحدًا على الأقل في كل يوم أو حذف اليوم الفاضي.")}
+        </p>
+      )}
+      <ConfirmDialog
+        open={deleteDay !== null}
+        title={tr("حذف اليوم وتمارينه؟")}
+        confirmLabel="احذف اليوم"
+        danger
+        onConfirm={() => {
+          if (deleteDay !== null) commitRemoveDay(deleteDay);
+        }}
+        onClose={() => setDeleteDay(null)}
+      >
+        {tr("{0} فيه {1}. الحذف يشيل اليوم وتمارينه من المسودة، ويظهر لك زر تراجع بعدها.", plan.days[deleteDay ?? 0]?.name ?? "", countLabel(locale, plan.days[deleteDay ?? 0]?.exercises.length ?? 0, nouns.exercise))}
+      </ConfirmDialog>
       <Notice result={result} />
       {repeatSource!==null && <div className="modal-backdrop" onClick={()=>setRepeatSource(null)}><div className="modal-sheet max-w-lg" ref={repeatRef} role="dialog" aria-modal="true" aria-labelledby="repeat-day-title" tabIndex={-1} onClick={event=>event.stopPropagation()}>
         <div className="flex items-center justify-between gap-3 mb-4"><h2 id="repeat-day-title">{tr("تكرار اليوم")}</h2><button type="button" className="icon-button" aria-label={tr("إغلاق")} onClick={()=>setRepeatSource(null)}><X size={20}/></button></div>
@@ -869,6 +988,7 @@ export function ProgramEditor({
             aria-label={tr("اختيار التمارين")}
           >
             <ExerciseCatalog
+              custom={library}
               onConfirm={addCatalog}
               onClose={() => setCatalogOpen(false)}
               initialDropDay={day}

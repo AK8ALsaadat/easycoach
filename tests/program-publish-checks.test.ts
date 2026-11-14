@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, expect, it } from "vitest";
 import type { PGlite } from "@electric-sql/pglite";
 import { openDatabase, rpcLocal, LOCAL_IDS } from "@/lib/local-db";
-import { blankContent, content as contentSchema, type Content } from "@/lib/model";
+import { blankContent, content as contentSchema, draftContent as draftSchema, type Content } from "@/lib/model";
 import { parseReps, parseRest, parseSets, publishIssues } from "@/lib/program-validation";
 
 const named = (overrides: Partial<Content> = {}): Content => ({
@@ -88,4 +88,37 @@ it("persists explicit coach instructions separately from legacy descriptions and
     await expect(app("program_save", { client_id: client, name: "Invalid notes", content: invalid })).rejects.toThrow();
   }
   expect((await db.query<{ valid: boolean }>("select public.valid_content($1::jsonb) as valid", [JSON.stringify(named())])).rows[0].valid).toBe(true);
+});
+
+it("saves a draft with an empty day and refuses to publish it", async () => {
+  // The coach asked for three days and has filled one. That draft has to be
+  // storable: refusing the save is how a day's work gets lost.
+  const partial = named();
+  partial.days.push({ name: "اليوم الثاني", exercises: [] });
+  partial.days.push({ name: "اليوم الثالث", exercises: [] });
+
+  expect(contentSchema.safeParse(partial).success).toBe(false);
+  expect(draftSchema.safeParse(partial).success).toBe(true);
+  expect((await db.query<{ valid: boolean }>("select public.valid_content($1::jsonb) as valid", [JSON.stringify(partial)])).rows[0].valid).toBe(true);
+
+  const draft = await app<{ id: string }>("program_save", { client_id: client, name: "مسودة ناقصة", content: partial });
+  expect(draft.id).toBeTruthy();
+
+  // Publishing is the gate, and the message names the day.
+  await expect(app("program_publish", { id: draft.id })).rejects.toThrow("اليوم الثاني");
+  expect(publishIssues(partial).filter((issue) => issue.kind === "day").map((issue) => issue.day)).toEqual([1, 2]);
+
+  // Filling the days, or deleting them, makes it publishable.
+  await app("program_save", { client_id: client, name: "مسودة ناقصة", content: named() });
+  expect((await app<{ published_at: string | null }>("program_publish", { id: draft.id })).published_at).toBeTruthy();
+});
+
+it("stores a template whose days are still empty", async () => {
+  const partial = named();
+  partial.days = [{ name: "اليوم الأول", exercises: [] }];
+  const saved = await rpcLocal<{ id: string }>(db, LOCAL_IDS.coach, "management_command", {
+    command: "template_save_typed",
+    payload: { name: "قالب تحت الإنشاء", content: partial, kind: "workout" },
+  });
+  expect(saved.id).toBeTruthy();
 });

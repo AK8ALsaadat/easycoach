@@ -35,8 +35,18 @@ it("verifies the cookie's email with type email, then requires a verified server
   const result = await verifySignupCode(codeForm("٠٠١٢٣٤"));
   expect(state.verify).toHaveBeenCalledWith({ email: "otp@example.test", token: "001234", type: "email" });
   expect(result).toMatchObject({ ok: true, url: "/coach" });
-  expect(state.actor).toHaveBeenCalledTimes(1);
+  expect(state.actor).toHaveBeenCalledTimes(2);
   expect(state.clear).toHaveBeenCalledTimes(1);
+});
+
+it("refuses to replace a different account's live session with the new one", async () => {
+  state.actor.mockResolvedValue({ id: "other", email: "coach@example.test" });
+  const result = await verifySignupCode(codeForm("001234"));
+  expect(result.ok).toBe(false);
+  expect(result.message).toContain("coach@example.test");
+  // Never reached: verifying installs a session for the pending account.
+  expect(state.verify).not.toHaveBeenCalled();
+  expect(state.clear).not.toHaveBeenCalled();
 });
 
 describe("OTP rejection paths", () => {

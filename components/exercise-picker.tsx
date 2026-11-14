@@ -2,24 +2,27 @@
 import {useMemo,useRef,useState} from "react";
 import { countLabel, nouns } from "@/lib/plural";
 import {Search,Plus,X,Check,ArrowLeft,ChevronLeft,ChevronRight,SlidersHorizontal,Expand,Dumbbell} from "lucide-react";
-import {catalog,catalogSearch,muscles,equipment,exerciseName,type CatalogExercise} from "@/lib/catalog";
+import {catalog,catalogSearch,customCatalogEntries,isCustomExercise,muscles,equipment,exerciseName,type PickerExercise} from "@/lib/catalog";
 import {ExerciseVisual} from "./exercise-visual";
 import {useLocale} from "./locale-provider";
 import {useDialog} from "./use-dialog";
 
 const pageSize=24;
-export function ExerciseCatalog({onConfirm,onClose,embedded=false,dropDays=[],initialDropDay=0}:{onConfirm:(exercises:CatalogExercise[],day:number)=>boolean|void;onClose?:()=>void;embedded?:boolean;dropDays?:{name:string;count:number}[];initialDropDay?:number}){
+export function ExerciseCatalog({onConfirm,onClose,embedded=false,dropDays=[],initialDropDay=0,custom=[]}:{onConfirm:(exercises:PickerExercise[],day:number)=>boolean|void;onClose?:()=>void;embedded?:boolean;dropDays?:{name:string;count:number}[];initialDropDay?:number;custom?:{id:string;name:string;description:string;video:string;media_id?:string|null}[]}){
   const {t:tr,language}=useLocale();
   const [query,setQuery]=useState("");const [muscle,setMuscle]=useState("");const [tool,setTool]=useState("");
   const [page,setPage]=useState(0);const [visuals,setVisuals]=useState(true);const [target,setTarget]=useState(initialDropDay);
-  const [chosen,setChosen]=useState<CatalogExercise[]>([]);const [preview,setPreview]=useState<CatalogExercise|null>(null);const [error,setError]=useState("");
+  const [chosen,setChosen]=useState<PickerExercise[]>([]);const [preview,setPreview]=useState<PickerExercise|null>(null);const [error,setError]=useState("");
   const committed=useRef(false);const previewRef=useDialog(Boolean(preview),()=>setPreview(null));
   const builder=dropDays.length>0,targetIndex=Math.max(0,Math.min(target,dropDays.length-1));
   const available=builder?Math.max(0,40-dropDays[targetIndex].count):40;
-  const found=useMemo(()=>catalog.filter(e=>(!muscle||e.primaryMuscles.includes(muscle))&&(!tool||e.equipment===tool)&&catalogSearch(e,query)),[query,muscle,tool]);
+  // The coach library sits in the same list as the built-in guide, searched
+  // by the same box, so a custom exercise is not invisible outside its tab.
+  const entries=useMemo<PickerExercise[]>(()=>[...customCatalogEntries(custom),...catalog],[custom]);
+  const found=useMemo(()=>entries.filter(e=>(isCustomExercise(e)?!muscle&&!tool:(!muscle||e.primaryMuscles.includes(muscle))&&(!tool||e.equipment===tool))&&catalogSearch(e,query)),[entries,query,muscle,tool]);
   const pages=Math.max(1,Math.ceil(found.length/pageSize)),current=Math.min(page,pages-1);
   const selected=new Set(chosen.map(e=>e.id));const full=chosen.length>=available;
-  function toggle(exercise:CatalogExercise){committed.current=false;setError("");setChosen(rows=>rows.some(e=>e.id===exercise.id)?rows.filter(e=>e.id!==exercise.id):rows.length<available?[...rows,exercise]:rows);}
+  function toggle(exercise:PickerExercise){committed.current=false;setError("");setChosen(rows=>rows.some(e=>e.id===exercise.id)?rows.filter(e=>e.id!==exercise.id):rows.length<available?[...rows,exercise]:rows);}
   function confirm(){
     if(!chosen.length||chosen.length>available||committed.current)return;
     committed.current=true;
@@ -35,7 +38,7 @@ export function ExerciseCatalog({onConfirm,onClose,embedded=false,dropDays=[],in
       {!found.length?<div className="empty"><SlidersHorizontal size={30}/><h3>{tr("لا توجد تمارين مطابقة")}</h3><button className="btn-soft" type="button" onClick={clearFilters}>{tr("عرض جميع التمارين")}</button></div>:<div className={`picker-grid ${visuals?"":"compact"}`}>{found.slice(current*pageSize,(current+1)*pageSize).map(exercise=>{
         const active=selected.has(exercise.id);const order=chosen.findIndex(e=>e.id===exercise.id)+1;
         return <article className={`picker-card ${active?"selected":""}`} key={exercise.id} data-catalog-id={exercise.id}>
-          <button type="button" className="picker-card-select" aria-pressed={active} aria-label={tr("اختيار {0}",exerciseName(exercise,language))} disabled={!active&&full} onClick={()=>toggle(exercise)}>{visuals&&<ExerciseVisual exercise={exercise}/>}<span className="picker-check" aria-hidden="true">{active?<Check size={17}/>:<Plus size={17}/>}</span><span className="picker-card-copy"><strong>{exerciseName(exercise,language)}</strong><small dir="ltr">{exercise.name}</small><span className="picker-meta">{tr(muscles[exercise.primaryMuscles[0]]??"عضلات متعددة")} · {tr(equipment[exercise.equipment??""]??"معدات متنوعة")}</span></span></button>
+          <button type="button" className="picker-card-select" aria-pressed={active} aria-label={tr("اختيار {0}",exerciseName(exercise,language))} disabled={!active&&full} onClick={()=>toggle(exercise)}>{visuals&&<ExerciseVisual exercise={exercise}/>}<span className="picker-check" aria-hidden="true">{active?<Check size={17}/>:<Plus size={17}/>}</span><span className="picker-card-copy"><strong>{exerciseName(exercise,language)}{isCustomExercise(exercise)?<span className="badge ms-2">{tr("خاص بك")}</span>:null}</strong>{isCustomExercise(exercise)?null:<small dir="ltr">{exercise.name}</small>}<span className="picker-meta">{isCustomExercise(exercise)?tr("من مكتبتك الخاصة"):tr(muscles[exercise.primaryMuscles[0]]??"عضلات متعددة")+" · "+tr(equipment[exercise.equipment??""]??"معدات متنوعة")}</span></span></button>
           <div className="picker-card-bottom"><span>{active?tr("الاختيار {0}",String(order)):tr("اضغط للاختيار")}</span><button type="button" className="picker-preview" aria-label={tr("معاينة صورة {0}",exerciseName(exercise,language))} onClick={()=>setPreview(exercise)}><Expand size={14}/>{tr("معاينة")}</button></div>
         </article>;
       })}</div>}

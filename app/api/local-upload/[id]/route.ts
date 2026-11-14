@@ -41,7 +41,7 @@ export async function PUT(
         const r = await reader.read();
         if (r.done) break;
         count += r.value.byteLength;
-        if (count > 50 * 1024 * 1024 || count > Number(asset.size)) {
+        if (count > 200 * 1024 * 1024 || count > Number(asset.size)) {
           await reader.cancel();
           throw Error("size");
         }

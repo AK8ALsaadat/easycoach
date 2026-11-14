@@ -4,17 +4,33 @@ import { LanguageSwitch } from "@/components/language-switch";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { AuthForm } from "@/components/auth-form";
-import { localMode, safeNext } from "@/lib/server";
+import { actor, localMode, safeNext, snapshot } from "@/lib/server";
+import { SignedInNotice } from "@/components/signed-in-notice";
 import { Check, Layers3, Users, Wallet } from "lucide-react";
 export default async function Login({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string; register?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; register?: string; switch?: string }>;
 }) {
   const params = await searchParams;
   const tr = translator(
     (await cookies()).get("ec_language")?.value === "en" ? "en" : "ar",
   );
+  // Signing in here while another account is already signed in replaces the
+  // identity of every open tab silently. Ask first, unless the visitor said
+  // explicitly that they want to switch accounts.
+  const signedIn = params.switch === "1" ? null : await actor();
+  if (signedIn) {
+    const state = await snapshot();
+    return (
+      <SignedInNotice
+        email={signedIn.email}
+        name={state.profile?.name ?? signedIn.name}
+        home={state.profile?.role === "coach" ? safeNext(params.next) : "/me"}
+        next={params.next}
+      />
+    );
+  }
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
       <section className="flex flex-col px-6 py-8 sm:px-16 lg:px-24">

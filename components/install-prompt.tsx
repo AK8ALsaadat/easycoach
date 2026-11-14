@@ -7,16 +7,23 @@ type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{
 const KEY = "ec_install_prompt_dismissed";
 const EVENT = "easycoach:install-dismissed";
 
+/** Dismissal lasts a week: once was invisible forever, which looked broken. */
+const SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
 function dismissed() {
   try {
-    return window.localStorage.getItem(KEY) === "1";
+    const stored = window.localStorage.getItem(KEY);
+    if (!stored) return false;
+    // "1" is the old forever-dismissed value; honour it as a fresh snooze.
+    if (stored === "1") return true;
+    const at = Number(stored);
+    return Number.isFinite(at) && Date.now() - at < SNOOZE_MS;
   } catch {
     return false;
   }
 }
 function remember() {
   try {
-    window.localStorage.setItem(KEY, "1");
+    window.localStorage.setItem(KEY, String(Date.now()));
   } catch {
     /* Blocked storage: the banner may return next visit, which is harmless. */
   }

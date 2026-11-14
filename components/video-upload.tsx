@@ -2,8 +2,9 @@
 import { useLocale } from "./locale-provider";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
+import { holdRefresh } from "@/lib/client-activity";
 import QRCode from "qrcode";
-import { Upload, QrCode, LoaderCircle, X, Check } from "lucide-react";
+import { Upload, QrCode, LoaderCircle, X, Check, RotateCcw } from "lucide-react";
 import {
   uploadTicket,
   completeUpload,
@@ -27,7 +28,9 @@ export function VideoUpload({
       url: string;
       qr: string;
     } | null>(null),
-    [loading, setLoading] = useState(false);
+    [loading, setLoading] = useState(false),
+    [finalizing, setFinalizing] = useState(false),
+    [retry, setRetry] = useState<null | { assetId: string }>(null);
   const input = useRef<HTMLInputElement>(null);
   const callback = useRef(onComplete);
   useEffect(() => {
@@ -53,24 +56,51 @@ export function VideoUpload({
       clearInterval(timer);
     };
   }, [phone]);
+  async function finalize(assetId: string) {
+    setFinalizing(true);
+    setRetry(null);
+    const release = holdRefresh("video-finalize");
+    try {
+      const result = await completeUpload(assetId, phoneToken);
+      if (!result.ok) {
+        // The upload itself is safe; only the check failed, so offer just that.
+        setError(result.error ?? "تعذر تأكيد الفيديو");
+        setRetry({ assetId });
+        return;
+      }
+      onComplete(assetId);
+      setDone(true);
+      setProgress(null);
+    } catch {
+      setError("تعذر تأكيد الفيديو. أعد المحاولة؛ الملف المرفوع محفوظ.");
+      setRetry({ assetId });
+    } finally {
+      release();
+      setFinalizing(false);
+    }
+  }
   async function upload(file: File) {
     setError("");
     setDone(false);
     if (
       !["video/mp4", "video/webm", "video/quicktime"].includes(file.type) ||
-      file.size > 50 * 1024 * 1024
+      file.size > 200 * 1024 * 1024
     ) {
-      setError("اختر MP4 أو MOV أو WebM حتى 50 ميجابايت");
+      setError("اختر MP4 أو MOV أو WebM حتى 200 ميجابايت");
       return;
     }
     setProgress(0);
+    const release = holdRefresh("video-upload");
     try {
       const ticket = await uploadTicket(
         { filename: file.name, size: file.size, mime: file.type },
         phoneToken,
       );
       if (!ticket.ok || !ticket.url || !ticket.id) throw Error(ticket.error);
-      await new Promise<void>((resolve, reject) => {
+      if (ticket.resumable && file.size > 6 * 1024 * 1024) {
+        const { uploadResumableVideo } = await import("@/lib/upload-exercise-video");
+        await uploadResumableVideo(file, ticket.resumable, setProgress);
+      } else await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("PUT", ticket.url!);
         xhr.setRequestHeader("Content-Type", file.type);
@@ -78,25 +108,26 @@ export function VideoUpload({
           xhr.setRequestHeader("x-upload-token", phoneToken);
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable)
-            setProgress(Math.round((e.loaded / e.total) * 95));
+            setProgress(Math.round((e.loaded / e.total) * 100));
         };
         xhr.onload = () =>
           xhr.status >= 200 && xhr.status < 300
             ? resolve()
             : reject(Error("تعذر الرفع. جرّب ملفًا أصغر أو اتصالًا آخر"));
         xhr.onerror = () => reject(Error("انقطع الاتصال. أعد المحاولة"));
-        xhr.timeout = 300000;
+        xhr.timeout = 900000;
         xhr.ontimeout = () => reject(Error("انتهت مهلة الرفع"));
         xhr.send(file);
       });
-      const result = await completeUpload(ticket.id, phoneToken);
-      if (!result.ok) throw Error(result.error);
-      onComplete(ticket.id);
-      setDone(true);
-      setProgress(null);
+      // The bytes are in storage. What follows is server-side verification,
+      // which used to leave the bar frozen at 95% with no explanation.
+      await finalize(ticket.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "تعذر الرفع");
       setProgress(null);
+      setFinalizing(false);
+    } finally {
+      release();
     }
   }
   return (
@@ -116,15 +147,17 @@ export function VideoUpload({
         <button
           type="button"
           className="btn-secondary"
-          disabled={progress !== null}
+          disabled={progress !== null || finalizing}
           onClick={() => input.current?.click()}
         >
-          {progress !== null ? (
+          {progress !== null || finalizing ? (
             <LoaderCircle size={16} className="animate-spin" />
           ) : (
             <Upload size={16} />
           )}{" "}
-          {progress !== null
+          {finalizing
+            ? tr("نتحقق من الفيديو…")
+            : progress !== null
             ? tr("جاري الرفع ") + progress + "%"
             : phoneToken
               ? tr("اختر فيديو من الجوال")
@@ -168,6 +201,11 @@ export function VideoUpload({
           </span>
         ) : null}
       </div>
+      {finalizing ? (
+        <p className="mt-3 text-xs text-muted" role="status">
+          {tr("تم الرفع 100%. نتحقق من الملف وحفظه…")}
+        </p>
+      ) : null}
       {progress !== null ? (
         <div className="mt-3 h-1.5 overflow-hidden rounded bg-line">
           <div
@@ -177,12 +215,18 @@ export function VideoUpload({
         </div>
       ) : null}
       <p className="mt-2 text-xs text-muted">
-        {tr("MP4 / MOV / WebM · حتى 50 MB · فيديو التمرين")}
+        {tr("MP4 / MOV / WebM · حتى 200 MB · الفيديو يُحفظ بجودته الأصلية")}
       </p>
       {error ? (
         <p role="alert" className="mt-2 text-sm text-red-700">
           {tr(error)}
         </p>
+      ) : null}
+      {retry ? (
+        <button type="button" className="btn-soft mt-2" disabled={finalizing} onClick={() => void finalize(retry.assetId)}>
+          <RotateCcw size={15} />
+          {tr("أعد محاولة التأكيد")}
+        </button>
       ) : null}
       {phone ? (
         <div className="modal-backdrop">

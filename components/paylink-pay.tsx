@@ -24,7 +24,13 @@ export function PaylinkPay({ subscriptions, payments, today }: { subscriptions: 
   const [askMobile, setAskMobile] = useState<string | null>(null);
   const [mobile, setMobile] = useState("");
 
-  if (!rows.length) return null;
+  // Nothing owed is a status too: silence read as "payment is not available".
+  if (!rows.length)
+    return subscriptions.some((item) => item.end_date >= today) ? (
+      <p className="mt-5 rounded-xl bg-canvas p-4 text-sm" data-testid="paylink-settled">
+        {tr("اشتراكك مدفوع بالكامل. شكرًا لك ✓")}
+      </p>
+    ) : null;
 
   async function pay(subscriptionId: string) {
     setBusy(subscriptionId);

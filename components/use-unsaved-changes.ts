@@ -1,11 +1,13 @@
 "use client";
 import {useEffect} from "react";
 import {useLocale} from "./locale-provider";
+import {holdRefresh} from "@/lib/client-activity";
 
 export function useUnsavedChanges(dirty:boolean) {
   const {t:tr}=useLocale();
   useEffect(()=>{
     if(!dirty)return;
+    const release = holdRefresh("unsaved-changes");
     const unload=(event:BeforeUnloadEvent)=>event.preventDefault();
     const navigate=(event:MouseEvent)=>{
       if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||!(event.target instanceof Element))return;
@@ -16,6 +18,6 @@ export function useUnsavedChanges(dirty:boolean) {
       if(!window.confirm(tr("لديك تعديلات لم تُحفظ بعد. هل تريد المغادرة دون حفظها؟"))){event.preventDefault();event.stopPropagation();}
     };
     window.addEventListener('beforeunload',unload);document.addEventListener('click',navigate,true);
-    return ()=>{window.removeEventListener('beforeunload',unload);document.removeEventListener('click',navigate,true);};
+    return ()=>{release();window.removeEventListener('beforeunload',unload);document.removeEventListener('click',navigate,true);};
   },[dirty,tr]);
 }

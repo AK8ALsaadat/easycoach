@@ -1,12 +1,14 @@
 "use client";
 import { countLabel, nouns } from "@/lib/plural";
 import { displayDayName } from "@/lib/program-builder";
+import { emptyMeal } from "@/lib/program-validation";
 import { useLocale } from "./locale-provider";
 import { ExerciseVisual } from "./exercise-visual";
+import { ExerciseVideo, ExerciseVideoLink } from "./exercise-video";
 import { catalogById, exerciseName } from "@/lib/catalog";
 import type { Program, Content } from "@/lib/model";
 import { formatDate } from "@/lib/dates";
-import { Play, Timer, Utensils } from "lucide-react";
+import { Timer, Utensils } from "lucide-react";
 import { useState } from "react";
 import { riyadhToday } from "@/lib/dates";
 import { resolveWorkoutDay } from "@/lib/trainee-workout-day";
@@ -32,6 +34,14 @@ export function ProgramView({
   const [chosenDay, setSelectedDay] = useState<number | null>(null);
   const selectedDay = resolveWorkoutDay(chosenDay, program?.content.days ?? [], weekday);
   const nutritionPlan = section === "training" ? undefined : nutrition ?? program?.content.nutrition;
+  const filledMeals = (nutritionPlan?.meals ?? []).filter((meal) => !emptyMeal(meal));
+  // Two days called "اليوم الثاني" are indistinguishable in the day switcher,
+  // so repeated names get their position added back.
+  const dayLabel = (name: string, index: number) => {
+    const names = program?.content.days.map((day) => day.name) ?? [];
+    const label = displayDayName(name, locale);
+    return names.filter((other) => other === name).length > 1 ? label + " (" + (index + 1) + ")" : label;
+  };
   return (
     <div className="space-y-6">
       {section === "nutrition" ? null : !program ? (
@@ -52,7 +62,7 @@ export function ProgramView({
       </div>
       {focusToday && <section className="card p-4" aria-label={tr("أيام البرنامج الأسبوعية")}>
         {!hasWeekdaySchedule && <p className="mb-3 text-sm text-muted">{tr("لم يحدد المدرب مواعيد لأيام البرنامج؛ اختر اليوم الذي تريد عرضه.")}</p>}
-        {(program.content.days.length > 1 || selectedDay === -1) && <div className="flex flex-wrap gap-2">{program.content.days.map((day, index) => <button type="button" key={index} className={selectedDay === index ? "btn" : "btn-secondary"} aria-pressed={selectedDay === index} onClick={() => setSelectedDay(index)}>{displayDayName(day.name, locale)}</button>)}</div>}
+        {(program.content.days.length > 1 || selectedDay === -1) && <div className="flex flex-wrap gap-2">{program.content.days.map((day, index) => <button type="button" key={index} className={selectedDay === index ? "btn" : "btn-secondary"} aria-pressed={selectedDay === index} onClick={() => setSelectedDay(index)}>{dayLabel(day.name, index)}</button>)}</div>}
         <p className="mt-3 text-sm text-muted">{selectedDay === -1 && hasWeekdaySchedule ? tr("لا توجد حصة مبرمجة اليوم؛ يوم راحة حسب جدولك.") : scheduledIndex === selectedDay ? tr("تم تحديد حصة اليوم حسب جدولك.") : tr("عرض يوم البرنامج: ") + displayDayName(program.content.days[selectedDay]?.name ?? "", locale)}</p>
       </section>}
       {program.content.days.map((day, index) => (!focusToday || selectedDay === index) && (
@@ -61,7 +71,7 @@ export function ProgramView({
             <span className="flex size-8 items-center justify-center rounded-lg bg-accent/40 text-sm font-bold text-teal">
               {index + 1}
             </span>
-            <h2>{displayDayName(day.name, locale)}</h2>
+            <h2>{dayLabel(day.name, index)}</h2>
           </div>
           <div className="divide-y divide-line">
             {day.exercises.map((e, i) => (
@@ -93,30 +103,13 @@ export function ProgramView({
                         : e.name}
                     </h3>
                   </div>
-                  {e.video ? (
-                    <a
-                      href={e.video}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                      className="btn-secondary"
-                    >
-                      <Play size={14} />
-                      {tr("فيديو التمرين")}
-                    </a>
-                  ) : null}
+                  {e.video ? <ExerciseVideoLink url={e.video} label={e.name} /> : null}
                 </div>
                 {e.coachNotes && <p className="mt-3 whitespace-pre-wrap text-sm leading-8 text-muted">{e.coachNotes}</p>}
                 {e.mediaId ? (
-                  <video
-                    controls
-                    playsInline
-                    preload="none"
-                    className="mt-4 max-h-80 w-full rounded bg-black"
-                    src={
-                      "/api/media/" +
-                      e.mediaId +
-                      (portalHash ? "?portal=" + portalHash : "")
-                    }
+                  <ExerciseVideo
+                    src={"/api/media/" + e.mediaId + (portalHash ? "?portal=" + portalHash : "")}
+                    label={tr("فيديو ") + e.name}
                   />
                 ) : null}
                 <div className="mt-4 flex flex-wrap gap-3">
@@ -178,9 +171,12 @@ export function ProgramView({
         <p className="whitespace-pre-wrap leading-9 text-muted">
           {nutritionPlan.text || tr("لم يضف المدرب خطة تغذية نصية بعد.")}
         </p>
-        {nutritionPlan.meals?.length ? (
+        {/* A meal with no foods and every value at zero is a row the coach has
+            not filled in yet. Showing it as "الفطور · 0 سعرة" read as a plan
+            of nothing; it is left out, and if they are all empty we say so. */}
+        {filledMeals.length ? (
           <div className="mt-6 space-y-3">
-            {nutritionPlan.meals.map((m, i) => (
+            {filledMeals.map((m, i) => (
               <article key={i} className="meal-card">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="font-bold">{m.name}</h3>
@@ -206,6 +202,8 @@ export function ProgramView({
               </article>
             ))}
           </div>
+        ) : nutritionPlan.meals?.length ? (
+          <p className="mt-6 text-sm text-muted">{tr("ما حدّد مدربك وجبات بعد. الماكروز أعلى هي هدفك اليومي.")}</p>
         ) : null}
       </section>}
     </div>

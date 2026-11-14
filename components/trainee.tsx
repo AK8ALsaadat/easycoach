@@ -2,10 +2,9 @@
 import { useLocale } from "./locale-provider";
 import { LanguageSwitch } from "./language-switch";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { CalendarDays, CheckCircle2, CloudOff, Download, Dumbbell, LogOut, Menu, MessageCircle, PauseCircle, Shield, TrendingUp, Utensils, X } from "lucide-react";
 import { logoutAction, mutate } from "@/app/actions";
-import { manage } from "@/app/management-actions";
 import type { CoachingRecord } from "@/lib/management";
 import { useRouter } from "next/navigation";
 import { WeightPanel } from "./weight-panel";
@@ -14,6 +13,8 @@ import { addDays, formatDate, riyadhToday } from "@/lib/dates";
 import { latestSubscription } from "@/lib/subscription-period";
 import { PaylinkPay } from "./paylink-pay";
 import { Brand } from "./brand";
+import { SessionGuard } from "./session-guard";
+import { refreshHeld, sessionIdentity } from "@/lib/client-activity";
 import { DataForm } from "./forms";
 import { ProgramView } from "./program-view";
 import { ClientHub } from "./client-hub";
@@ -95,66 +96,40 @@ function TraineeHeader({ name }: { name: string }) {
   );
 }
 
-/** The in-app message the trainee sends with one tap; also how we detect it was already sent this week. */
-const WEEKLY_REVIEW_DONE_TEXT = "خلصت مراجعتي الأسبوعية ✅";
-
 /**
- * One-tap "I finished my weekly review": sends an in-app message to the coach
- * and shows the week's status. A submitted weekly check-in counts as done too.
+ * Starts the real weekly review.
+ *
+ * This used to send the coach a one-line message saying the review was done,
+ * while the review itself — weight, sleep, energy, hunger, stress, adherence,
+ * notes, questions, photos — stayed on the coach side only, so the coach kept
+ * reading "no weekly review submitted yet". The button now opens the same form
+ * in the trainee portal; submitting it writes a checkin record, which is what
+ * the coach tab and the awaiting-review list both count.
  */
-function WeeklyReviewDone({ clientId, records, onSent }: { clientId: string; records: CoachingRecord[]; onSent: () => void }) {
+function WeeklyReviewStart({ clientId, records }: { clientId: string; records: CoachingRecord[] }) {
   const { t: tr } = useLocale();
-  const requestId = useRef<string | null>(null);
-  const [busy, setBusy] = useState(false), [sent, setSent] = useState(false), [error, setError] = useState("");
   const today = riyadhToday(), weekStart = addDays(today, -6);
   const mine = records.filter((record) => record.client_id === clientId && record.entry_date >= weekStart);
-  const checkinSent = mine.some((record) => record.kind === "checkin");
-  const announced = sent || mine.some((record) => record.kind === "message" && record.author_type === "client" && record.payload.text === WEEKLY_REVIEW_DONE_TEXT);
-  if (checkinSent || announced)
+  const submitted = mine.find((record) => record.kind === "checkin");
+  const open = () => {
+    document.getElementById("client-management-hub")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.dispatchEvent(new CustomEvent("easycoach:open-hub-tab", { detail: "checkins" }));
+  };
+  if (submitted)
     return (
       <p className="weekly-review-done" role="status">
         <CheckCircle2 size={16} aria-hidden="true" />
-        {tr(checkinSent ? "مراجعتك الأسبوعية مرسلة هذا الأسبوع" : "تم إبلاغ مدربك أنك خلصت مراجعتك الأسبوعية")}
+        {tr(submitted.reviewed_at ? "مدربك راجع مراجعتك هذا الأسبوع" : "مراجعتك الأسبوعية مرسلة، بانتظار رد مدربك")}
+        <button type="button" className="btn-soft ms-2" onClick={open}>
+          {tr("عرضها")}
+        </button>
       </p>
     );
   return (
-    <>
-      <button
-        type="button"
-        className="btn"
-        disabled={busy}
-        onClick={async () => {
-          setBusy(true);
-          setError("");
-          try {
-            const result = await manage("record_save", {
-              id: (requestId.current ??= crypto.randomUUID()),
-              client_id: clientId,
-              kind: "message",
-              entry_date: today,
-              payload: { text: WEEKLY_REVIEW_DONE_TEXT },
-              author_type: "client",
-            });
-            if (result.ok) {
-              setSent(true);
-              onSent();
-            } else setError(result.message);
-          } catch {
-            setError("تعذر الاتصال. أعد المحاولة.");
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        <CheckCircle2 size={16} aria-hidden="true" />
-        {tr(busy ? "نبلغ مدربك…" : "خلصت المراجعة الأسبوعية")}
-      </button>
-      {error ? (
-        <p role="alert" className="basis-full text-sm text-red-700">
-          {tr(error)}
-        </p>
-      ) : null}
-    </>
+    <button type="button" className="btn" onClick={open}>
+      <CheckCircle2 size={16} aria-hidden="true" />
+      {tr("ابدأ المراجعة الأسبوعية")}
+    </button>
   );
 }
 
@@ -219,11 +194,22 @@ export function Trainee({
 
   const router = useRouter();
   useEffect(() => {
-    const refresh = () => { if (document.visibilityState === "visible") router.refresh(); };
-    const timer = window.setInterval(refresh, 60000);
-    window.addEventListener("focus", refresh);
-    return () => { window.clearInterval(timer); window.removeEventListener("focus", refresh); };
-  }, [router]);
+    // A background refresh re-renders the whole page on the server. It must
+    // never land while a photo is being prepared or a form holds unsaved work,
+    // and never while the session is gone: snapshot() would redirect to the
+    // login page and take the unsaved work with it. SessionGuard reports that
+    // case in place instead.
+    const refresh = async () => {
+      if (document.visibilityState !== "visible" || refreshHeld()) return;
+      const identity = await sessionIdentity();
+      if (identity.state !== "active" || identity.userId !== data.profile?.id) return;
+      router.refresh();
+    };
+    const tick = () => void refresh();
+    const timer = window.setInterval(tick, 60000);
+    window.addEventListener("focus", tick);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", tick); };
+  }, [router, data.profile?.id]);
   const clients = data.clients.filter(
     (c) => c.trainee_user_id === data.profile?.id && !c.archived,
   );
@@ -267,6 +253,7 @@ export function Trainee({
   const paused = !client && (data.paused_access?.length ?? 0) > 0;
   return (
     <div className={`trainee-shell min-h-screen ${client ? "has-bottom-nav" : ""}`}>
+      {data.profile?.id && <SessionGuard userId={data.profile.id} />}
       <TraineeHeader name={data.profile!.name} />
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-5 sm:py-9">
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -341,7 +328,7 @@ export function Trainee({
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div><p className="eyebrow">{tr("اليوم")}</p><h2 id="linked-today-title" className="mt-2 text-xl">{publishedProgram ? tr("خطتك لهذا اليوم") : tr("لا توجد خطة منشورة حاليًا")}</h2><p className="mt-2 text-sm text-muted">{clientWeights[0] ? <>{tr("آخر وزن")}: <bdi dir="ltr">{clientWeights[0].weight}</bdi> {tr("كجم")} · {formatDate(clientWeights[0].entry_date, locale)}</> : tr("لا يوجد وزن مسجل بعد. سجّل تحديثًا سريعًا عندما يناسبك.")}</p><p className="mt-1 text-xs text-muted">{formatDate(today, locale)}</p></div>
                 <TraineeCheckinStatus clientId={clientId} today={today} weights={clientWeights} records={data.management?.records ?? []} management={data.management} />
-                <div className="flex flex-wrap items-center gap-2"><WeeklyReviewDone key={clientId} clientId={clientId} records={data.management?.records ?? []} onSent={() => router.refresh()} /><a className="btn-secondary" href="#weight">{tr("تسجيل الوزن")}</a><a className="btn-secondary" href="#client-management-hub" onClick={() => window.dispatchEvent(new CustomEvent("easycoach:open-hub-tab", { detail: "progress" }))}>{tr("إرسال تحديث للمدرب")}</a></div>
+                <div className="flex flex-wrap items-center gap-2"><WeeklyReviewStart key={clientId} clientId={clientId} records={data.management?.records ?? []} /><a className="btn-secondary" href="#weight">{tr("تسجيل الوزن")}</a><a className="btn-secondary" href="#client-management-hub" onClick={() => window.dispatchEvent(new CustomEvent("easycoach:open-hub-tab", { detail: "progress" }))}>{tr("إرسال تحديث للمدرب")}</a></div>
               </div>
             </section>
             <div className="trainee-layout">
@@ -431,7 +418,7 @@ export function Trainee({
                     <button type="button" className="btn-secondary mt-4" onClick={() => {
                       window.dispatchEvent(new Event("easycoach:open-messages"));
                       document.getElementById("client-management-hub")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }}>{tr(subscriptions.length ? "طلب تجديد الاشتراك من المدرب" : "التواصل مع المدرب")}</button>
+                    }}>{tr("التواصل مع المدرب")}</button>
                   </section>
                   <details className="card p-6">
                     <summary>{tr("طلب تصحيح أو حذف بياناتي")}</summary>

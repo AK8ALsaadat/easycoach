@@ -107,6 +107,27 @@ export const content = z
   })
   .strict();
 export type Content = z.infer<typeof content>;
+/**
+ * What a *draft* is allowed to look like. A coach who asked for three days and
+ * has filled one must be able to save and come back to it; refusing the save
+ * is how unsaved work gets lost. Only publishing requires a complete program —
+ * enforced both in the editor (publishIssues) and on the row
+ * (private.program_publish_issue), so no publish path can skip it.
+ */
+export const draftContent = content.safeExtend({
+  days: z
+    .array(
+      z
+        .object({
+          name: z.string().min(1).max(100),
+          weekday: z.number().int().min(0).max(6).optional(),
+          exercises: z.array(exercise).max(40),
+        })
+        .strict(),
+    )
+    .min(1)
+    .max(14),
+});
 export const clientInput = z.object({
   id: id.optional(),
   name: z.string().trim().min(2).max(120),
@@ -142,13 +163,16 @@ export const commands = {
     name: z.string().min(2).max(140),
     description: z.string().max(2000),
     video: z.union([z.literal(""), z.url().startsWith("https://")]),
+    // Omitted keeps the stored clip; null clears it.
+    media_id: id.nullable().optional(),
   }),
+  exercise_delete: z.object({ id }),
   // New templates need a real name; the database re-checks names whenever they change.
   template_save: z
     .object({
       id: id.optional(),
       name: z.string().trim().min(2).max(140),
-      content,
+      content: draftContent,
     })
     .superRefine((value, ctx) => {
       if (value.id) return;
@@ -158,7 +182,7 @@ export const commands = {
   program_save: z.object({
     client_id: id,
     name: z.string().min(2).max(140),
-    content,
+    content: draftContent,
     expected_draft_id: id.nullable().optional(),
     expected_edit_revision: z.number().int().positive().nullable().optional(),
   }),
@@ -233,6 +257,8 @@ export type Exercise = {
   name: string;
   description: string;
   video: string;
+  /** An uploaded clip the coach owns, shown wherever this exercise appears. */
+  media_id?: string | null;
 };
 export type Template = {
   id: string;

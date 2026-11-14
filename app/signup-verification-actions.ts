@@ -11,6 +11,12 @@ export async function verifySignupCode(form: FormData): Promise<VerificationResu
     if (localMode()) return { ok: false, message: "التحقق بالبريد متاح مع Supabase فقط." };
     const pending = await readPendingSignup();
     if (!pending) return { ok: false, message: "ابدأ التسجيل من جديد لتحديد البريد الذي تريد تأكيده." };
+    // Verifying a code installs a session for that account in this browser.
+    // Doing that while another account is signed in replaces the identity
+    // every page and every save then uses, with nothing on screen to say so.
+    const signedIn = await actor();
+    if (signedIn && signedIn.email.toLowerCase() !== pending.email)
+      return { ok: false, message: "أنت مسجّل دخول بحساب " + signedIn.email + ". سجّل الخروج أولًا ثم أكّد الحساب الجديد." };
     const code = normalizeEmailOtp(String(form.get("code") ?? ""));
     if (!validEmailOtp(code)) return { ok: false, message: `أدخل رمز التحقق المكوّن من ${EMAIL_OTP_LENGTH} أرقام.` };
     const client = await supabase();

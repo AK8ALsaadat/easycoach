@@ -73,7 +73,41 @@ export const exerciseName = (
 ) =>
   language === "en"
     ? e.name
-    : (aliases[e.name] ?? translations[e.id]?.name ?? e.name);
+    : (translations[e.id]?.name ?? aliases[e.name] ?? e.name);
+/**
+ * A coach-written exercise shown inside the guide and the search beside the
+ * 876 built-in movements. It keeps its own instructions, link and uploaded
+ * clip so that picking it carries all three into the program.
+ */
+export type CustomCatalogExercise = CatalogExercise & {
+  custom: { exerciseId: string; description: string; video: string; mediaId: string | null };
+};
+export type PickerExercise = CatalogExercise | CustomCatalogExercise;
+export const isCustomExercise = (exercise: PickerExercise): exercise is CustomCatalogExercise =>
+  "custom" in exercise && Boolean(exercise.custom);
+
+/** Presents the coach library in the shape the guide and picker already use. */
+export function customCatalogEntries(
+  exercises: { id: string; name: string; description: string; video: string; media_id?: string | null }[],
+): CustomCatalogExercise[] {
+  return exercises.map((exercise) => ({
+    id: "custom:" + exercise.id,
+    name: exercise.name,
+    primaryMuscles: [],
+    secondaryMuscles: [],
+    equipment: "",
+    level: "beginner",
+    category: "strength",
+    images: [],
+    custom: {
+      exerciseId: exercise.id,
+      description: exercise.description,
+      video: exercise.video,
+      mediaId: exercise.media_id ?? null,
+    },
+  }));
+}
+
 export function catalogSearch(e: CatalogExercise, query: string) {
   const terms: Record<string, string> = {
     سكوات: "squat",

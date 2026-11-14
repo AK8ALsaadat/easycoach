@@ -29,7 +29,11 @@ export async function localGuard() {
   if (!/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(h.get("host") ?? ""))
     throw new Error("المعاينة المحلية متاحة على الجهاز فقط");
 }
-export async function supabase() {
+// Memoized per request: every rpc() built its own client, so one page load
+// ran several independent GoTrueClients racing to redeem the same single-use
+// refresh token (auth-js coordinates refreshes per instance only). One client
+// per request means one refresh and one cookie write.
+export const supabase = cache(async () => {
   const jar = await cookies();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL,
     key =
@@ -51,12 +55,12 @@ export async function supabase() {
             }),
           );
         } catch {
-          /* Proxy refreshes cookies on ordinary reads. */
+          /* A render cannot set cookies; the proxy persists the rotation. */
         }
       },
     },
   });
-}
+});
 // Memoized per request: rpc() consults the actor before every call, and
 // without the cache each consultation was its own Auth network round trip.
 export const actor = cache(async () => {
@@ -87,13 +91,34 @@ export const actor = cache(async () => {
     role: data.user.user_metadata.role === "coach" ? "coach" : "trainee",
   };
 });
+/** Marks "you are signed out" so the UI can offer a sign-in modal instead of
+ *  throwing the page away with unsaved work in it. */
+export const SESSION_EXPIRED = "session_expired";
+export function sessionExpired() {
+  return Object.assign(new Error("انتهت جلستك. سجّل الدخول من جديد للمتابعة"), {
+    code: SESSION_EXPIRED,
+  });
+}
+export function isSessionExpired(error: unknown) {
+  return (error as { code?: string } | null)?.code === SESSION_EXPIRED;
+}
+/** One retry for a transient Auth/PostgREST hiccup; a signed-out session is
+ *  never retried, and the second failure is reported honestly. */
+async function retryOnce<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    if (isSessionExpired(error)) throw error;
+    return run();
+  }
+}
 export async function rpc<T>(
   name: string,
   args: Record<string, unknown> = {},
   anonymous = false,
 ): Promise<T> {
   const user = await actor();
-  if (!anonymous && !user) throw new Error("يلزم تسجيل الدخول");
+  if (!anonymous && !user) throw sessionExpired();
   if (localMode())
     return rpcLocal<T>(await getLocalDatabase(), user?.id ?? null, name, args);
   type Functions = Database["public"]["Functions"];
@@ -107,7 +132,7 @@ export async function rpc<T>(
 export async function snapshot(): Promise<Snapshot> {
   const user = await actor();
   if (!user) redirect("/login");
-  let data = await rpc<Snapshot>("management_snapshot");
+  let data = await retryOnce(() => rpc<Snapshot>("management_snapshot"));
   if (!data.profile) {
     await rpc("init_profile", {
       display_name: user.name || "مستخدم جديد",
@@ -123,7 +148,8 @@ export async function snapshot(): Promise<Snapshot> {
     data.profile?.role !== "coach"
       ? rpc<NonNullable<Snapshot["paused_access"]>>("trainee_access_status").catch(() => [] as NonNullable<Snapshot["paused_access"]>)
       : Promise.resolve(undefined),
-    rpc<Snapshot["coach_branding"]>("coach_branding_snapshot"),
+    // Branding is decoration: a transient failure must not blank the page.
+    rpc<Snapshot["coach_branding"]>("coach_branding_snapshot").catch(() => undefined),
   ]);
   if (data.management) {
     data.management.schedules = schedules;
@@ -133,7 +159,20 @@ export async function snapshot(): Promise<Snapshot> {
   data.coach_branding = branding;
   return data;
 }
+/**
+ * A fast coach check for hot paths. requireCoach() loads the whole management
+ * snapshot (several round trips) which is wasted work when the action only
+ * needs to fail early for a non-coach: every tenant RPC below it runs under
+ * RLS as the same identity, so the database stays the authority.
+ */
+export async function requireCoachIdentity() {
+  const user = await actor();
+  if (!user) throw sessionExpired();
+  if (user.role !== "coach") throw new Error("هذه العملية للمدرب فقط");
+  return user;
+}
 export async function requireCoach() {
+  if (!(await actor())) throw sessionExpired();
   const data = await snapshot();
   if (data.profile?.role !== "coach") throw new Error("هذه الصفحة للمدرب فقط");
   return data;

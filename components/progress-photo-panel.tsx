@@ -10,6 +10,8 @@ import type { ManagementData } from "@/lib/management";
 import type { CoachingRecord } from "@/lib/management";
 import type { WeightEntry } from "@/lib/model";
 import { prepareProgressPhoto } from "@/lib/prepare-progress-photo";
+import { holdRefresh } from "@/lib/client-activity";
+import { SectionBoundary } from "./error-boundary";
 import { useDialog } from "./use-dialog";
 import { progressComparisonDates, progressMetricsForDate } from "@/lib/progress-comparison";
 import { canUploadPhotos, consentStatusLabel, type PhotoConsentState } from "@/lib/photo-consent";
@@ -25,7 +27,7 @@ const ANGLES: { key: Angle; label: string; hint: string }[] = [
 const labelFor = (angle: string, tr: (text: string) => string) =>
   tr(ANGLES.find((item) => item.key === angle)?.label ?? "زاوية غير محددة");
 
-export function ProgressPhotos({
+function ProgressPhotosPanel({
   clientId,
   photos,
   portalToken,
@@ -77,7 +79,12 @@ export function ProgressPhotos({
   const setDay = onEntryDateChange ?? setOwnDay;
   const [busy, setBusy] = useState(false);
   const [uploadState, setUploadState] = useState<{ angle: Angle; percent: number; finalizing: boolean } | null>(null);
-  const [preparing, setPreparing] = useState<Angle | null>(null);
+  // Per angle, not one scalar: three pickers can be busy at once, and the
+  // first to finish must not clear the other two indicators or their errors.
+  const [preparing, setPreparing] = useState<Partial<Record<Angle, boolean>>>({});
+  const [angleErrors, setAngleErrors] = useState<Partial<Record<Angle, string>>>({});
+  const selections = useRef<Record<Angle, number>>({ front: 0, back: 0, side: 0 });
+  const anyPreparing = Object.values(preparing).some(Boolean);
   const [message, setMessage] = useState("");
   const [zoom, setZoom] = useState<string | null>(null);
   const zoomDialog = useDialog<HTMLDivElement>(Boolean(zoom), () => setZoom(null), "button");
@@ -183,29 +190,49 @@ export function ProgressPhotos({
   }
 
   async function selectFile(angle: Angle, original?: File) {
-    const previous = slots[angle];
+    const selection = ++selections.current[angle];
     if (!original) {
-      if (previous) URL.revokeObjectURL(previous.preview);
+      setPreparing((current) => ({ ...current, [angle]: false }));
+      setAngleErrors((current) => ({ ...current, [angle]: undefined }));
       setSlots((current) => {
         const next = { ...current };
+        // Read the slot from the committed state, never from a render closure:
+        // another angle may have replaced the map while this one was decoding.
+        if (next[angle]) URL.revokeObjectURL(next[angle]!.preview);
         delete next[angle];
         return next;
       });
       return;
     }
-    setPreparing(angle);
+    // Decoding and re-encoding is slow; a background refresh landing in the
+    // middle of it would re-render the page and drop the pending selection.
+    const release = holdRefresh("photo-prepare");
+    setPreparing((current) => ({ ...current, [angle]: true }));
+    setAngleErrors((current) => ({ ...current, [angle]: undefined }));
     setMessage("");
     try {
       const file = await prepareProgressPhoto(original);
-      if (previous) URL.revokeObjectURL(previous.preview);
-      setSlots((current) => ({
-        ...current,
-        [angle]: { file, preview: URL.createObjectURL(file), requestId: crypto.randomUUID() },
-      }));
+      if (selection !== selections.current[angle]) return;
+      const preview = URL.createObjectURL(file);
+      const requestId = crypto.randomUUID();
+      setSlots((current) => {
+        if (current[angle]) URL.revokeObjectURL(current[angle]!.preview);
+        return { ...current, [angle]: { file, preview, requestId } };
+      });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "تعذر تجهيز الصورة.");
+      if (selection !== selections.current[angle]) return;
+      // Honest and local: this photo failed, the page and the other angles did not.
+      setAngleErrors((current) => ({
+        ...current,
+        [angle]: error instanceof Error ? error.message : "تعذر تجهيز هذه الصورة. جرّب صورة ثانية.",
+      }));
     } finally {
-      setPreparing(null);
+      if (selection === selections.current[angle]) setPreparing((current) => {
+        const next = { ...current };
+        delete next[angle];
+        return next;
+      });
+      release();
     }
   }
 
@@ -219,6 +246,7 @@ export function ProgressPhotos({
       setMessage("اختر صورة واحدة على الأقل.");
       return;
     }
+    const release = holdRefresh("photo-upload");
     setBusy(true);
     setMessage("");
     const failures: string[] = [];
@@ -268,6 +296,7 @@ export function ProgressPhotos({
     } catch {
       setMessage(failures.length ? failures.join(" · ") : "حُفظت الصور. تعذر تحديث العرض؛ حدّث الصفحة لرؤيتها.");
     } finally {
+      release();
       setBusy(false);
     }
   }
@@ -355,20 +384,21 @@ export function ProgressPhotos({
                   </div>
                 </div>
               ) : (
-                <button type="button" disabled={preparing === key || busy} onClick={() => document.getElementById(`progress-photo-${clientId}-${key}`)?.click()} className="mt-3 flex min-h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-line bg-canvas p-4 text-center text-sm">
+                <button type="button" disabled={busy} onClick={() => document.getElementById(`progress-photo-${clientId}-${key}`)?.click()} className="mt-3 flex min-h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-line bg-canvas p-4 text-center text-sm">
                   <ImagePlus size={21} />
-                  {tr(preparing === key ? "نجهز الصورة…" : "اختيار من المعرض أو الملفات")}
+                  {tr(preparing[key] ? "نجهز الصورة…" : "اختيار من المعرض أو الملفات")}
                 </button>
               )}
-              <input id={`progress-photo-${clientId}-${key}`} aria-label={tr(key === "front" ? "صورة تقدم خاصة" : "صورة ") + (key === "front" ? "" : tr(label))} className="sr-only" tabIndex={-1} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" disabled={preparing === key || busy} onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) void selectFile(key, file); }} />
-              <button type="button" className="btn-secondary mt-3 w-full" disabled={preparing === key || busy} onClick={() => document.getElementById(`progress-camera-${clientId}-${key}`)?.click()}>{tr("التقاط بالكاميرا")}</button>
-              <input id={`progress-camera-${clientId}-${key}`} aria-label={tr("التقاط صورة ") + tr(label)} className="sr-only" tabIndex={-1} type="file" accept="image/*" capture="environment" disabled={preparing === key || busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) void selectFile(key, file); }} />
+              <input id={`progress-photo-${clientId}-${key}`} aria-label={tr(key === "front" ? "صورة تقدم خاصة" : "صورة ") + (key === "front" ? "" : tr(label))} className="sr-only" tabIndex={-1} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" disabled={busy} onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) void selectFile(key, file); }} />
+              {angleErrors[key] && <p className="field-error mt-2" role="alert">{tr(angleErrors[key]!)}</p>}
+              <button type="button" className="btn-secondary mt-3 w-full" disabled={busy} onClick={() => document.getElementById(`progress-camera-${clientId}-${key}`)?.click()}>{tr("التقاط بالكاميرا")}</button>
+              <input id={`progress-camera-${clientId}-${key}`} aria-label={tr("التقاط صورة ") + tr(label)} className="sr-only" tabIndex={-1} type="file" accept="image/*" capture="environment" disabled={busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) void selectFile(key, file); }} />
             </article>
           );
         })}
       </div>
 
-      <button type="button" className="btn" onClick={() => void upload()} disabled={busy || preparing !== null}>
+      <button type="button" className="btn" onClick={() => void upload()} disabled={busy || anyPreparing}>
         <Upload size={17} /> {busy ? tr("جارٍ رفع الصور…") : tr(Object.keys(slots).length === 1 ? "رفع صورة" : "رفع الصور المختارة")}
       </button>
       {uploadState && (
@@ -474,5 +504,21 @@ export function ProgressPhotos({
         <img src={zoom} alt={tr("صورة تقدم محفوظة") + " · " + labelFor(compareAngle, tr)} className="max-h-[92dvh] max-w-[96vw] object-contain" onClick={(event) => event.stopPropagation()} />
       </div>}
     </section>
+  );
+}
+
+/**
+ * A failure while reading, decoding or previewing a photo is a problem with
+ * that photo, never a reason to replace the trainee portal with a full-screen
+ * error. Every call site gets the boundary for free.
+ */
+export function ProgressPhotos(props: Parameters<typeof ProgressPhotosPanel>[0]) {
+  return (
+    <SectionBoundary
+      title="تعذر عرض صور التقدم"
+      hint="ما قدرنا نجهّز هذا الجزء. بقية صفحتك تعمل عادي — أعد المحاولة أو اختر صورة ثانية."
+    >
+      <ProgressPhotosPanel {...props} />
+    </SectionBoundary>
   );
 }
