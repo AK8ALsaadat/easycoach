@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { translator } from "@/lib/i18n";
-import { PaylinkService } from "@/lib/paylink/service";
+import { verifyPlatformPayment } from "@/lib/platform/paylink";
 import { paylinkReturnParams, returnQuery } from "@/lib/paylink/params";
 import { PaylinkResult } from "@/components/paylink-result";
 import type { VerifyResult } from "@/lib/paylink/flow";
@@ -14,7 +14,7 @@ export default async function PaylinkCallback({ searchParams }: { searchParams: 
   const params = paylinkReturnParams(await searchParams);
   let result: VerifyResult;
   try {
-    result = await PaylinkService.verify(params);
+    result = await verifyPlatformPayment(params);
   } catch {
     result = { state: "error", errors: [] };
   }

@@ -18,7 +18,7 @@ if (selectedScripts.some(script => ![...allScripts, "qa-subscribe-actions.mjs"].
 const env = {
   ...process.env, LOCAL_DB_PATH: directory, EASYCOACH_EVIDENCE_DIST_DIR: dist,
   APP_URL: base, TEST_BASE_URL: base,
-  PAYLINK_BASE_URL: "http://127.0.0.1:4017", PAYLINK_ENV_COACH_ID: "11111111-1111-4111-8111-111111111111",
+  PAYLINK_BASE_URL: "http://127.0.0.1:4017",
   PAYLINK_API_ID: "synthetic-qa", PAYLINK_SECRET_KEY: "synthetic-qa", PAYLINK_WEBHOOK_SECRET: "qa-local-webhook",
 };
 function command(args) {
@@ -33,6 +33,7 @@ try {
   await mkdir("artifacts/design-release", { recursive: true });
   await command(["--experimental-strip-types", "scripts/prepare-platform-qa.ts", directory]);
   await command(["--experimental-strip-types", "scripts/prepare-trial-qa.ts", directory]);
+  if (selectedScripts.includes("qa-paylink-browser-check.mjs")) await command(["--experimental-strip-types", "scripts/prepare-billing-qa.ts", directory]);
   server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "dev", "--webpack", "-H", "127.0.0.1", "-p", String(port)], {
     env, stdio: ["ignore", "pipe", "pipe"], windowsHide: true,
   });

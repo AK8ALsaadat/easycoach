@@ -1,6 +1,7 @@
 import "server-only";
 import { rpc, requireCoachIdentity } from "@/lib/server";
 import type { PlatformState, PlatformQuote, PlanCode } from "./plans";
+import { platformMerchant } from "./paylink";
 import { POLICY_VERSION } from "@/lib/legal";
 
 export async function platformState() {
@@ -17,7 +18,6 @@ export async function requireFeature(feature: string) {
   await requireCoachIdentity();
   await rpc("ec_require", { feature });
 }
-/** No documented zero-charge setup/delayed billing/cancellation adapter is available.
- * An environment flag alone must never enable an unverified payment journey. */
-export function platformProviderReady() { return false; }
+/** Hosted one-month platform checkout; this does not enable recurring card setup. */
+export async function platformProviderReady() { return Boolean(platformMerchant()) && await rpc<boolean>("ec_paylink_ready"); }
 

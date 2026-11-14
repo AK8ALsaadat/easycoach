@@ -6,6 +6,8 @@ import { isPlan, limitLabel, plans, riyadhDate, riyals, sar } from "@/lib/platfo
 import { platformQuote, platformState } from "@/lib/platform/server";
 import { actor } from "@/lib/server";
 import { LegalLinks } from "@/components/legal-links";
+import { PlatformCheckout } from "@/components/platform-checkout";
+import { platformProviderReady } from "@/lib/platform/server";
 import { TrialStartForm } from "@/components/trial-start-form";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +18,7 @@ export default async function ConfirmPage({ searchParams }: { searchParams: Prom
   if (!user) redirect(`/login?register=1&next=${encodeURIComponent(`/start?plan=${plan}`)}`);
   const [quote, state] = await Promise.all([platformQuote(plan), platformState().catch(() => null)]);
   if (!state) redirect("/coach");
+  const paymentReady = await platformProviderReady();
   const trialEnd = new Date(Date.parse(quote.server_now) + quote.trial_days * 86_400_000).toISOString();
   const tax = quote.tax_mode === "unconfigured" ? "تُحدد المعالجة الضريبية وتُعرض قبل أي خصم" : quote.tax_mode === "not_registered" ? "غير مسجل ضريبيًا بحسب إعدادات المشغّل" : `${sar(quote.vat_halalas ?? 0)} ريال (${quote.tax_mode === "inclusive" ? "مشمولة" : "تضاف للسعر"})`;
   return <main dir="rtl" className="plans-page plans-page-narrow">
@@ -25,11 +28,11 @@ export default async function ConfirmPage({ searchParams }: { searchParams: Prom
       <h1>باقة {plans[plan].name}</h1>
       {error === "terms" && <p role="alert" className="plans-alert">وافق على الشروط وسياسة الخصوصية قبل بدء التجربة.</p>}
       {error === "start" && <p role="alert" className="plans-alert">تعذّر تأكيد بدء التجربة. راجع حالة الاشتراك الظاهرة هنا، ثم حاول مرة أخرى أو تواصل مع الدعم إذا استمرت المشكلة.</p>}
-      <div className="confirm-price"><strong>{riyals(quote.net_halalas)}</strong><span>ريال / شهر بعد التجربة</span></div>
+      <div className="confirm-price"><strong>{riyals(quote.net_halalas)}</strong><span>ريال / شهر</span></div>
       <dl className="confirm-facts">
         {quote.trial_available && <><dt>المستحق اليوم</dt><dd><strong>0 ريال</strong> · لا خصم ولا حجز مبلغ</dd></>}
         {quote.trial_available && <><dt>مدة التجربة</dt><dd>{quote.trial_days} يومًا مجانًا، بدون بطاقة · تنتهي في {riyadhDate(trialEnd)}</dd></>}
-        <dt>مزايا التجربة</dt><dd>كل مزايا باقة الأعمال طوال التجربة. مزايا {plans[plan].name} تبدأ عند تفعيل اشتراكك المدفوع بعدها.</dd>
+        {quote.trial_available && <><dt>مزايا التجربة</dt><dd>كل مزايا باقة الأعمال طوال التجربة. مزايا {plans[plan].name} تبدأ عند تفعيل اشتراكك المدفوع بعدها.</dd></>}
         <dt>حدود {plans[plan].name}</dt><dd>{limitLabel(quote.limits).join(" · ")}</dd>
         <dt>الضريبة</dt><dd>{tax}</dd>
         <dt>الإجمالي الشهري</dt><dd>{quote.total_halalas === null ? "يُعرض بعد ضبط الضريبة، قبل أي خصم" : `${sar(quote.total_halalas)} ريال`}</dd>
@@ -37,11 +40,13 @@ export default async function ConfirmPage({ searchParams }: { searchParams: Prom
       <ul className="plan-features">{plans[plan].features.map(f => <li key={f}><Check size={15} aria-hidden="true" />{f}</li>)}</ul>
       {quote.trial_available
         ? <TrialStartForm plan={plan} days={quote.trial_days} />
-        : state && (state.status === "trialing" || state.status === "active")
+        : state.mode === "legacy" || state.status === "trialing" || state.status === "active"
           ? <Link href="/subscription" className="btn w-full">إدارة اشتراكي الحالي</Link>
-          : <p role="status" className="plan-note">{quote.trial_used ? "استخدمت تجربتك المجانية من قبل." : "عرض التجربة المجانية غير متاح حاليًا."} تفعيل الدفع للاشتراكات المدفوعة قيد التحقق لدى مزود الدفع؛ لم يبدأ أي اشتراك أو تجديد تلقائي.</p>}
+          : paymentReady && quote.total_halalas !== null
+            ? <PlatformCheckout plan={plan} total={quote.total_halalas} />
+            : <p role="status" className="plans-alert">الدفع لاشتراك المنصة غير متاح حاليًا حتى استكمال إعداداته. لم يُنشأ طلب دفع. يمكنك استخدام الباقة المجانية أو مراجعة الدعم.</p>}
       <p className="plans-note">لا خصم ولا بطاقة خلال التجربة. بعد انتهائها تعود الصلاحيات إلى الباقة المجانية إلى أن تفعّل اشتراكك، وتبقى بياناتك محفوظة.</p>
-      <section className="payment-availability" aria-labelledby="card-availability"><h2 id="card-availability">بطاقتك ووسيلة الدفع</h2><p>إضافة بطاقة لاشتراك EasyCoach غير متاحة حاليًا. يمكنك بدء التجربة المجانية دون بطاقة. لا تدخل بيانات البطاقة في رسائل الدعم؛ عند إتاحة الدفع ستنتقل إلى صفحة مزود الدفع الآمنة.</p></section>
+      <section className="payment-availability" aria-labelledby="card-availability"><h2 id="card-availability">بطاقتك ووسيلة الدفع</h2><p>Paylink يحصّل قيمة اشتراكك في EasyCoach لصالح المنصة. الاشتراك المدفوع لشهر واحد يبدأ بعد تأكيد الدفع ويتجدد يدويًا بعد انتهائه. لا نطلب حساب تاجر من المدرب ولا نحصّل دفعات المتدربين. بيانات البطاقة تُدخل في صفحة Paylink فقط.</p></section>
     </section>
     <LegalLinks />
   </main>;

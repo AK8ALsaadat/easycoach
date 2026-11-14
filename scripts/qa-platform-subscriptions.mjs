@@ -26,7 +26,7 @@ try{
  await page.locator('button[type="submit"]').click();await page.waitForURL("**/coach");
  await page.goto(base+"/subscription");await page.locator("h1").waitFor();
  await page.screenshot({path:dir+"/subscription-mobile.png",fullPage:true});
- assert.equal((await page.request.post(base+"/api/platform/checkout")).status(),503);
+ assert.equal((await page.request.post(base+"/api/platform/checkout")).status(),403);
  for(const path of ["/organization","/attendance","/reports","/subscription/confirm?plan=starter"]){
   const response=await page.goto(base+path);assert.equal(response.status(),200,path);await page.locator("h1").waitFor();
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth),path+" overflows");
@@ -62,5 +62,5 @@ try{
   console.log("PASS: Free quota/export denial; accepted team invitation; assigned program save/publication; portal color; coach comparison.");
  }
  assert.deepEqual(errors,[]);
- console.log(JSON.stringify({pricingCards:4,mobileOverflow:false,uncaughtErrors:0,anonymousCheckout:401,disabledCheckout:503,screenshots:dir}));
+ console.log(JSON.stringify({pricingCards:4,mobileOverflow:false,uncaughtErrors:0,anonymousCheckout:401,missingOriginCheckout:403,screenshots:dir}));
 }finally{await browser.close();}

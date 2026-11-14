@@ -1,4 +1,6 @@
 import { randomBytes } from "node:crypto";
+// Historical trainee flow retained for regression/audit tests only. Its SQL
+// entry points are revoked; production billing uses lib/platform/paylink.ts.
 import { MIN_INVOICE_AMOUNT, PaylinkError, type PaylinkClient, type PaylinkInvoice, type PaymentError } from "./client";
 import type { CheckoutContext, SettleResult, StoredInvoice } from "./store";
 

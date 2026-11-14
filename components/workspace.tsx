@@ -80,7 +80,6 @@ const CustomExercises = dynamic(() => import("./custom-exercises").then(m => m.C
 const NotificationSettings = dynamic(() => import("./notification-settings").then(m => m.NotificationSettings), { loading: ChunkLoading });
 const AccountSettings = dynamic(() => import("./account-settings").then(m => m.AccountSettings), { loading: ChunkLoading });
 const CoachBrandingSettings = dynamic(() => import("./coach-branding-settings").then(m => m.CoachBrandingSettings), { loading: ChunkLoading });
-const PaylinkSettings = dynamic(() => import("./paylink-settings").then(m => m.PaylinkSettings), { loading: ChunkLoading });
 const SupportDesk = dynamic(() => import("./support-desk").then(m => m.SupportDesk), { loading: ChunkLoading });
 
 const clientFields = (client?: Client): Field[] => [
@@ -1347,7 +1346,7 @@ function SettingsPage({ data }: { data: Snapshot }) {
       <NotificationSettings data={data} />
       <AccountSettings name={data.profile!.name} />
       <CoachBrandingSettings branding={data.coach_branding?.find(b => b.coach_id === data.profile?.id)} defaultName={data.profile!.name} />
-      <PaylinkSettings />
+      <section className="card p-5"><h2>اشتراكك في EasyCoach</h2><p className="text-muted mt-2">الدفع عبر Paylink مخصص لاشتراكك في أدوات المنصة. دفعات متدربيك تسجّلها يدويًا في ملفاتهم.</p><Link href="/subscription" className="btn-secondary mt-4">إدارة اشتراك المنصة والفواتير</Link></section>
       <div className="grid items-start gap-6 xl:grid-cols-2">
         <section className="card p-6">
           <h2 className="mb-3">{tr("رابط طلب الانضمام")}</h2>

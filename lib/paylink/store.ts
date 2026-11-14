@@ -1,4 +1,6 @@
 import "server-only";
+// Retired trainee merchant store. No application entry point may use this;
+// paylink_* RPC execution is revoked, including service_role.
 import { getLocalDatabase } from "../local-db";
 import { localMode, localGuard } from "../server";
 import { adminSupportClient } from "../supabase/admin";

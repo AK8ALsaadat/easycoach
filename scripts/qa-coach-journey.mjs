@@ -88,7 +88,7 @@ try {
   await page.getByText("المجانية", { exact: false }).first().waitFor();
   await page.getByText("2 / 5", { exact: false }).first().waitFor();
   assert.equal(await page.locator('form:has(input[name="color"])').count(), 0, "Portal colour is a paid feature");
-  assert.equal((await page.request.post(base + "/api/platform/checkout")).status(), 503, "Disabled provider must refuse checkout");
+  assert.equal((await page.request.post(base + "/api/platform/checkout")).status(), 403, "Requests without an Origin must be refused");
   await page.screenshot({ path: dir + "/subscription-free.png", fullPage: true });
 
   // 7. Team space needs a plan that supports it; the page says so instead of
@@ -117,6 +117,6 @@ try {
     localRegistrationHidden: true, login: "journey@example.test",
     clientAdded: true, freeGating: { library: true, export: 403 },
     attendance: { recorded: 1, overBalanceRefused: true, outOfRangeRefused: true },
-    subscription: { plan: "free", usage: "2 / 5", checkout: 503 }, mobileOverflow: false, uncaughtErrors: 0, screenshots: dir,
+    subscription: { plan: "free", usage: "2 / 5", missingOriginCheckout: 403 }, mobileOverflow: false, uncaughtErrors: 0, screenshots: dir,
   }));
 } finally { await browser.close(); }

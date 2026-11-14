@@ -3,7 +3,6 @@ import type { PaylinkClient, PaylinkInvoice, PaymentError } from "@/lib/paylink/
 import { PaylinkError } from "@/lib/paylink/client";
 import { newOrderNumber, normalizeSaudiMobile, startCheckout, verifyTransaction, type FlowDeps, type FlowStore } from "@/lib/paylink/flow";
 import type { CheckoutContext, StoredInvoice } from "@/lib/paylink/store";
-import { payableSubscriptions } from "@/components/paylink-pay";
 import { paylinkReturnParams } from "@/lib/paylink/params";
 
 const COACH = "11111111-1111-4111-8111-111111111111";
@@ -320,14 +319,4 @@ describe("helpers", () => {
     expect(paylinkReturnParams({ transactionNo: ["9", "8"] })).toEqual({ transactionNo: "9", orderNumber: null });
   });
 
-  it("offers payment only for what is owed on current or upcoming subscriptions", () => {
-    const base = { client_id: "c", previous_id: null, created_at: "" };
-    const subs = [
-      { ...base, id: "old", name: "قديم", start_date: "2026-09-01", end_date: "2026-09-30", price: 300 },
-      { ...base, id: "now", name: "حالي", start_date: "2026-11-01", end_date: "2026-11-30", price: 300 },
-      { ...base, id: "next", name: "تجديد", start_date: "2026-12-01", end_date: "2026-12-31", price: 300 },
-    ];
-    const rows = payableSubscriptions(subs, [{ subscription_id: "now", amount: 100 }, { subscription_id: "next", amount: 300 }], "2026-11-13");
-    expect(rows.map((r) => [r.subscription.id, r.outstanding])).toEqual([["now", 200]]);
-  });
 });

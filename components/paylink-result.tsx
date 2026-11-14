@@ -8,13 +8,13 @@ type Copy = { title: string; body: string; tone: "ok" | "wait" | "fail" };
 
 const copy: Record<VerifyResult["state"] | "cancelled_by_user", Copy> = {
   paid: { tone: "ok", title: "تم الدفع بنجاح", body: "سجّلنا دفعتك وتحدّث اشتراكك. شكرًا لك." },
-  review: { tone: "wait", title: "استلمنا دفعتك", body: "وصلت الدفعة، وتحتاج مراجعة سريعة من مدربك قبل ما تنضاف لاشتراكك. لا تدفع مرة ثانية." },
+  review: { tone: "wait", title: "عملية الدفع قيد المراجعة", body: "تحتاج بيانات العملية إلى مراجعة من دعم EasyCoach قبل تفعيل اشتراك المنصة. إذا ظهر خصم فلا تدفع مرة ثانية." },
   pending: { tone: "wait", title: "الدفع قيد المعالجة", body: "ما وصلنا تأكيد الدفع من Paylink بعد. حدّث الصفحة بعد دقيقة، ولا تدفع مرة ثانية قبل ما تتأكد." },
-  failed: { tone: "fail", title: "لم تنجح عملية الدفع", body: "لم تؤكد Paylink نجاح العملية. إذا ظهر خصم أو مبلغ محجوز في حسابك، تحقق من حالة العملية مع مدربك قبل الدفع مرة أخرى." },
-  canceled: { tone: "fail", title: "ما تم الدفع", body: "انتهت صلاحية الفاتورة أو أُلغيت. ارجع لاشتراكك وأنشئ رابط دفع جديد." },
+  failed: { tone: "fail", title: "لم تنجح عملية الدفع", body: "لم تؤكد Paylink نجاح العملية. إذا ظهر خصم أو مبلغ محجوز في حسابك، تحقق من حالة العملية مع دعم EasyCoach قبل الدفع مرة أخرى." },
+  canceled: { tone: "fail", title: "أُغلقت فاتورة الدفع", body: "أُلغيت الفاتورة أو انتهت صلاحيتها لدى Paylink. راجع سجل اشتراكك والعملية قبل إنشاء دفعة جديدة." },
   unknown: { tone: "fail", title: "ما لقينا عملية الدفع", body: "الرابط ناقص أو غير صحيح. ارجع لاشتراكك وتأكد من حالته." },
-  error: { tone: "wait", title: "تعذّر التحقق من الدفع الآن", body: "لم نتمكن من تأكيد نتيجة الدفع. حدّث الحالة بعد قليل، ولا تدفع مرة ثانية إذا ظهر خصم. تواصل مع مدربك برقم العملية عند استمرار المشكلة." },
-  cancelled_by_user: { tone: "wait", title: "رجعت من صفحة الدفع", body: "العودة من صفحة الدفع لا تثبت خصم المبلغ أو عدمه. راجع حالة اشتراكك والعملية قبل المحاولة مجددًا، وتواصل مع مدربك إذا ظهر خصم لم يُسجل." },
+  error: { tone: "wait", title: "تعذّر التحقق من الدفع الآن", body: "لم نتمكن من تأكيد نتيجة الدفع. حدّث الحالة بعد قليل، ولا تدفع مرة ثانية إذا ظهر خصم. تواصل مع دعم EasyCoach برقم العملية عند استمرار المشكلة." },
+  cancelled_by_user: { tone: "wait", title: "رجعت من صفحة الدفع", body: "العودة من صفحة الدفع لا تثبت خصم المبلغ أو عدمه. راجع حالة اشتراكك والعملية قبل المحاولة مجددًا، وتواصل مع دعم EasyCoach إذا ظهر خصم لم يُسجل." },
 };
 
 const icons = { ok: CheckCircle2, wait: Clock3, fail: XCircle };
@@ -57,7 +57,7 @@ export function PaylinkResult({
           </ul>
         ) : null}
         <div className="mt-6 flex flex-wrap gap-2">
-          <Link className="btn" href="/me">
+          <Link className="btn" href="/subscription">
             {tr(["paid", "review"].includes(result.state) ? "الرجوع لاشتراكي" : "الرجوع للاشتراك والمحاولة مجددًا")}
           </Link>
           {(result.state === "pending" || result.state === "error") && retryHref ? (
