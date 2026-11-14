@@ -77,7 +77,7 @@ try {
   await trial.page.waitForLoadState("networkidle");
   assert.equal(await trial.page.getByText("هذه الميزة متاحة ابتداءً", { exact: false }).count(), 0);
   await trial.page.goto(base + "/start");
-  await trial.page.waitForURL("**/coach");
+  await trial.page.waitForURL("**/subscription");
   results.push("Trial: free feature gate, four plans, open offer, start, subscription status, unlocked library, no second onboarding");
   await trial.context.close();
 

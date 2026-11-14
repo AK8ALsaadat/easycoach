@@ -22,8 +22,9 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
     platformState().catch(() => null),
     Promise.all(planCodes.map(code => platformQuote(code).catch(() => null))),
   ]);
-  // Nothing to choose: legacy accounts and running subscriptions go straight to work.
-  if (!state || state.mode === "legacy" || state.status === "trialing" || state.status === "active") redirect("/coach");
+  if (!state) return <main dir="rtl" className="plans-page plans-page-narrow"><Brand /><section className="confirm-card"><h1>تعذّر تحميل خيارات الاشتراك</h1><p role="alert">لم نتمكن من التحقق من حالة حسابك الآن. حاول مرة أخرى؛ لم نبدأ تجربة أو عملية دفع من هذه الصفحة.</p><Link href={plan ? `/start?plan=${plan}` : "/start"} className="btn">إعادة المحاولة</Link><Link href="/subscription" className="btn-secondary">عرض حالة اشتراكي</Link></section></main>;
+  // Show the existing entitlement instead of returning silently to the dashboard.
+  if (state.mode === "legacy" || state.status === "trialing" || state.status === "active") redirect("/subscription");
   const offer = trialOffer(quotes);
   const firstName = data.profile.name.split(" ")[0];
   return <main dir="rtl" className="plans-page">

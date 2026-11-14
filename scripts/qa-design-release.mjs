@@ -14,7 +14,7 @@ const port = await new Promise(resolve => {
 const base = `http://127.0.0.1:${port}`;
 const allScripts = ["qa-design-browser.mjs", "qa-policy-dialogs.mjs", "qa-import-browser.mjs", "qa-session-photos.mjs", "qa-paylink-browser-check.mjs", "qa-platform-subscriptions.mjs", "qa-coach-journey.mjs"];
 const selectedScripts = process.argv.length > 2 ? process.argv.slice(2) : allScripts;
-if (selectedScripts.some(script => !allScripts.includes(script))) throw Error("Unknown QA script");
+if (selectedScripts.some(script => ![...allScripts, "qa-subscribe-actions.mjs"].includes(script))) throw Error("Unknown QA script");
 const env = {
   ...process.env, LOCAL_DB_PATH: directory, EASYCOACH_EVIDENCE_DIST_DIR: dist,
   APP_URL: base, TEST_BASE_URL: base,

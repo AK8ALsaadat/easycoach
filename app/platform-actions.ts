@@ -50,14 +50,15 @@ export async function startTrialAction(form: FormData) {
   if (!isPaidPlan(plan)) redirect("/start?error=plan");
   if (!(await actor())) redirect(`/login?register=1&next=${encodeURIComponent(back)}`);
   if (form.get("terms_acceptance") !== POLICY_VERSION) redirect(`/subscription/confirm?plan=${plan}&error=terms`);
-  let failure: string | null = null;
+  let failed = false;
   try {
     await startPlatformTrial(plan);
   } catch (error) {
     if (isSessionExpired(error)) redirect(`/login?next=${encodeURIComponent(back)}`);
-    failure = error instanceof Error ? error.message : "تعذر بدء التجربة";
+    failed = true;
+    console.error("platform.trial.start_failed", { code: (error as { code?: string })?.code ?? "unknown" });
   }
-  if (failure) redirect(`${back}&error=${encodeURIComponent(failure.slice(0, 160))}`);
+  if (failed) redirect(`/subscription/confirm?plan=${plan}&error=start`);
   revalidatePath("/", "layout");
   redirect("/coach?trial=started");
 }

@@ -2,12 +2,11 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Check } from "lucide-react";
 import { Brand } from "@/components/brand";
-import { startTrialAction } from "@/app/platform-actions";
 import { isPlan, limitLabel, plans, riyadhDate, riyals, sar } from "@/lib/platform/plans";
 import { platformQuote, platformState } from "@/lib/platform/server";
 import { actor } from "@/lib/server";
-import { POLICY_VERSION } from "@/lib/legal";
 import { LegalLinks } from "@/components/legal-links";
+import { TrialStartForm } from "@/components/trial-start-form";
 
 export const dynamic = "force-dynamic";
 export default async function ConfirmPage({ searchParams }: { searchParams: Promise<{ plan?: string; error?: string }> }) {
@@ -25,6 +24,7 @@ export default async function ConfirmPage({ searchParams }: { searchParams: Prom
       <p className="eyebrow">{quote.trial_available ? "تأكيد بدء التجربة المجانية" : "تفاصيل الباقة"}</p>
       <h1>باقة {plans[plan].name}</h1>
       {error === "terms" && <p role="alert" className="plans-alert">وافق على الشروط وسياسة الخصوصية قبل بدء التجربة.</p>}
+      {error === "start" && <p role="alert" className="plans-alert">تعذّر تأكيد بدء التجربة. راجع حالة الاشتراك الظاهرة هنا، ثم حاول مرة أخرى أو تواصل مع الدعم إذا استمرت المشكلة.</p>}
       <div className="confirm-price"><strong>{riyals(quote.net_halalas)}</strong><span>ريال / شهر بعد التجربة</span></div>
       <dl className="confirm-facts">
         {quote.trial_available && <><dt>المستحق اليوم</dt><dd><strong>0 ريال</strong> · لا خصم ولا حجز مبلغ</dd></>}
@@ -36,7 +36,7 @@ export default async function ConfirmPage({ searchParams }: { searchParams: Prom
       </dl>
       <ul className="plan-features">{plans[plan].features.map(f => <li key={f}><Check size={15} aria-hidden="true" />{f}</li>)}</ul>
       {quote.trial_available
-        ? <form action={startTrialAction} className="trial-confirm-form"><input type="hidden" name="plan" value={plan} /><label className="policy-acceptance"><input type="checkbox" name="terms_acceptance" value={POLICY_VERSION} required /><span>قرأت وأوافق على <Link href="/terms" target="_blank" rel="noopener">الشروط والأحكام</Link> و<Link href="/privacy" target="_blank" rel="noopener">سياسة الخصوصية</Link>، وأفهم أن التجربة لا تتجدد تلقائيًا.</span></label><button className="btn w-full">ابدأ {quote.trial_days} يومًا مجانًا الآن</button></form>
+        ? <TrialStartForm plan={plan} days={quote.trial_days} />
         : state && (state.status === "trialing" || state.status === "active")
           ? <Link href="/subscription" className="btn w-full">إدارة اشتراكي الحالي</Link>
           : <p role="status" className="plan-note">{quote.trial_used ? "استخدمت تجربتك المجانية من قبل." : "عرض التجربة المجانية غير متاح حاليًا."} تفعيل الدفع للاشتراكات المدفوعة قيد التحقق لدى مزود الدفع؛ لم يبدأ أي اشتراك أو تجديد تلقائي.</p>}
