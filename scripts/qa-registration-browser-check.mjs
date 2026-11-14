@@ -6,9 +6,8 @@ const browser = await chromium.launch({ headless: true, ...(process.platform ===
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
   page.setDefaultTimeout(60000);
-  await page.goto(base + "/login");
+  await page.goto(base + "/login?register=1");
   await page.waitForLoadState("networkidle");
-  await page.getByRole("button", { name: "جديد هنا؟ أنشئ حسابك", exact: true }).click();
   const password = page.locator("#auth-password");
   const confirmation = page.locator("#auth-password-confirmation");
   const submit = page.getByRole("button", { name: "إنشاء حساب", exact: true });
