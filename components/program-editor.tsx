@@ -571,7 +571,7 @@ export function ProgramEditor({
             {plan.days.some((item, index) => index !== day && dayNameKey(item.name) === dayNameKey(active.name)) && <p role="alert" className="field-error">{tr("اسم اليوم مكرر؛ اختر اسمًا يميزه عن بقية الأيام.")}</p>}
             <button
               type="button"
-              className="btn-secondary text-red-700"
+              className="btn-secondary text-danger"
               disabled={plan.days.length === 1}
               onClick={() => removeDay(day)}
             >
@@ -605,7 +605,7 @@ export function ProgramEditor({
                   </div>
                 ) : null}
                 <div className="exercise-row-heading">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-xs font-bold text-teal">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface text-xs font-bold text-teal">
                     {i + 1}
                   </span>
                   <input
@@ -639,7 +639,7 @@ export function ProgramEditor({
                   <button
                     type="button"
                     aria-label={tr("حذف التمرين {0}", String(i + 1))}
-                    className="text-muted hover:text-red-600"
+                    className="text-muted hover:text-danger"
                     onClick={() => {
                       const previous={plan:structuredClone(plan),day};
                       edit((c) => ({
@@ -710,7 +710,7 @@ export function ProgramEditor({
                       />
                       <button
                         type="button"
-                        className="mt-2 inline-flex items-center gap-1 text-xs text-red-700"
+                        className="mt-2 inline-flex items-center gap-1 text-xs text-danger"
                         onClick={() =>
                           edit((c) => ({
                             ...c,
@@ -837,7 +837,7 @@ export function ProgramEditor({
           </section>
         </div>
       )}
-      <div className="program-savebar flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white/95 p-4 shadow-lg">
+      <div className="program-savebar flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-surface/95 p-4 shadow-lg">
         <p className="max-w-md text-xs text-muted">
           {/* Autosave runs 1.2s after the last edit; the state is said out loud
               so nobody has to guess whether their work is safe. */}
@@ -967,7 +967,7 @@ export function ProgramEditor({
         </section>
       )}
       {plan.days.some((d) => !d.exercises.length) && (
-        <p className="text-sm text-amber-800" role="status">
+        <p className="text-sm text-warning" role="status">
           {tr("فيه يوم بدون تمارين. المسودة تُحفظ عادي، لكن النشر يحتاج تمرينًا واحدًا على الأقل في كل يوم أو حذف اليوم الفاضي.")}
         </p>
       )}
@@ -994,7 +994,7 @@ export function ProgramEditor({
         }}>
           <label>{tr("اسم اليوم الجديد")}<input className="field mt-2" value={repeatName} maxLength={100} required onChange={event=>{setRepeatName(event.target.value);setRepeatError("");}}/></label>
           <label>{tr("موعد الحصة الجديدة")}<select className="field mt-2" aria-label={tr("موعد الحصة الجديدة")} value={repeatWeekday} onChange={event=>setRepeatWeekday(event.target.value)}><option value="">{tr("بدون يوم محدد")}</option>{["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"].map((name,index)=><option key={index} value={index}>{tr(name)}</option>)}</select></label>
-          {repeatError && <p role="alert" className="text-sm text-red-700">{repeatError}</p>}
+          {repeatError && <p role="alert" className="text-sm text-danger">{repeatError}</p>}
           <div className="flex gap-2"><button type="submit" className="btn">{tr("إضافة النسخة للجدول")}</button><button type="button" className="btn-secondary" onClick={()=>setRepeatSource(null)}>{tr("إلغاء")}</button></div>
         </form>
       </div></div>}

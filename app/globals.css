@@ -26,6 +26,13 @@
   --ui-shadow-float:0 24px 60px rgb(0 0 0 / .6), 0 2px 6px rgb(0 0 0 / .4);
 }
 @theme {
+  --color-danger: var(--ui-danger-text);
+  --color-danger-surface: var(--ui-danger-surface);
+  --color-warning: var(--ui-warning-text);
+  --color-warning-surface: var(--ui-warning-surface);
+  --color-surface: var(--ui-surface);
+  --color-photo-overlay: #000000;
+  --color-on-overlay: #ffffff;
   --color-ink: var(--ui-text-primary);
   --color-muted: var(--ui-text-muted);
   --color-line: var(--ui-line);

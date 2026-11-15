@@ -44,7 +44,7 @@ export function ManagementButton({
         {children}
       </button>
       {error && (
-        <span role="alert" className="block text-xs text-red-700 mt-2">
+        <span role="alert" className="block text-xs text-danger mt-2">
           {tr(error)}
         </span>
       )}

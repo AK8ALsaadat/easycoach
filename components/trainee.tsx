@@ -51,7 +51,6 @@ const forgetDevice = () => {
 };
 
 function TraineeHeader({ name }: { name: string }) {
-  const billing = useBillingEnabled();
   const { t: tr } = useLocale();
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -109,7 +108,6 @@ function TraineeHeader({ name }: { name: string }) {
  * the coach tab and the awaiting-review list both count.
  */
 function WeeklyReviewStart({ clientId, records }: { clientId: string; records: CoachingRecord[] }) {
-  const billing = useBillingEnabled();
   const { t: tr } = useLocale();
   const today = riyadhToday(), weekStart = addDays(today, -6);
   const mine = records.filter((record) => record.client_id === clientId && record.entry_date >= weekStart);
@@ -138,7 +136,6 @@ function WeeklyReviewStart({ clientId, records }: { clientId: string; records: C
 
 const sections = ["today", "training", "nutrition", "client-management-hub"] as const;
 function BottomNav() {
-  const billing = useBillingEnabled();
   const { t: tr } = useLocale();
   const [active, setActive] = useState<string>("today");
   const [hubTab, setHubTab] = useState<"progress" | "messages">("progress");

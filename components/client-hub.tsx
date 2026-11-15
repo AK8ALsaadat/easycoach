@@ -1379,7 +1379,7 @@ function RecordForm({
         {kind === "message" ? tr("إرسال") : <>{tr("حفظ")} {tr(labels[kind])}</>}
       </button>
       {localError && (
-        <p role="alert" className="text-red-700 mt-3 text-sm">
+        <p role="alert" className="text-danger mt-3 text-sm">
           {localError}
         </p>
       )}

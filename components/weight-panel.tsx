@@ -186,7 +186,7 @@ export function WeightPanel({
         </form>
       ) : null}
       {error ? (
-        <p role="alert" className="mt-3 text-sm text-red-700">
+        <p role="alert" className="mt-3 text-sm text-danger">
           {tr(error)}
         </p>
       ) : null}

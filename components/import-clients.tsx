@@ -373,7 +373,7 @@ export function ImportClients({
                           </p>
                         )}
                         {row.errors.length ? (
-                          <span className="text-red-700">
+                          <span className="text-danger">
                             {row.errors.join("؛ ")}
                           </span>
                         ) : row.existing && row.category === "clients" ? (
@@ -386,7 +386,7 @@ export function ImportClients({
                           tr("صالح")
                         )}
                         {row.warnings.length > 0 && (
-                          <p className="text-xs text-amber-800">
+                          <p className="text-xs text-warning">
                             {row.warnings.join("؛ ")}
                           </p>
                         )}
@@ -422,7 +422,7 @@ export function ImportClients({
               </button>
             </div>
           </div>
-          <div className="space-y-3 rounded-xl border bg-white p-4">
+          <div className="space-y-3 rounded-xl border bg-surface p-4">
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"

@@ -309,7 +309,7 @@ export function CoachToday({
                     </p>
                   </div>
                   {urgent ? (
-                    <span className="badge bg-red-50 text-red-700">
+                    <span className="badge bg-danger-surface text-danger">
                       {tr("عاجل")}
                     </span>
                   ) : (

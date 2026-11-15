@@ -1,4 +1,5 @@
 "use client";
+import { QR_COLORS } from "@/lib/design-tokens";
 import { useLocale } from "./locale-provider";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
@@ -180,7 +181,7 @@ export function VideoUpload({
                   qr: await QRCode.toDataURL(r.url, {
                     width: 240,
                     margin: 2,
-                    color: { dark: "#151916", light: "#ffffff" },
+                    color: QR_COLORS,
                   }),
                 });
               } catch (e) {
@@ -218,7 +219,7 @@ export function VideoUpload({
         {tr("MP4 / MOV / WebM · حتى 200 MB · الفيديو يُحفظ بجودته الأصلية")}
       </p>
       {error ? (
-        <p role="alert" className="mt-2 text-sm text-red-700">
+        <p role="alert" className="mt-2 text-sm text-danger">
           {tr(error)}
         </p>
       ) : null}

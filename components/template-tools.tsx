@@ -190,7 +190,7 @@ export function TemplateTools({ data }: { data: Snapshot }) {
               />
             )}
             <button
-              className="btn-secondary text-red-700"
+              className="btn-secondary text-danger"
               disabled={busy}
               onClick={async () => {
                 if (

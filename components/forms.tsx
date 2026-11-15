@@ -109,6 +109,7 @@ export function DataForm({
                 className="field min-h-24"
                 maxLength={2000}
                 required={field.required}
+                aria-describedby={field.hint ? `${prefix}-${field.name}-hint` : undefined}
               />
             ) : field.type === "select" ? (
               <select
@@ -117,6 +118,7 @@ export function DataForm({
                 defaultValue={field.value}
                 className="field"
                 required={field.required}
+                aria-describedby={field.hint ? `${prefix}-${field.name}-hint` : undefined}
               >
                 {field.options?.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -125,12 +127,14 @@ export function DataForm({
                 ))}
               </select>
             ) : field.type === "date" ? (
-              <DateInput id={`${prefix}-${field.name}`} name={field.name} defaultValue={field.value} className="field" required={field.required}/>
+              <DateInput id={`${prefix}-${field.name}`} name={field.name} defaultValue={field.value} className="field" required={field.required} aria-describedby={field.hint ? `${prefix}-${field.name}-hint` : undefined}/>
             ) : (
               <input
                 id={`${prefix}-${field.name}`}
                 name={field.name}
-                type={field.type ?? "text"}
+                type={field.type ?? (field.name === "phone" ? "tel" : "text")}
+                pattern={field.type === "tel" || field.name === "phone" ? "(?:05\\d{8}|\\+?9665\\d{8})" : undefined}
+                title={field.type === "tel" || field.name === "phone" ? tr("أدخل رقم جوال سعودي مثل 0512345678 أو +966512345678") : undefined}
                 defaultValue={field.value}
                 className="field"
                 required={field.required}

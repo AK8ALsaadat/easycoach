@@ -510,7 +510,7 @@ function Heading({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
+    <div className="page-heading mb-7 flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1>{title}</h1>
         {text && <p className="mt-1 text-sm text-muted">{text}</p>}
@@ -1191,7 +1191,7 @@ function Library({ data, initialTab, initialTemplate }: { data: Snapshot; initia
                     {tr("آخر تعديل")} {formatDate(t.updated_at, locale)}
                   </p>
                   <div className="mt-6 flex gap-2">
-                    <button className="btn-secondary text-red-700" aria-label={tr("حذف القالب ") + t.name} disabled={Boolean(deletingTemplate)} onClick={async () => {
+                    <button className="btn-secondary text-danger" aria-label={tr("حذف القالب ") + t.name} disabled={Boolean(deletingTemplate)} onClick={async () => {
                       if (!window.confirm("حذف القالب نهائيًا؟ برامج المتدربين المستقلة وسجل التغذية سيبقيان كما هما.")) return;
                       setDeletingTemplate(t.id);
                       try { const result = await manage("template_delete", { id: t.id }); setTemplateResult(result); if (result.ok) router.refresh(); }
@@ -1409,7 +1409,7 @@ function SettingsPage({ data }: { data: Snapshot }) {
                     {r.details}
                   </p>
                   {r.kind === "deletion" ? (
-                    <p className="mb-4 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
+                    <p className="mb-4 rounded-xl bg-warning-surface p-3 text-xs text-warning">
                       {tr(
                         billing ? "سيُحذف البرنامج والاسم والإيميل والجوال والدعوات ويُلغى الوصول. تبقى أرقام الدفعات مجهّلة في السجل؛ هذه سياسة أولية تحتاج مراجعة قبل الإطلاق." : "سيُحذف البرنامج والاسم والبريد والجوال والدعوات ويُلغى الوصول.",
                       )}

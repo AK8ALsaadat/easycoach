@@ -42,7 +42,7 @@ export default async function Login({
         </div>
         <div className="my-auto w-full max-w-md self-center py-14">
           {params.error ? (
-            <p role="alert" className="mb-4 text-red-700">
+            <p role="alert" className="mb-4 text-danger">
               {params.error === "oauth"
                 ? tr("ما اكتمل الدخول بحساب Google. حاول مرة ثانية أو استخدم الإيميل.")
                 : tr("تعذر تأكيد الحساب. جرّب رابطًا جديدًا أو سجّل الدخول.")}

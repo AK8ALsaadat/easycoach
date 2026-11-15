@@ -130,7 +130,7 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
             {busy ? tr("نفتح جدولك…") : tr("افتح جدولي")}
           </button>
           {error ? (
-            <p role="alert" className="mt-4 text-sm text-red-700">
+            <p role="alert" className="mt-4 text-sm text-danger">
               {tr(error)}
             </p>
           ) : null}
@@ -189,7 +189,7 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
           </div>
         </div>
         {error ? (
-          <p role="alert" className="my-4 text-red-700">
+          <p role="alert" className="my-4 text-danger">
             {tr(error)}
           </p>
         ) : null}

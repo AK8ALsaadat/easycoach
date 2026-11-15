@@ -499,8 +499,8 @@ function ProgressPhotosPanel({
         {photoTimeline.length > 5 && <nav className="mt-3 flex flex-wrap items-center gap-3" aria-label={tr("صفحات سجل الصور")}><button type="button" className="btn-secondary" disabled={visibleTimelinePage === 0} onClick={() => setTimelinePage(visibleTimelinePage - 1)}>{tr("السابق")}</button><span className="text-xs">{visibleTimelinePage + 1} / {Math.ceil(photoTimeline.length / 5)}</span><button type="button" className="btn-secondary" disabled={(visibleTimelinePage + 1) * 5 >= photoTimeline.length} onClick={() => setTimelinePage(visibleTimelinePage + 1)}>{tr("التالي")}</button></nav>}
       </section>
 
-      {zoom && <div ref={zoomDialog} tabIndex={-1} className="fixed inset-0 z-50 grid place-items-center bg-black/90 p-3" role="dialog" aria-modal="true" aria-label={tr("عرض صورة التقدم")} onClick={() => setZoom(null)}>
-        <button type="button" className="absolute end-4 top-4 rounded-full bg-white/15 p-3 text-white" aria-label={tr("إغلاق")} onClick={() => setZoom(null)}><X size={22} /></button>
+      {zoom && <div ref={zoomDialog} tabIndex={-1} className="fixed inset-0 z-50 grid place-items-center bg-photo-overlay/90 p-3" role="dialog" aria-modal="true" aria-label={tr("عرض صورة التقدم")} onClick={() => setZoom(null)}>
+        <button type="button" className="absolute end-4 top-4 rounded-full bg-on-overlay/15 p-3 text-on-overlay" aria-label={tr("إغلاق")} onClick={() => setZoom(null)}><X size={22} /></button>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={zoom} alt={tr("صورة تقدم محفوظة") + " · " + labelFor(compareAngle, tr)} className="max-h-[92dvh] max-w-[96vw] object-contain" onClick={(event) => event.stopPropagation()} />
       </div>}

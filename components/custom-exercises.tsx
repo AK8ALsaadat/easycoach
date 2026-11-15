@@ -118,7 +118,7 @@ export function CustomExercises({ data }: { data: Snapshot }) {
                   </button>
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 text-xs text-red-700"
+                    className="inline-flex items-center gap-1 text-xs text-danger"
                     disabled={busy}
                     onClick={() => setRemoving(exercise.id)}
                   >
@@ -197,7 +197,7 @@ export function CustomExercises({ data }: { data: Snapshot }) {
                 <ExerciseVideo src={"/api/media/" + mediaId} label={tr("الفيديو المرفوع")} />
                 <button
                   type="button"
-                  className="mt-2 inline-flex items-center gap-1 text-xs text-red-700"
+                  className="mt-2 inline-flex items-center gap-1 text-xs text-danger"
                   onClick={() => setMediaId(null)}
                 >
                   <X size={14} />

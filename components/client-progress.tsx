@@ -246,7 +246,7 @@ export function PortalControl({
         </p>
       ) : null}
       {result?.error ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {result.error}
         </p>
       ) : null}
