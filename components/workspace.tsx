@@ -53,6 +53,7 @@ import type { PlatformState } from "@/lib/platform/plans";
 import { ActionButton, DataForm, Notice, type Field } from "./forms";
 import { ClientProgress, PortalControl } from "./client-progress";
 import { ClientRoster } from "./client-roster";
+import { StarterPrograms } from "./starter-programs";
 import { ClientOverview } from "./client-overview";
 import { NutritionTargetEditor } from "./nutrition-target-editor";
 import { PhoneLink } from "./phone-link";
@@ -1139,6 +1140,7 @@ function Library({ data, initialTab, initialTemplate }: { data: Snapshot; initia
         hidden={tab !== "templates"}
       >
         <VisitedPanel active={tab === "templates"}>
+        {!editor && !initialTemplate && <StarterPrograms onChoose={createTemplate} />}
         <TemplateTools data={data} />
         <Notice result={templateResult} />
         {editor || Boolean(initialTemplate && activeTemplate) ? (

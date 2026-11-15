@@ -78,7 +78,7 @@ export function InteractiveLineChart({
   const line = sorted
     .map((point) => `${x(point.date)},${y(point.value)}`)
     .join(" ");
-  const index = activeIndex ?? sorted.length - 1;
+  const index = Math.min(sorted.length - 1, Math.max(0, activeIndex ?? sorted.length - 1));
   const active = sorted[index],
     previous = sorted[index - 1];
   const shortDate = (day: string) =>

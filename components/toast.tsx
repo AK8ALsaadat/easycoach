@@ -21,6 +21,7 @@ export function ToastHost() {
   const [toast, setToast] = useState<Toast | null>(null);
   const [running, setRunning] = useState(false);
   const timer = useRef<number | undefined>(undefined);
+  const actionPending = useRef(false);
   useEffect(() => {
     const display = (next: Toast) => {
       const remaining = next.until - Date.now();
@@ -49,7 +50,7 @@ export function ToastHost() {
   };
   if (!toast) return null;
   return (
-    <div className={`app-toast ${toast.tone === "error" ? "app-toast-error" : ""}`} role={toast.tone === "error" ? "alert" : "status"} aria-live="polite">
+    <div className={`app-toast ${toast.tone === "error" ? "app-toast-error" : ""}`} role={toast.tone === "error" ? "alert" : "status"} aria-live={toast.tone === "error" ? "assertive" : "polite"} aria-atomic="true">
       <p>{tr(toast.message)}</p>
       {toast.action && (
         <button
@@ -57,13 +58,18 @@ export function ToastHost() {
           className="app-toast-action"
           disabled={running}
           onClick={async () => {
+            if (actionPending.current) return;
+            actionPending.current = true;
             setRunning(true);
             window.clearTimeout(timer.current);
             try {
               await toast.action!.run();
+              close(toast.id);
+            } catch {
+              if (latest?.id === toast.id) showToast({ message: "لم يكتمل الإجراء. أعد المحاولة.", tone: "error", action: { label: "إعادة المحاولة", run: toast.action!.run }, duration: 10000 });
             } finally {
+              actionPending.current = false;
               setRunning(false);
-              close();
             }
           }}
         >

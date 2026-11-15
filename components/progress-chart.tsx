@@ -3,7 +3,8 @@ import { DateInput } from "./date-input";
 import { useLocale } from "./locale-provider";
 import { formatNumber, formatSigned } from "@/lib/plural";
 import { useState } from "react";
-import { addDays, riyadhToday } from "@/lib/dates";
+import { riyadhToday } from "@/lib/dates";
+import { progressRange } from "@/lib/progress-range";
 import { InteractiveLineChart } from "./interactive-line-chart";
 
 export function ProgressChart({
@@ -24,13 +25,7 @@ export function ProgressChart({
   const [range, setRange] = useState(defaultRange),
     [from, setFrom] = useState(""),
     [to, setTo] = useState(riyadhToday());
-  const earliest = points.filter(point=>point.date<=to && Number.isFinite(point.value)).map(point=>point.date).sort()[0] ?? to;
-  const lower =
-    from ||
-    (range === "all" ? earliest : addDays(riyadhToday(), -Number(range)));
-  const selected = points
-    .filter((point) => point.date >= lower && point.date <= to && Number.isFinite(point.value))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const { lower, selected } = progressRange(points, range, from, to);
   const first = selected[0],
     last = selected.at(-1);
   return (
@@ -120,6 +115,7 @@ export function ProgressChart({
               "لا توجد سجلات ضمن الفترة المختارة. غيّر الفترة أو أضف أول قياس.",
             )}
           </p>
+          {points.length > 0 && <button type="button" className="btn-secondary mt-4" onClick={() => { setRange("all"); setFrom(""); setTo(riyadhToday()); }}>{tr("عرض كامل السجل")}</button>}
         </div>
       )}
     </section>
