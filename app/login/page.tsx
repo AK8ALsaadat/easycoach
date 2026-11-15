@@ -6,7 +6,7 @@ import { Brand } from "@/components/brand";
 import { AuthForm } from "@/components/auth-form";
 import { actor, localMode, safeNext, snapshot } from "@/lib/server";
 import { SignedInNotice } from "@/components/signed-in-notice";
-import { Check, Layers3, Users, Wallet } from "lucide-react";
+import { ProductPreview } from "@/components/product-preview";
 import { LegalLinks } from "@/components/legal-links";
 export default async function Login({
   searchParams,
@@ -37,20 +37,9 @@ export default async function Login({
       <section className="auth-panel flex flex-col px-6 py-8 sm:px-16 lg:px-24">
         <div className="auth-topbar flex justify-between gap-3">
           <Brand />
-          <div className="flex flex-wrap items-center gap-3"><Link className="auth-pricing-link" href="/pricing">الباقات والأسعار</Link><LanguageSwitch /></div>
+          <div className="flex flex-wrap items-center gap-3"><Link className="auth-pricing-link" href="/pricing">الباقات</Link><LanguageSwitch /></div>
         </div>
         <div className="my-auto w-full max-w-md self-center py-14">
-          <p className="mb-3 text-sm font-medium text-teal">
-            {tr("مرحبًا بك في إيزي كوتش")}
-          </p>
-          <h1 className="auth-title">
-            {tr("خطط أقوى.")}
-            <br />
-            {tr("نتائج تُتابَع.")}
-          </h1>
-          <p className="mt-3 mb-8 text-muted">
-            {tr("كل متدربيك وبرامجهم واشتراكاتهم، بوضوح وفي مكان واحد.")}
-          </p>
           {params.error ? (
             <p role="alert" className="mb-4 text-red-700">
               {params.error === "oauth"
@@ -72,24 +61,7 @@ export default async function Login({
           <br />
           <span className="auth-aside-accent">{tr("وكل متدرب له خطته.")}</span>
         </h2>
-        <div className="auth-features">
-          {[
-            [Users, "الهدف والوزن ومسار التقدم"],
-            [Layers3, "876 حركة. جدولك بتفاصيله."],
-            [Wallet, "الوجبات والباقات والدفعات"],
-          ].map(([Icon, text], i) => {
-            const I = Icon as typeof Check;
-            return (
-              <div
-                key={i}
-                className="auth-feature"
-              >
-                <I className="auth-feature-icon" size={20} />
-                <span>{tr(String(text))}</span>
-              </div>
-            );
-          })}
-        </div>
+        <ProductPreview compact/>
         <p className="auth-aside-note">
           {tr("ويب عربي · توقيت الرياض · خصوصية من البداية")}
         </p>

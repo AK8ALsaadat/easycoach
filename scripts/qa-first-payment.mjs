@@ -68,7 +68,6 @@ try {
   await page.reload();await page.getByRole("heading", { name: "الاشتراك نشط", exact: true }).waitFor();
   const trial = await login("trial@example.test");
   await trial.goto(base + "/subscription/confirm?plan=pro");
-  await trial.locator('.trial-confirm-form [name="mobile"]').fill("0501234567");
   await trial.locator('.trial-confirm-form [name="terms_acceptance"]').check();
   await trial.getByRole("button", { name: "ابدأ 14 يومًا مجانًا الآن", exact: true }).click();
   await trial.waitForURL("**/coach?trial=started");

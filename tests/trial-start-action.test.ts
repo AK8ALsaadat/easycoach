@@ -16,13 +16,13 @@ function form(accepted = true) {
 }
 beforeEach(() => { vi.clearAllMocks(); state.actor.mockResolvedValue({ id: "owner" }); state.start.mockReset().mockResolvedValue({ status: "trialing" }); });
 it("returns missing acceptance to the same plan's review and never starts a trial", async () => {
-  await expect(startTrialAction(form(false))).rejects.toThrow("redirect:/subscription/confirm?plan=starter&error=terms");
+  await expect(startTrialAction(form(false))).rejects.toThrow("redirect:/start?plan=starter&error=terms");
   expect(state.start).not.toHaveBeenCalled();
 });
 it("shows a visible review error on a failed trial request instead of navigating silently to the dashboard", async () => {
   vi.spyOn(console, "error").mockImplementation(() => {});
   state.start.mockRejectedValue(Object.assign(Error("private database detail"), { code: "XX000" }));
-  await expect(startTrialAction(form())).rejects.toThrow("redirect:/subscription/confirm?plan=starter&error=start");
+  await expect(startTrialAction(form())).rejects.toThrow("redirect:/start?plan=starter&error=start");
   expect(state.revalidate).not.toHaveBeenCalled();
 });
 it("starts the selected plan once and opens the successful workspace", async () => {

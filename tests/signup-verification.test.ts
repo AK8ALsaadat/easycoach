@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { normalizeEmailOtp, validEmailOtp } from "@/lib/email-otp";
 const state = vi.hoisted(() => ({
   pending: null as null | { email: string; next: string; resendAt: number; expiresAt: number },
-  verify: vi.fn(), resend: vi.fn(), signOut: vi.fn(), actor: vi.fn(), snapshot: vi.fn(), write: vi.fn(), clear: vi.fn(),
+  verify: vi.fn(), resend: vi.fn(), signOut: vi.fn(), actor: vi.fn(), snapshot: vi.fn(), write: vi.fn(), clear: vi.fn(), enroll: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/server", () => ({
@@ -13,6 +13,7 @@ vi.mock("@/lib/server", () => ({
 }));
 vi.mock("next/navigation", () => ({ redirect: (url: string) => { throw new Error(`redirect:${url}`); } }));
 vi.mock("@/lib/pending-signup", () => ({ readPendingSignup: async () => state.pending, writePendingSignup: state.write, clearPendingSignup: state.clear }));
+vi.mock("@/lib/platform/onboarding", () => ({completeSignupTrial:state.enroll}));
 import { resendSignupCode, signOutForSignupVerification, verifySignupCode } from "@/app/signup-verification-actions";
 
 const codeForm = (code: string) => { const form = new FormData(); form.set("code", code); return form; };
@@ -24,6 +25,7 @@ beforeEach(() => {
   state.signOut.mockReset().mockResolvedValue({ error: null });
   state.actor.mockReset().mockResolvedValue({ id: "test", email: "otp@example.test" });
   state.snapshot.mockReset().mockResolvedValue({ profile: { role: "coach" } });
+  state.enroll.mockReset().mockResolvedValue("/coach?trial=started");
 });
 
 describe("explicit account change for signup verification", () => {
@@ -64,6 +66,11 @@ it("verifies the cookie's email with type email, then requires a verified server
 it.each(["starter", "pro", "business"])("preserves the selected %s plan after email verification", async plan => {
   state.pending!.next = `/start?plan=${plan}`;
   expect(await verifySignupCode(codeForm("001234"))).toMatchObject({ ok: true, url: `/start?plan=${plan}` });
+});
+it("opens the workspace with its trial after a new coach explicitly requested it at registration",async()=>{
+  state.verify.mockResolvedValue({data:{session:{access_token:"synthetic"},user:{email:"otp@example.test",email_confirmed_at:"verified",user_metadata:{ec_signup_trial:true}}},error:null});
+  expect(await verifySignupCode(codeForm("001234"))).toMatchObject({ok:true,url:"/coach?trial=started"});
+  expect(state.enroll).toHaveBeenCalledExactlyOnceWith("coach","/coach",true);
 });
 
 it("refuses to replace a different account's live session with the new one", async () => {

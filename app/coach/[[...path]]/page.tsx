@@ -57,7 +57,7 @@ export default async function CoachPage({
   };
   return (
     <>
-    {!path[1]&&<section dir="rtl" className="server-browse" aria-label="تصفح بيانات الخادم">
+    {!path[1]&&(section==="clients"||section==="library"||data.page_info?.next_client||search.q)&&<section dir="rtl" className="server-browse" aria-label="تصفح بيانات الخادم">
       <p>إجمالي النشطين: {data.page_info?.total_active_clients??data.clients.filter(c=>!c.archived).length} · مؤشرات اللوحة تخص المتدربين المحملين في هذه الصفحة.</p>
       <form className="server-browse-search" action={`/coach/${section}`}><input className="field" name="q" defaultValue={search.q} placeholder="بحث في جميع المتدربين والقوالب" maxLength={120}/><button className="btn-secondary">بحث</button></form>
       {data.page_info?.next_client&&<Link className="btn" href={pageLink("after",data.page_info.next_client)}>المتدربون التاليون</Link>}
@@ -65,16 +65,11 @@ export default async function CoachPage({
       {section==="library"&&data.page_info?.next_exercise&&<Link className="btn" href={pageLink("exercise_after",data.page_info.next_exercise)}>التمارين الخاصة التالية</Link>}
       {(search.after||search.template_after||search.exercise_after||search.q)&&<Link className="btn" href={`/coach/${section}`}>الصفحة الأولى</Link>}
     </section>}
-    {search.trial === "started" && platform?.status === "trialing" && platform.trial_end && (
-      <div className="trial-banner" role="status">
-        <strong>بدأت تجربتك المجانية</strong>
-        <p>كل مزايا باقة الأعمال مفتوحة لك حتى {new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { dateStyle: "long", timeZone: "Asia/Riyadh" }).format(new Date(platform.trial_end))}. لا بطاقة ولا خصم؛ تفاصيل اشتراكك في <Link href="/subscription">صفحة الاشتراك</Link>.</p>
-      </div>
-    )}
     {platform?.subscription_state === "TRIAL_ENDING" && <div className="trial-banner" role="status"><strong>تجربتك تنتهي خلال 3 أيام أو أقل</strong><p>ستظهر فاتورة الفترة عند انتهاء التجربة. <Link href="/subscription">راجع اشتراكك وتذكيراته</Link>.</p></div>}
     <Workspace
       data={data}
       platform={platform}
+      trialStarted={search.trial === "started"}
       section={section}
       tutorialDismissed={tutorialDismissed}
       clientId={path[1]}

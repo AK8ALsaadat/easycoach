@@ -68,12 +68,11 @@ function PlanAction({ code, quote, state, signedIn, offer, context, isCurrent }:
   if (isCurrent) return <Link className="btn-secondary w-full" href="/subscription">إدارة اشتراكي</Link>;
   if (!signedIn) {
     return offer.active
-      ? <Link className="btn w-full" href={`/login?register=1&next=${encodeURIComponent(`/start?plan=${code}`)}`}>{quote?.provider_ready && quote.total_halalas !== null ? `أنشئ حسابك وابدأ ${offer.days} يومًا مجانًا` : "أنشئ حسابك وراجع الباقة"}</Link>
+      ? <Link className="btn w-full" href={`/login?register=1&next=${encodeURIComponent(`/start?plan=${code}`)}`}>أنشئ حسابك وابدأ {offer.days} يومًا مجانًا</Link>
       : <Link className="btn-secondary w-full" href={`/subscription/confirm?plan=${code}`}>تفاصيل الباقة</Link>;
   }
   if (quote?.trial_available) {
-    if (!quote.provider_ready || quote.total_halalas === null) return <><button className="btn w-full" disabled>ابدأ التجربة</button><p className="plan-note">التفعيل معطل لحين تأكيد جاهزية وسيلة الدفع</p><Link href={`/subscription/confirm?plan=${code}`} className="subscription-compare">مراجعة تفاصيل الباقة</Link></>;
-    return <Link className="btn w-full" href={`/subscription/confirm?plan=${code}`}>ابدأ {offer.days} يومًا مجانًا</Link>;
+    return <Link className="btn w-full" href={`/start?plan=${code}`}>ابدأ {offer.days} يومًا مجانًا</Link>;
   }
   if (state && (state.status === "trialing" || state.status === "active")) return <p className="plan-note">يمكنك تغيير باقتك من صفحة الاشتراك بعد نهاية الفترة الحالية.</p>;
   return <Link className="btn-secondary w-full" href={`/subscription/confirm?plan=${code}`}>تفاصيل الباقة</Link>;

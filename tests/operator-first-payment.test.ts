@@ -36,10 +36,11 @@ afterAll(async () => { vi.unstubAllEnvs(); await fx?.db.close(); });
 const request = (total = 57385) => new Request("https://easycoach.test/api/payments/paylink/create-invoice", { method: "POST", headers: { origin: "https://easycoach.test", host: "easycoach.test", "Content-Type": "application/json" }, body: JSON.stringify({ plan: "pro", total, mobile: "0501234567", terms: POLICY_VERSION }) });
 const options = async (total: number | null) => renderToStaticMarkup(createElement(SubscriptionPurchaseOptions, { plan: "pro", total, trialAvailable: true, trialDays: 14, canPay: true, readiness: await paymentReadiness() }));
 
-it("hides payment and trial submit buttons while the operator tax registration is missing", async () => {
+it("keeps the free trial available but blocks paid checkout while tax registration is missing", async () => {
   const html = await options(null);
   expect(html).toContain("لم تُحدد إعدادات التسجيل الضريبي للمشغّل");
-  expect(html).not.toContain("<button");
+  expect(html).toContain("ابدأ التجربة");
+  expect(html).not.toContain("ادفع الفترة الأولى");
   expect((await createInvoice(request())).status).toBe(503);
   expect(mock.create).not.toHaveBeenCalled();
   expect((await fx.db.query<{ tax_configured: boolean }>("select tax_configured from public.ec_config")).rows[0].tax_configured).toBe(false);
@@ -51,10 +52,10 @@ it("requires a real configured registration number and computes VAT using intege
   expect(await fx.call(coach, "ec_quote", { plan_code: "pro" })).toMatchObject({ net_halalas: 49900, vat_halalas: 7485, total_halalas: 57385 });
   await expect(fx.call(coach, "ec_billing_operator_config", { registration_number: "300000000000003", vat_basis_points: 1500, approve_provider: true })).rejects.toThrow(/permission denied/);
 });
-it("hides both submit buttons when PAYLINK_VERIFIED is false and rejects direct API calls", async () => {
+it("keeps the free trial available when Paylink is unverified and rejects paid API calls", async () => {
   vi.stubEnv("PAYLINK_VERIFIED", "false");
   const html = await options(57385);
-  expect(html).toContain("Paylink غير معتمد"); expect(html).not.toContain("<button");
+  expect(html).toContain("Paylink غير معتمد"); expect(html).toContain("ابدأ التجربة"); expect(html).not.toContain("ادفع الفترة الأولى");
   expect((await createInvoice(request())).status).toBe(503);
   expect(mock.create).not.toHaveBeenCalled();
   vi.stubEnv("PAYLINK_VERIFIED", "true");

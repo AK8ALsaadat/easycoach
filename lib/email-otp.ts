@@ -17,6 +17,6 @@ export function signupDestination(role: string | undefined, next: string) {
   // next is always passed through safeNext on the server before this function.
   if (next.startsWith("/invite/")) return next;
   if (role !== "coach") return "/me";
-  // A new coach chooses a plan (free trial) right after verifying the email.
+  // Recovery for older registrations without explicit automatic-trial intent.
   return next === "/coach" ? "/start" : next;
 }

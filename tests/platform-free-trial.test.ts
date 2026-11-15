@@ -5,11 +5,10 @@ let fx: Awaited<ReturnType<typeof fixtureDatabase>>;
 beforeAll(async()=>{fx=await fixtureDatabase({platformManaged:true});});
 afterAll(async()=>{await fx?.db.close();});
 const start=(owner=coach,version:string|null=POLICY_VERSION)=>fx.db.query("select public.ec_billing_start($1,'pro','0501234567','Fictional owner',$2)",[owner,version]);
-it("leaves Free intact while provider and tax are not ready",async()=>{
+it("leaves Free intact until explicit trial acceptance, independently of provider and tax setup",async()=>{
  expect(await fx.call(coach,"ec_subscription")).toMatchObject({effective_plan:"free",subscription_state:"NOT_STARTED"});
- await expect(start()).rejects.toThrow("provider_not_ready");
+ await expect(start(coach,"old")).rejects.toThrow("terms_required");
  await fx.db.exec("update public.ec_config set provider_verified=true");
- await expect(start()).rejects.toThrow("tax_not_configured");
  await fx.db.exec("update public.ec_config set tax_mode='not_registered'");
 });
 it("requires current consent and an open campaign, then records acceptance atomically",async()=>{

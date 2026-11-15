@@ -49,7 +49,7 @@ export async function startTrialAction(form: FormData) {
   const back = isPaidPlan(plan) ? `/start?plan=${plan}` : "/start";
   if (!isPaidPlan(plan)) redirect("/start?error=plan");
   if (!(await actor())) redirect(`/login?register=1&next=${encodeURIComponent(back)}`);
-  if (form.get("terms_acceptance") !== POLICY_VERSION) redirect(`/subscription/confirm?plan=${plan}&error=terms`);
+  if (form.get("terms_acceptance") !== POLICY_VERSION) redirect(`/start?plan=${plan}&error=terms`);
   let failed = false;
   try {
     await startPlatformTrial(plan, String(form.get("mobile") ?? ""));
@@ -58,7 +58,7 @@ export async function startTrialAction(form: FormData) {
     failed = true;
     console.error("platform.trial.start_failed", { code: (error as { code?: string })?.code ?? "unknown" });
   }
-  if (failed) redirect(`/subscription/confirm?plan=${plan}&error=start`);
+  if (failed) redirect(`/start?plan=${plan}&error=start`);
   revalidatePath("/", "layout");
   redirect("/coach?trial=started");
 }

@@ -138,7 +138,7 @@ export function CoachToday({
       <div className="dashboard-heading">
         <div>
           <p className="eyebrow">{tr("لوحة التحكم")}</p>
-          <h1>{tr("نظرة عامة")}</h1>
+          <h1>{tr("يوم جديد. أثر أكبر.")}</h1>
           <p className="mt-2 text-sm text-muted">
             {tr(
               "أهلًا {0}، هذه آخر مستجدات متدربيك وأعمالك.",
@@ -189,7 +189,7 @@ export function CoachToday({
           </div>
         </section>
       )}
-      <div className="stat-strip" aria-label={tr("ملخص المتدربين")}>
+      {clients.length > 0 ? <><div className="stat-strip" aria-label={tr("ملخص المتدربين")}>
         {[
           {
             label: "قائمة المتدربين",
@@ -561,7 +561,10 @@ export function CoachToday({
           {tr("إدارة جميع المتدربين")}
           <ArrowLeft size={14} />
         </Link>
-      </section>
+      </section></> : <section className="workspace-first-actions" aria-label={tr("جهّز مساحتك")}>
+        <Link href="/coach/library"><span><Dumbbell size={24}/></span><div><h2>{tr("برنامجك الأول يبدأ بفكرة.")}</h2><p>{tr("استكشف مكتبة التمارين وجهّز قالبك الخاص، حتى قبل إضافة المتدربين.")}</p><strong>{tr("افتح مكتبة التدريب")}<ArrowLeft size={16}/></strong></div></Link>
+        <Link href="/coach/clients"><span><Users size={24}/></span><div><h2>{tr("عندك متدربون من قبل؟")}</h2><p>{tr("انقل بياناتهم من ملف Excel أو CSV، وابدأ متابعتهم من مكان واحد.")}</p><strong>{tr("إدارة واستيراد المتدربين")}<ArrowLeft size={16}/></strong></div></Link>
+      </section>}
     </div>
   );
 }

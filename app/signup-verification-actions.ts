@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { actor, localMode, safeNext, snapshot, supabase } from "@/lib/server";
 import { clearPendingSignup, readPendingSignup, writePendingSignup } from "@/lib/pending-signup";
 import { EMAIL_OTP_LENGTH, EMAIL_RESEND_SECONDS, normalizeEmailOtp, signupDestination, validEmailOtp } from "@/lib/email-otp";
+import { completeSignupTrial } from "@/lib/platform/onboarding";
 
 export type VerificationResult = { ok: boolean; message: string; url?: string; retryAt?: number };
 
@@ -37,7 +38,9 @@ export async function verifySignupCode(form: FormData): Promise<VerificationResu
     const user = await actor();
     if (!user || user.email.toLowerCase() !== pending.email) return { ok: false, message: "تعذر تثبيت الجلسة. أعد المحاولة أو سجّل الدخول بعد تأكيد البريد." };
     const state = await snapshot(); // init_profile is idempotent and requires verified Auth.
-    const url = signupDestination(state.profile?.role, safeNext(pending.next));
+    const url = data.user.user_metadata?.ec_signup_trial === true
+      ? await completeSignupTrial(state.profile?.role, safeNext(pending.next), true)
+      : signupDestination(state.profile?.role, safeNext(pending.next));
     await clearPendingSignup();
     return { ok: true, message: "تم تأكيد بريدك بنجاح. ننقلك إلى حسابك…", url };
   } catch {

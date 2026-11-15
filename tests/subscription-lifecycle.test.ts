@@ -12,11 +12,9 @@ type Attempt={id:string;invoice_id:string;order_no:string;created:boolean;amount
 const prepare=(owner=coach)=>sql<Attempt>("select public.ec_billing_prepare($1,'pro',49900) as r",[owner]);
 const settle=(p:Attempt,status="Paid",amount=49900,paidAt:string|null=null,errors:unknown[]=[])=>sql<string>("select public.ec_billing_settle($1,$2,$3,$4,'SAR',$5,$6,$7::jsonb) as r",[p.id,'tx-'+p.id,p.order_no,amount,status,paidAt,JSON.stringify(errors)]);
 const trialHours=(hours:number,owner=coach)=>fx.db.query("update public.ec_accounts set trial_start=now()+($2::text||' hours')::interval-interval '336 hours',trial_end=now()+($2::text||' hours')::interval where owner_id=$1",[owner,hours]);
-it("starts at NOT_STARTED and blocks unverified provider, empty tax, wrong consent, and browser mutations",async()=>{
+it("starts at NOT_STARTED and protects ownership and browser mutations independently of paid setup",async()=>{
  expect((await state()).subscription_state).toBe("NOT_STARTED");
- await expect(start()).rejects.toThrow("provider_not_ready");
  await fx.db.exec("update public.ec_config set provider_verified=true");
- await expect(start()).rejects.toThrow("tax_not_configured");
  await fx.db.exec("update public.ec_config set tax_mode='not_registered'");
  await expect(fx.call(coach,"ec_billing_start",{owner:coach,plan_code:"pro",mobile:"0501234567",customer_name:"x",accepted_version:POLICY_VERSION})).rejects.toThrow(/permission denied/);
  await expect(fx.call(coach,"ec_start_trial_accepted",{plan_code:"pro",accepted_version:POLICY_VERSION})).rejects.toThrow(/permission denied/);

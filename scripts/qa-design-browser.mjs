@@ -62,23 +62,20 @@ try {
   await trial.page.getByText("هذه الميزة متاحة ابتداءً", { exact: false }).waitFor();
   await trial.page.goto(base + "/start?plan=pro");
   await screen(trial.page, "start-mobile");
-  assert.equal(await trial.page.locator(".plan-card").count(), 4);
+  assert.equal(await trial.page.locator(".trial-confirm-form").count(), 1);
   assert.equal(await trial.page.getByText(/2099|31 ديسمبر 2026/).count(), 0);
-  await trial.page.locator(".plan-card.is-featured").getByRole("link", { name: "ابدأ 14 يومًا مجانًا", exact: true }).click();
-  await trial.page.waitForURL("**/subscription/confirm?plan=pro");
   await screen(trial.page, "trial-review-mobile");
-  await trial.page.locator('.trial-confirm-form [name="mobile"]').fill('0501234567');
   await trial.page.locator('[name="terms_acceptance"]').check();
   await trial.page.getByRole("button", { name: "ابدأ 14 يومًا مجانًا الآن", exact: true }).click();
   await trial.page.waitForURL("**/coach?trial=started");
-  await trial.page.getByText("بدأت تجربتك المجانية", { exact: false }).first().waitFor();
+  await trial.page.getByText("تجربتك بدأت. المساحة كلها لك.", { exact: true }).waitFor();
   await trial.page.goto(base + "/subscription");
   await screen(trial.page, "trial-subscription-mobile");
   await trial.page.goto(base + "/coach/library");
   await trial.page.waitForLoadState("networkidle");
   assert.equal(await trial.page.getByText("هذه الميزة متاحة ابتداءً", { exact: false }).count(), 0);
   await trial.page.goto(base + "/start");
-  await trial.page.waitForURL("**/subscription");
+  await trial.page.waitForURL("**/coach");
   results.push("Trial: free feature gate, four plans, open offer, start, subscription status, unlocked library, no second onboarding");
   await trial.context.close();
 

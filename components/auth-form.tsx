@@ -1,234 +1,101 @@
 "use client";
 import Link from "next/link";
-import { POLICY_VERSION } from "@/lib/legal";
-import { useLocale } from "./locale-provider";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  loginAction,
-  registerAction,
-  magicLinkAction,
-  googleLoginAction,
-  type Result,
-} from "@/app/actions";
+import { ArrowLeft, Eye, EyeOff, Sparkles, Check } from "lucide-react";
+import { POLICY_VERSION } from "@/lib/legal";
+import { useLocale } from "./locale-provider";
+import { loginAction, registerAction, magicLinkAction, googleLoginAction, type Result } from "@/app/actions";
 import { Notice } from "./forms";
-import { PASSWORD_MIN_LENGTH, passwordRequirements, passwordStrength, registrationPasswordIssue } from "@/lib/password";
-function GoogleMark() {
-  return (
-    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48">
-      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
-      <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
-      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/>
-    </svg>
-  );
-}
-export function AuthForm({ next, local, google = false, initialRegister = false }: { next: string; local: boolean; google?: boolean; initialRegister?: boolean }) {
-  const { t: tr } = useLocale();
-  const router = useRouter();
-
-  const [register, setRegister] = useState(initialRegister && !local);
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<Result | null>(null);
-  const [email,setEmail]=useState(local ? "coach@example.test" : "");
-  const [password, setPassword] = useState(local ? "CoachPreview!2026" : "");
-  const [confirmation, setConfirmation] = useState("");
-  const requirements = passwordRequirements(password);
-  const strength = passwordStrength(password);
-  const formRef = useRef<HTMLFormElement>(null);
-  const submitLock = useRef(false);
-  return (
-    <div>
-      <form
-        method="post"
-        ref={formRef}
-        onSubmit={async (event) => {
-          event.preventDefault();
-          if (submitLock.current) return;
-          const form = new FormData(event.currentTarget);
-          if (register) {
-            const issue = registrationPasswordIssue(String(form.get("password") ?? ""), String(form.get("password_confirmation") ?? ""));
-            if (issue) { setResult({ ok: false, message: issue }); return; }
-          }
-          submitLock.current = true;
-          setBusy(true);
-          try {
-            const response = await (register ? registerAction : loginAction)(form);
-            setResult(response);
-            if (register && response.ok && response.url) {
-              setPassword(""); setConfirmation("");
-              router.replace(response.url);
-            }
-          } catch {
-            setResult({ ok: false, message: "تعذر الاتصال. لم تكتمل العملية؛ حاول مرة أخرى." });
-          } finally {
-            submitLock.current = false;
-            setBusy(false);
-          }
-        }}
-        className="space-y-5"
-      >
-        <input type="hidden" name="next" value={next} />
-        {register ? (
-          <>
-            <div>
-              <label htmlFor="auth-name">{tr("اسمك")}</label>
-              <input
-                className="field"
-                id="auth-name"
-                name="name"
-                required
-                minLength={2}
-                maxLength={120}
-              />
-            </div>
-            <div>
-              <label htmlFor="auth-role">{tr("نوع الحساب")}</label>
-              <select className="field" id="auth-role" name="role" defaultValue={next.startsWith("/invite/") ? "trainee" : "coach"}>
-                <option value="coach">{tr("مدرب")}</option>
-                <option value="trainee">{tr("متدرب — بدعوة من مدربي")}</option>
-              </select>
-            </div>
-          </>
-        ) : null}
-        <div>
-          <label htmlFor="auth-email">{tr("الإيميل")}</label>
-          <input
-            id="auth-email"
-            name="email"
-            className="field"
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={event=>setEmail(event.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="auth-password">{tr("كلمة المرور")}</label>
-          <input
-            id="auth-password"
-            name="password"
-            className="field"
-            type="password"
-            required
-            minLength={register ? PASSWORD_MIN_LENGTH : 8}
-            maxLength={128}
-            aria-describedby={register ? "password-rules password-strength-label" : undefined}
-            autoComplete={register ? "new-password" : "current-password"}
-            value={password}
-            onChange={event => { setPassword(event.target.value); setResult(null); }}
-          />
-        </div>
-        {register ? (
-          <>
-            <div className="space-y-2 text-sm">
-              <p id="password-strength-label" aria-live="polite">{tr("قوة كلمة المرور: {0}", tr(strength.label))}</p>
-              <div role="meter" aria-label={tr("قوة كلمة المرور")} aria-valuemin={0} aria-valuemax={4} aria-valuenow={strength.score} aria-valuetext={tr(strength.label)} className="h-2 overflow-hidden rounded-full bg-canvas">
-                <div className={`h-full transition-all ${strength.score < 2 ? "bg-red-500" : strength.score === 2 ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${strength.score * 25}%` }} />
-              </div>
-              <ul id="password-rules" className="space-y-1 text-xs text-muted">
-                {([
-                  [requirements.length, "8 أحرف على الأقل"],
-                  [requirements.uppercase, "حرف إنجليزي كبير واحد على الأقل (A–Z)"],
-                  [requirements.symbol, "رمز خاص واحد على الأقل مثل ! @ # $ %"],
-                ] as const).map(([met, label]) => <li key={label} className={met ? "text-emerald-600" : undefined}><span aria-hidden="true">{met ? "✓" : "○"} </span>{tr(label)}</li>)}
-              </ul>
-            </div>
-            <div>
-              <label htmlFor="auth-password-confirmation">{tr("تأكيد كلمة المرور")}</label>
-              <input id="auth-password-confirmation" name="password_confirmation" className="field" type="password" required minLength={PASSWORD_MIN_LENGTH} maxLength={128} autoComplete="new-password" value={confirmation} onChange={event => { setConfirmation(event.target.value); setResult(null); }} aria-invalid={Boolean(confirmation && password !== confirmation)} aria-describedby="password-match" />
-              <p id="password-match" role="status" className={`mt-2 text-xs ${password === confirmation ? "text-emerald-600" : "text-danger"}`}>
-                {confirmation ? tr(password === confirmation ? "كلمتا المرور متطابقتان" : "كلمتا المرور غير متطابقتين") : ""}
-              </p>
-            </div>
-          </>
-        ) : null}
-        {register && <label className="policy-acceptance"><input type="checkbox" name="terms_acceptance" value={POLICY_VERSION} required /><span>أوافق على <Link href="/terms" target="_blank" rel="noopener">الشروط والأحكام</Link> و<Link href="/privacy" target="_blank" rel="noopener">سياسة الخصوصية</Link>. الموافقة لا تشمل صور التقدم الاختيارية أو أي تفويض دفع.</span></label>}
-        <button disabled={busy || (register && Boolean(registrationPasswordIssue(password, confirmation)))} className="btn w-full" type="submit">
-          {busy
-            ? tr("نتحقق من بياناتك…")
-            : register
-              ? tr("إنشاء حساب")
-              : tr("الدخول إلى مساحتك")}
-        </button>
-        {!local && !register ? (
-          <button
-            type="button"
-            disabled={busy}
-            className="btn-secondary w-full"
-            onClick={async () => {
-              if (!formRef.current) return;
-              setBusy(true);
-              try {
-                setResult(await magicLinkAction(new FormData(formRef.current)));
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {tr("الدخول برابط على الإيميل")}
-          </button>
-        ) : null}
-        {google ? (
-          <>
-            <div className="auth-divider"><span>{tr("أو")}</span></div>
-            <button
-              type="button"
-              disabled={busy}
-              className="btn-secondary auth-google w-full"
-              onClick={async () => {
-                const acceptance = formRef.current?.querySelector<HTMLInputElement>('[name="terms_acceptance"]');
-                if (register && !acceptance?.checked) { acceptance?.reportValidity(); setResult({ ok: false, message: "وافق على الشروط وسياسة الخصوصية قبل إنشاء حسابك." }); return; }
-                setBusy(true);
-                setResult(null);
-                try {
-                  const role = register ? String(new FormData(formRef.current ?? undefined).get("role") ?? "") : undefined;
-                  const response = await googleLoginAction({ next, role: role || undefined });
-                  if (response.ok && response.url) window.location.assign(response.url);
-                  else { setResult(response); setBusy(false); }
-                } catch {
-                  setResult({ ok: false, message: "تعذر فتح الدخول بحساب Google" });
-                  setBusy(false);
-                }
-              }}
-            >
-              <GoogleMark />
-              {register ? tr("التسجيل بحساب Google") : tr("الدخول بحساب Google")}
-            </button>
-          </>
-        ) : null}
-        <Notice result={result} />
-      </form>
-      {!local ? (
-        <button
-          className="mt-5 text-sm text-teal"
-          onClick={() => {
-            setRegister(!register);
-            setPassword("");
-            setConfirmation("");
-            setResult(null);
-          }}
-        >
-          {register ? tr("عندك حساب؟ ادخل") : tr("جديد هنا؟ أنشئ حسابك")}
-        </button>
-      ) : (
-        <div className="mt-6 rounded-xl border border-dashed bg-canvas p-4 text-xs leading-7 text-muted">
-          <p className="font-bold text-ink">
-            {tr("حسابات اصطناعية للمعاينة فقط")}
-          </p>
-          <p dir="ltr" className="text-right">
-            coach@example.test · coach2@example.test
-          </p>
-          <p dir="ltr" className="text-right">
-            trainee@example.test
-          </p>
-          <p>
-            {tr("كلمة المرور للجميع:")} <code dir="ltr">CoachPreview!2026</code>
-          </p>
-          <p>{tr("المدرب الثاني معزول عن بيانات الأول.")}</p>
-        </div>
-      )}
+import { PASSWORD_MIN_LENGTH, registrationPasswordIssue } from "@/lib/password";
+export function AuthForm({ next, local, google = false, initialRegister = false }: {
+    next: string;
+    local: boolean;
+    google?: boolean;
+    initialRegister?: boolean;
+}) {
+    const { t: tr } = useLocale();
+    const router = useRouter();
+    const [register, setRegister] = useState(initialRegister);
+    const [role, setRole] = useState(next.startsWith("/invite/") ? "trainee" : "coach");
+    const [busy, setBusy] = useState(false), [showPassword, setShowPassword] = useState(false);
+    const [result, setResult] = useState<Result | null>(null);
+    const [email, setEmail] = useState(local ? "coach@example.test" : "");
+    const [password, setPassword] = useState(local ? "CoachPreview!2026" : "");
+    const formRef = useRef<HTMLFormElement>(null), submitLock = useRef(false);
+    const freeTrial = register && role === "coach";
+    function switchMode(value: boolean) { setRegister(value); setPassword(""); setResult(null); }
+    return <div className="auth-form-wrap">
+    <div className="auth-mode-switch" aria-label={tr("الدخول أو التسجيل")}><button type="button" aria-pressed={!register} onClick={() => switchMode(false)} disabled={busy}>{tr("تسجيل الدخول")}</button><button type="button" aria-pressed={register} onClick={() => switchMode(true)} disabled={busy}>{tr("إنشاء حساب")}</button></div>
+    <div className="auth-form-heading">
+      <p className="eyebrow">{freeTrial ? <><Sparkles size={15}/>{tr("14 يومًا مجانًا · بدون بطاقة")}</> : tr("مساحتك التدريبية")}</p>
+      <h1>{freeTrial ? tr("أول خطوة لشغل أرتب.") : register ? tr("أهلًا بك في فريقك.") : tr("أهلًا بعودتك.")}</h1>
+      <p>{freeTrial ? tr("أنشئ حسابك، أكّد بريدك، وابدأ تجربتك مباشرة. الباقة والدفع تختارهما لاحقًا.") : register ? tr("أنشئ حسابك للانضمام إلى مدربك.") : tr("متدربوك، برامجك، وكل التفاصيل بانتظارك.")}</p>
     </div>
-  );
+    <form method="post" ref={formRef} className="auth-fields" onSubmit={async (event) => {
+            event.preventDefault();
+            if (submitLock.current)
+                return;
+            const form = new FormData(event.currentTarget);
+            if (register) {
+                const issue = registrationPasswordIssue(password, password);
+                if (issue) {
+                    setResult({ ok: false, message: issue });
+                    return;
+                }
+            }
+            submitLock.current = true;
+            setBusy(true);
+            setResult(null);
+            try {
+                const response = await (register ? registerAction : loginAction)(form);
+                setResult(response);
+                if (register && response.ok && response.url) {
+                    setPassword("");
+                    router.replace(response.url);
+                }
+            }
+            catch {
+                setResult({ ok: false, message: tr("تعذّر الاتصال. حاول مرة أخرى، بياناتك في النموذج محفوظة.") });
+            }
+            finally {
+                submitLock.current = false;
+                setBusy(false);
+            }
+        }}>
+      <input type="hidden" name="next" value={next}/>
+      {register && <><div><label htmlFor="auth-name">{tr("اسمك")}</label><input className="field" id="auth-name" name="name" autoComplete="name" placeholder={tr("كيف نناديك؟")} required minLength={2} maxLength={120} disabled={busy}/></div><input type="hidden" name="password_confirmation" value={password}/></>}
+      <div><label htmlFor="auth-email">{tr("البريد الإلكتروني")}</label><input id="auth-email" name="email" className="field" type="email" required autoComplete="email" inputMode="email" dir="ltr" placeholder="you@example.com" value={email} onChange={event => setEmail(event.target.value)} disabled={busy}/></div>
+      <div><label htmlFor="auth-password">{tr("كلمة المرور")}</label><div className="password-field"><input id="auth-password" name="password" className="field" type={showPassword ? "text" : "password"} required minLength={register ? PASSWORD_MIN_LENGTH : 8} maxLength={128} autoComplete={register ? "new-password" : "current-password"} dir="ltr" value={password} onChange={event => { setPassword(event.target.value); setResult(null); }} disabled={busy} aria-describedby={register ? "password-hint" : undefined}/><button type="button" aria-label={showPassword ? tr("إخفاء كلمة المرور") : tr("إظهار كلمة المرور")} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div>{register && <p id="password-hint" className="field-hint">{tr("8 أحرف على الأقل، مع حرف إنجليزي كبير ورمز مثل !")}</p>}</div>
+      {register && <details className="auth-role-details" open={next.startsWith("/invite/")}><summary>{role === "trainee" ? tr("حساب متدرب بدعوة من مدربي") : tr("تسجل كمتدرب؟")}</summary><label className="sr-only" htmlFor="auth-role">{tr("نوع الحساب")}</label><select className="field" id="auth-role" name="role" value={role} onChange={event => setRole(event.target.value)} disabled={busy}><option value="coach">{tr("مدرب · مساحة لإدارة متدربيّ")}</option><option value="trainee">{tr("متدرب · بدعوة من مدربي")}</option></select></details>}
+      {register && <label className="policy-acceptance"><input type="checkbox" name="terms_acceptance" value={POLICY_VERSION} required disabled={busy}/><span>{tr("أوافق على") + " "}<Link href="/terms" target="_blank" rel="noopener">{tr("الشروط")}</Link>{" " + tr("و")}<Link href="/privacy" target="_blank" rel="noopener">{tr("الخصوصية")}</Link>{freeTrial ? tr(" وبدء تجربتي المجانية بعد تأكيد البريد، دون بطاقة أو تجديد تلقائي.") : "."}</span></label>}
+      <Notice result={result}/>
+      <button disabled={busy} className="btn auth-submit" type="submit">{busy ? tr("نجهّز مساحتك\u2026") : freeTrial ? tr("أنشئ حسابي وابدأ التجربة") : register ? tr("إنشاء حساب") : tr("الدخول إلى مساحتك")}{!busy && <ArrowLeft size={18}/>}</button>
+      {!local && !register && <button type="button" disabled={busy} className="auth-magic-link" onClick={async () => { if (!formRef.current)
+        return; setBusy(true); try {
+        setResult(await magicLinkAction(new FormData(formRef.current)));
+    }
+    finally {
+        setBusy(false);
+    } }}>{tr("الدخول برابط على البريد بدل كلمة المرور")}</button>}
+      {google && <><div className="auth-divider"><span>{tr("أو")}</span></div><button type="button" disabled={busy} className="btn-secondary auth-google w-full" onClick={async () => { const acceptance = formRef.current?.querySelector<HTMLInputElement>('[name="terms_acceptance"]'); if (register && !acceptance?.checked) {
+        acceptance?.reportValidity();
+        return;
+    } setBusy(true); try {
+        const r = await googleLoginAction({ next, role: register ? role : undefined, trial: freeTrial });
+        if (r.ok && r.url)
+            window.location.assign(r.url);
+        else {
+            setResult(r);
+            setBusy(false);
+        }
+    }
+    catch {
+        setResult({ ok: false, message: tr("تعذّر فتح Google. حاول مرة أخرى.") });
+        setBusy(false);
+    } }}><span className="google-letter" aria-hidden="true">G</span>{register ? tr("التسجيل بحساب Google") : tr("الدخول بحساب Google")}</button></>}
+    </form>
+    {freeTrial && <p className="auth-reassurance"><Check size={15}/>{tr("لا جوال، لا بطاقة، ولا التزام بالدفع.")}</p>}
+    {local && !register && <p className="field-hint mt-5">{tr("حسابات اصطناعية للمعاينة فقط")} · <bdi>coach@example.test</bdi> · <bdi>CoachPreview!2026</bdi></p>}
+  </div>;
 }

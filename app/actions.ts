@@ -146,7 +146,7 @@ export async function registerAction(form: FormData): Promise<Result> {
       password: input.password,
       options: {
         emailRedirectTo: `${process.env.APP_URL}/auth/callback?next=${encodeURIComponent(safeNext(form.get("next")))}`,
-        data: { display_name: input.name, role: input.role, policy_version: POLICY_VERSION, policy_accepted_at: new Date().toISOString(), ec_signup: true, marketing_attribution: await signupAttribution() },
+        data: { display_name: input.name, role: input.role, policy_version: POLICY_VERSION, policy_accepted_at: new Date().toISOString(), ec_signup: true, ec_signup_trial: input.role === "coach", marketing_attribution: await signupAttribution() },
       },
     });
     if (error) {
@@ -271,6 +271,7 @@ const OAUTH_ROLE_COOKIE = "ec_oauth_role";
 export async function googleLoginAction(input: {
   next?: string;
   role?: string;
+  trial?: boolean;
 }): Promise<Result> {
   try {
     if (!googleAuthEnabled())
@@ -279,6 +280,7 @@ export async function googleLoginAction(input: {
     const role = z.enum(["coach", "trainee"]).parse(
       input.role ?? (next.startsWith("/invite/") ? "trainee" : "coach"),
     );
+    const trialRequested = z.boolean().optional().parse(input.trial) ?? false;
     // Applied only to brand-new accounts in /auth/callback; existing roles never change.
     (await cookies()).set(OAUTH_ROLE_COOKIE, role, {
       httpOnly: true,
@@ -287,6 +289,9 @@ export async function googleLoginAction(input: {
       maxAge: 600,
       path: "/auth/callback",
     });
+    const trialJar = await cookies();
+    if (trialRequested && role === "coach") trialJar.set("ec_oauth_trial", POLICY_VERSION, { httpOnly: true, sameSite: "lax", secure: process.env.APP_URL?.startsWith("https://") ?? false, maxAge: 600, path: "/auth/callback" });
+    else trialJar.delete({ name: "ec_oauth_trial", path: "/auth/callback" });
     const { data, error } = await (
       await supabase()
     ).auth.signInWithOAuth({

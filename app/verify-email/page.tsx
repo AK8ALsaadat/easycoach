@@ -18,7 +18,7 @@ export default async function VerifyEmailPage() {
     redirect(signupDestination(data.profile?.role, safeNext(pending?.next)));
   }
   if (!pending) redirect("/login?register=1");
-  return <main className="mx-auto flex min-h-screen max-w-lg flex-col px-5 py-8 sm:py-12" dir="rtl">
+  return <main className="verification-page mx-auto flex min-h-screen max-w-lg flex-col px-5 py-8 sm:py-12" dir="rtl">
     <Brand />
     {differentAccount ? <section className="card my-auto space-y-5 p-6 sm:p-8">
       <h1 className="text-2xl font-bold">تأكيد الحساب الجديد</h1>

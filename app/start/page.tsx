@@ -1,43 +1,35 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Sparkles, Check, ArrowLeft, ShieldCheck } from "lucide-react";
 import { Brand } from "@/components/brand";
-import { PlanCards, TrialHero, trialOffer } from "@/components/plan-cards";
-import { isPaidPlan, planCodes, plans } from "@/lib/platform/plans";
+import { isPaidPlan } from "@/lib/platform/plans";
 import { platformQuote, platformState } from "@/lib/platform/server";
 import { actor, snapshot } from "@/lib/server";
 import { LegalLinks } from "@/components/legal-links";
+import { TrialStartForm } from "@/components/trial-start-form";
 
-export const metadata: Metadata = { title: "اختر باقتك", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "ابدأ تجربتك", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
-
-/** First screen after a coach verifies their email: pick a plan and start the free trial. */
 export default async function StartPage({ searchParams }: { searchParams: Promise<{ plan?: string; error?: string }> }) {
   const search = await searchParams;
-  const plan = isPaidPlan(search.plan) ? search.plan : null;
-  if (!(await actor())) redirect(`/login?register=1&next=${encodeURIComponent(plan ? `/start?plan=${plan}` : "/start")}`);
+  const plan = isPaidPlan(search.plan) ? search.plan : "pro";
+  if (!(await actor())) redirect(`/login?register=1&next=${encodeURIComponent(`/start?plan=${plan}`)}`);
   const data = await snapshot();
   if (data.profile?.role !== "coach") redirect("/me");
-  const [state, quotes] = await Promise.all([
-    platformState().catch(() => null),
-    Promise.all(planCodes.map(code => platformQuote(code).catch(() => null))),
-  ]);
-  if (!state) return <main dir="rtl" className="plans-page plans-page-narrow"><Brand /><section className="confirm-card"><h1>تعذّر تحميل خيارات الاشتراك</h1><p role="alert">لم نتمكن من التحقق من حالة حسابك الآن. حاول مرة أخرى؛ لم نبدأ تجربة أو عملية دفع من هذه الصفحة.</p><Link href={plan ? `/start?plan=${plan}` : "/start"} className="btn">إعادة المحاولة</Link><Link href="/subscription" className="btn-secondary">عرض حالة اشتراكي</Link></section></main>;
-  // Show the existing entitlement instead of returning silently to the dashboard.
-  if (state.mode === "legacy" || state.status === "trialing" || state.status === "active") redirect("/subscription");
-  const offer = trialOffer(quotes);
-  const firstName = data.profile.name.split(" ")[0];
-  return <main dir="rtl" className="plans-page">
-    <div className="plans-topbar"><Brand /><Link href="/coach" className="btn-secondary">تخطّي الآن</Link></div>
-    <TrialHero quotes={quotes}
-      title={offer.active ? `أهلًا ${firstName}، ابدأ بـ${offer.days} يومًا مجانًا` : `أهلًا ${firstName}، اختر باقتك`}
-      lead={offer.active
-        ? "حسابك جاهز. اختر الباقة التي تناسبك وجرّبها مجانًا بدون بطاقة؛ خلال التجربة تحصل على كل مزايا باقة الأعمال، وتبقى بياناتك محفوظة مهما قررت بعدها."
-        : "حسابك جاهز. يمكنك البدء بالباقة المجانية الآن والترقية في أي وقت من صفحة الاشتراك."} />
-    {search.error && <p role="alert" className="plans-alert">{search.error === "plan" ? "اختر باقة مدفوعة لبدء التجربة." : search.error}</p>}
-    {plan && offer.active && <p className="plans-focus">اخترت باقة <strong>{plans[plan].name}</strong>؛ أكّد البدء من بطاقتها أو اختر باقة أخرى.</p>}
-    <PlanCards quotes={quotes} state={state} signedIn highlight={plan} context="start" />
-    <p className="plans-note">لا نطلب بطاقة ولا نخصم شيئًا خلال التجربة. عند انتهائها تعود صلاحياتك إلى الباقة المجانية إلى أن تفعّل اشتراكك، وتبقى سجلاتك ومتدربوك كما هم. التجربة مرة واحدة لكل حساب.</p>
-    <LegalLinks />
+  const [state, quote] = await Promise.all([platformState().catch(() => null), platformQuote(plan).catch(() => null)]);
+  if (state?.mode === "legacy" || state?.trial_used_at || state?.period_end) redirect("/coach");
+  return <main className="onboarding-page" dir="rtl">
+    <nav className="public-nav"><Brand /><Link href="/coach" className="text-link">المتابعة بالباقة المجانية <ArrowLeft size={16}/></Link></nav>
+    <section className="onboarding-card">
+      <span className="onboarding-symbol"><Sparkles size={32}/></span>
+      <p className="eyebrow">مساحتك جاهزة يا {data.profile.name.split(" ")[0]}</p>
+      <h1>ابدأ التدريب.<br/><span>واترك التنظيم علينا.</span></h1>
+      <p className="onboarding-lead">14 يومًا تستكشف فيها كل مزايا الأعمال. خطوة واحدة، وتبدأ من الآن.</p>
+      <ul className="onboarding-benefits">{["متدربوك وبرامجهم في مكان واحد", "مكتبة التمارين والقوالب والتقارير", "بدون بطاقة، بدون جوال، وبدون خصم تلقائي"].map(item=><li key={item}><Check size={18}/>{item}</li>)}</ul>
+      {quote?.trial_available ? <TrialStartForm plan={plan} days={quote.trial_days}/> : <div className="space-y-4"><p role="status">{!state || !quote ? "تعذّر تحميل التجربة الآن. أعد المحاولة، أو تابع إلى مساحتك." : "عرض التجربة غير متاح حاليًا. مساحتك المجانية جاهزة."}</p><Link className="btn w-full" href={!state || !quote ? `/start?plan=${plan}` : "/coach"}>{!state || !quote ? "إعادة المحاولة" : "افتح مساحتك"}</Link></div>}
+      {search.error && <p role="alert" className="plans-alert">{search.error === "terms" ? "وافق على الشروط والخصوصية لبدء تجربتك المجانية." : "لم تكتمل بداية التجربة. اضغط البدء للمحاولة مجددًا؛ لن تتكرر تجربة مفعّلة."}</p>}
+      <p className="onboarding-footnote"><ShieldCheck size={16}/>بياناتك محفوظة. تختار باقتك وتقرر الدفع لاحقًا.</p>
+    </section><LegalLinks className="justify-center"/>
   </main>;
 }

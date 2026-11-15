@@ -16,9 +16,9 @@ const freeState: PlatformState = {
   usage: { clients: 0, templates: 0, coaches: 1 }, limits: quotes[0].limits, billing_limits: quotes[0].limits,
   locked_clients: null, locked_templates: null, features: [], server_now: quotes[0].server_now,
 };
-it("sends an eligible owner to plan review, without starting a trial or collecting card data on the pricing card", () => {
+it("sends an eligible owner straight to trial activation without collecting card data on the pricing card", () => {
   const html = renderToStaticMarkup(createElement(PlanCards, { quotes, state: freeState, signedIn: true, context: "pricing" }));
-  for (const plan of ["starter", "pro", "business"]) expect(html).toContain(`/subscription/confirm?plan=${plan}`);
+  for (const plan of ["starter", "pro", "business"]) expect(html).toContain(`/start?plan=${plan}`);
   expect(html).not.toContain("<form");
   expect(html).not.toContain('name="card');
 });
@@ -34,9 +34,8 @@ it("preserves a guest's chosen plan through registration and discloses tax uncer
   expect(html).toContain("بانتظار ضبط الضريبة");
   expect(html).not.toContain("2099");
 });
-it("disables trial activation when the provider or tax is not ready while retaining plan review", () => {
+it("allows free trial activation even when the paid provider and tax are not ready", () => {
   const html = renderToStaticMarkup(createElement(PlanCards, { quotes, state: freeState, signedIn: true, context: "pricing" }));
-  expect(html.match(/disabled=""/g)).toHaveLength(3);
-  expect(html).toContain("التفعيل معطل لحين تأكيد جاهزية وسيلة الدفع");
-  expect(html).toContain("/subscription/confirm?plan=pro");
+  expect(html).not.toContain('disabled=""');
+  expect(html).toContain("/start?plan=pro");
 });

@@ -237,9 +237,11 @@ export function Workspace({
   local,
   supportOwner = false,
   platform = null,
+  trialStarted = false,
 }: {
   data: Snapshot;
   platform?: (PlatformState & { trial_offer: boolean }) | null;
+  trialStarted?: boolean;
   section: string;
   clientId?: string;
   initialFilter?: string;
@@ -254,6 +256,7 @@ export function Workspace({
   const { t: tr, language: locale } = useLocale();
 
   const [mobile, setMobile] = useState(false);
+  const [trialWelcome, setTrialWelcome] = useState(trialStarted);
   const sidebarRef = useDialog<HTMLElement>(mobile, () => setMobile(false));
   const client = data.clients.find((c) => c.id === clientId && !c.archived);
   const visibleNav = nav.filter((item) => item.key !== "support" || supportOwner);
@@ -421,6 +424,7 @@ export function Workspace({
           </div>
         ) : null}
         <main id="portal-content" className="portal-content">
+          {trialWelcome && platform?.status === "trialing" && <section className="workspace-trial-welcome" role="status"><span><Sparkles size={20}/></span><div><strong>{tr("تجربتك بدأت. المساحة كلها لك.")}</strong><p>{tr("كل مزايا الأعمال لمدة 14 يومًا، بدون بطاقة أو خصم تلقائي.")}</p></div><Link href="/subscription">{tr("تفاصيل التجربة")}<ArrowLeft size={15}/></Link><button type="button" aria-label={tr("إخفاء رسالة الترحيب")} onClick={()=>setTrialWelcome(false)}><X size={17}/></button></section>}
           {section === "support" && supportOwner ? (
             <SupportDesk owner />
           ) : section === "today" ? (

@@ -28,7 +28,9 @@ const provider = createServer(async (req, res) => {
   const send = (body, status = 200) => { res.statusCode = status; res.end(JSON.stringify(body)); };
   if (url.pathname === "/auth/v1/signup") {
     counts.signup++;
-    const user = { id: randomUUID(), email: body.email, aud: "authenticated", role: "authenticated", user_metadata: body.data, app_metadata: { provider: "email" }, created_at: new Date().toISOString(), email_confirmed_at: null, consumed: false };
+    // This transport fixture isolates OTP recovery. Automatic trial enrollment
+    // is covered by real PGlite and onboarding tests, not this fake REST server.
+    const user = { id: randomUUID(), email: body.email, aud: "authenticated", role: "authenticated", user_metadata: { ...body.data, ec_signup_trial: false }, app_metadata: { provider: "email" }, created_at: new Date().toISOString(), email_confirmed_at: null, consumed: false };
     users.set(user.email, user);
     return send({ user, session: null });
   }
@@ -73,8 +75,8 @@ async function signup(page, email) {
   await page.locator("#auth-name").fill("حساب اختبار اصطناعي");
   await page.locator("#auth-email").fill(email);
   await page.locator("#auth-password").fill("SyntheticTest!2026");
-  await page.locator("#auth-password-confirmation").fill("SyntheticTest!2026");
-  await page.getByRole("button", { name: "إنشاء حساب", exact: true }).click();
+  await page.locator('[name="terms_acceptance"]').check();
+  await page.locator('button[type="submit"]').click();
   await page.waitForURL("**/verify-email");
   await page.locator("#signup-otp").waitFor();
 }
@@ -139,7 +141,7 @@ try {
   // Exercise a client-side mode switch instead of waiting for dev HMR traffic
   // to become network-idle after returning from an authenticated page.
   await page.getByRole("button", { name: "جديد هنا؟ أنشئ حسابك", exact: true }).click();
-  await page.locator("#auth-password-confirmation").waitFor();
+  await page.locator("#auth-name").waitFor();
   await page.getByRole("button", { name: "عندك حساب؟ ادخل", exact: true }).click();
   await page.locator("#auth-email").fill("signup-otp@example.test");
   await page.locator("#auth-password").fill("SyntheticTest!2026");
@@ -152,7 +154,7 @@ try {
   await signup(other, "signup-correct@example.test");
   await other.getByRole("button", { name: "الرجوع لتصحيح البريد", exact: true }).click();
   await other.waitForURL("**/login?register=1");
-  await other.locator("#auth-password-confirmation").waitFor();
+  await other.locator("#auth-name").waitFor();
   assert(!(await second.cookies()).some(c => c.name === "ec_pending_signup"));
   assert.equal(await other.locator("#auth-password").inputValue(), "");
   pass("Correcting email restarts registration, clears pending metadata and never carries a password forward");

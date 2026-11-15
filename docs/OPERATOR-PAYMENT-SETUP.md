@@ -51,6 +51,16 @@ environment flag; do not delete historical payment records.
 
 ## Payment behavior
 
+Free trial onboarding is independent of paid billing after
+`20261116200000_direct_free_trial.sql`. A new coach accepts the free trial during
+registration and is enrolled once after verified email confirmation; Google
+registration records the same explicit intent before OAuth. No phone, card,
+merchant authentication or configured VAT is needed to explore the product.
+Existing eligible accounts can start with one confirmation on `/start`.
+The billing readiness gates still protect every paid invoice. An unknown tax
+amount stays null during a trial; paid checkout uses the real operator tax
+configuration once supplied. Trial enrollment never issues a paid invoice.
+
 Legacy owners can voluntarily purchase a paid plan after migration
 `20261116190000_voluntary_legacy_checkout.sql`. Pricing and subscription management
 link to checkout rather than hiding purchases behind the legacy entitlement.

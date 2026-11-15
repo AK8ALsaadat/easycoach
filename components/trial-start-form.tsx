@@ -26,14 +26,9 @@ export function TrialStartForm({ plan, days, disabled = false }: { plan: PaidPla
       event.preventDefault();
       setError("لبدء التجربة، وافق على الشروط والأحكام وسياسة الخصوصية أولًا.");
       checkbox.current?.focus();
-    } else {
-      const field = event.currentTarget.elements.namedItem("mobile") as HTMLInputElement;
-      if (!field.value.trim()) { event.preventDefault(); setError("أدخل رقم جوالك لإصدار رابط دفع الفترة لاحقًا؛ لا نطلب بطاقة."); field.focus(); }
-      else setError("");
-    }
+    } else setError("");
   }}>
     <input type="hidden" name="plan" value={plan} />
-    <label>رقم الجوال للفواتير<input className="field mt-2 w-full" name="mobile" type="tel" autoComplete="tel" inputMode="tel" dir="ltr" placeholder="05XXXXXXXX" required maxLength={24} disabled={disabled} /></label>
     <label className="policy-acceptance"><input ref={checkbox} type="checkbox" name="terms_acceptance" value={POLICY_VERSION} required aria-invalid={Boolean(error)} aria-describedby={error ? errorId : undefined} onChange={() => setError("")} /><span>قرأت وأوافق على <Link href="/terms" target="_blank" rel="noopener">الشروط والأحكام</Link> و<Link href="/privacy" target="_blank" rel="noopener">سياسة الخصوصية</Link>، وأفهم أن التجربة لا تتجدد تلقائيًا.</span></label>
     {error && <p id={errorId} role="alert" className="plans-alert">{error}</p>}
     <SubmitTrial days={days} disabled={disabled} />

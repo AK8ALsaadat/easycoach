@@ -6,8 +6,10 @@ const state = vi.hoisted(() => ({
   exchangeError: null as null | Error,
   updateUser: vi.fn(),
   signInWithOAuth: vi.fn(),
+  enroll: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/platform/onboarding",()=>({completeSignupTrial:state.enroll}));
 vi.mock("next/headers", () => ({
   cookies: async () => ({
     get: (name: string) => (state.jar.has(name) ? { name, value: state.jar.get(name) } : undefined),
@@ -39,6 +41,7 @@ beforeEach(() => {
   state.exchangeError = null;
   state.updateUser.mockReset();
   state.signInWithOAuth.mockReset();
+  state.enroll.mockReset().mockResolvedValue("/coach?trial=started");
   vi.stubEnv("APP_URL", "https://coach.example");
   vi.stubEnv("AUTH_GOOGLE_ENABLED", "true");
 });
@@ -57,6 +60,15 @@ it("never changes the role of an existing account", async () => {
   state.user = { user_metadata: { role: "trainee", display_name: "متدرب" } };
   await callback("code=abc&next=%2Fme");
   expect(state.updateUser).not.toHaveBeenCalled();
+});
+it("opens a newly verified Google coach's trial only after explicit registration acceptance",async()=>{
+  const {POLICY_VERSION}=await import("@/lib/legal");
+  state.jar.set("ec_oauth_role","coach");state.jar.set("ec_oauth_trial",POLICY_VERSION);
+  state.user={user_metadata:{full_name:"Coach signup"}};
+  const response=await callback("code=abc&next=%2Fcoach");
+  expect(response.headers.get("location")).toBe("https://coach.example/coach?trial=started");
+  expect(state.enroll).toHaveBeenCalledExactlyOnceWith("coach","/coach",true);
+  expect(state.jar.has("ec_oauth_trial")).toBe(false);
 });
 
 it("defaults a new account without a chosen role to trainee", async () => {
