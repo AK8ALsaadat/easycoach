@@ -1,19 +1,24 @@
 import { timingSafeEqual } from "node:crypto";
 import { PAYLINK_HOSTS, normalizeBaseUrl } from "@/lib/paylink/client";
-import { paylinkVerified, paymentReadiness, paymentsEnabled, vatRegisteredEnv } from "@/lib/platform/payment-config";
+import { paylinkVerified, paymentReadiness, paymentsEnabled, platformMerchant, vatRegisteredEnv } from "@/lib/platform/payment-config";
 
 export const dynamic = "force-dynamic";
 const present = (name: string) => Boolean(process.env[name]?.trim());
 
 /**
  * Operator smoke check. Booleans only: never values, hosts, IDs or secrets.
- * Requires `Authorization: Bearer <CRON_SECRET>`; anything else gets a bare 404.
+ * Accepts a dedicated PAYMENT_HEALTH_SECRET or the existing CRON_SECRET.
+ * Anything else gets a bare 404. POST additionally verifies merchant authentication.
  */
 export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET;
   const supplied = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] ?? "";
-  const a = Buffer.from(supplied), b = Buffer.from(secret ?? "");
-  if (!secret || a.length !== b.length || !timingSafeEqual(a, b)) return new Response(null, { status: 404, headers: { "Cache-Control": "no-store" } });
+  const a = Buffer.from(supplied);
+  const authorized = [process.env.PAYMENT_HEALTH_SECRET, process.env.CRON_SECRET].some(secret => {
+    if (!secret) return false;
+    const b = Buffer.from(secret);
+    return a.length === b.length && timingSafeEqual(a, b);
+  });
+  if (!authorized) return new Response(null, { status: 404, headers: { "Cache-Control": "no-store" } });
 
   const sandboxSelected = process.env.PAYLINK_SANDBOX !== "false";
   const baseUrl = normalizeBaseUrl(process.env.PAYLINK_BASE_URL || `https://${sandboxSelected ? PAYLINK_HOSTS.test : PAYLINK_HOSTS.live}`);
@@ -46,4 +51,17 @@ export async function GET(request: Request) {
     readyToCharge: readiness?.ready ?? false,
   };
   return Response.json(body, { headers: { "Cache-Control": "no-store" } });
+}
+
+export async function POST(request: Request) {
+  const response = await GET(request);
+  if (response.status !== 200) return response;
+  const body = await response.json();
+  const merchant = platformMerchant();
+  let authenticationSucceeded = false;
+  if (merchant) {
+    try { await merchant.auth({ fresh: true }); authenticationSucceeded = true; }
+    catch { /* Only booleans are returned, never provider errors or tokens. */ }
+  }
+  return Response.json({ ...body, paylink: { ...body.paylink, authenticationChecked: Boolean(merchant), authenticationSucceeded } }, { headers: { "Cache-Control": "no-store" } });
 }

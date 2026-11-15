@@ -95,11 +95,18 @@ the merchant is treated as unconfigured and payment stays blocked.
 ## Health check
 
 `GET /api/health/payments` with `Authorization: Bearer <CRON_SECRET>` (the same secret
-the maintenance endpoints use). Other callers get a bare 404. Returns booleans only:
+the maintenance endpoints use), or a separate `PAYMENT_HEALTH_SECRET` for operator
+diagnostics without rotating the cron secret. Other callers get a bare 404. Returns booleans only:
 
 ```sh
 curl -s -H "Authorization: Bearer $CRON_SECRET" https://easycoach.space/api/health/payments
 ```
+
+An authenticated `POST` to the same URL also requests a fresh Paylink API token
+and returns `paylink.authenticationChecked` and `paylink.authenticationSucceeded`.
+It never creates an invoice, charges a card, changes provider approval or returns
+the token. `readyToCharge` describes configuration; authentication success alone
+does not prove that a payment has settled.
 
 ## Payment log
 

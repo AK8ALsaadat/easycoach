@@ -8,7 +8,7 @@ vi.mock("@/lib/platform/billing-store", () => ({ billingCall: mock.call }));
 vi.mock("@/lib/server", () => ({ actor: mock.actor, rpc: mock.rpc }));
 vi.mock("@/lib/paylink/client", async original => ({ ...await original<typeof import("@/lib/paylink/client")>(), createPaylinkClient: () => ({ auth: mock.auth, createInvoice: mock.create, getInvoice: mock.get }) }));
 import { paymentReadiness } from "@/lib/platform/payment-config";
-import { GET as health } from "@/app/api/health/payments/route";
+import { GET as health, POST as probe } from "@/app/api/health/payments/route";
 import { POST as createInvoice } from "@/app/api/payments/paylink/create-invoice/route";
 import { POST as webhook } from "@/app/api/payments/paylink/webhook/route";
 
@@ -41,10 +41,28 @@ it("keeps both gates off when they are absent from the environment", async () =>
   expect(await paymentReadiness()).toMatchObject({ ready: false, enabled: false, verified: false });
 });
 it("hides the health check from callers without the operator secret", async () => {
+  vi.stubEnv("PAYMENT_HEALTH_SECRET", "");
   expect((await check()).status).toBe(404);
   expect((await check("wrong")).status).toBe(404);
   vi.stubEnv("CRON_SECRET", "");
   expect((await check("")).status).toBe(404);
+});
+it("accepts a separate health secret and probes authentication without exposing tokens", async () => {
+  vi.stubEnv("PAYMENT_HEALTH_SECRET", "fictional-independent-health");
+  const request = (token: string) => new Request("https://easycoach.test/api/health/payments", { method: "POST", headers: { authorization: `Bearer ${token}` } });
+  mock.auth.mockClear();
+  expect((await probe(request("wrong"))).status).toBe(404);
+  expect(mock.auth).not.toHaveBeenCalled();
+  const result = await probe(request("fictional-independent-health"));
+  const raw = await result.text();
+  expect(JSON.parse(raw)).toMatchObject({ paylink: { authenticationChecked: true, authenticationSucceeded: true } });
+  expect(mock.auth).toHaveBeenCalledWith({ fresh: true });
+  expect(raw).not.toContain("fictional-token");
+  mock.auth.mockRejectedValueOnce(Error("provider-secret-response"));
+  const failed = await probe(request("fictional-independent-health"));
+  const failure = await failed.text();
+  expect(JSON.parse(failure)).toMatchObject({ paylink: { authenticationChecked: true, authenticationSucceeded: false } });
+  expect(failure).not.toContain("provider-secret-response");
 });
 it("VAT_REGISTERED=false sets not_registered once: 499.00 SAR with no VAT, booleans only in the health check", async () => {
   const response = await check("fictional-operator-check");
