@@ -59,7 +59,7 @@ async function verifyOnce(params: { transactionNo?: string | null; orderNumber?:
 }
 
 /** One period can have several historical attempts, but only one payable link at a time. */
-export async function checkoutPlatform(input: { owner: string; plan: PaidPlan; total?: number; email: string }) {
+export async function checkoutPlatform(input: { owner: string; plan: PaidPlan; total?: number; email: string; coupon?: string }) {
   const readiness = await paymentReadiness();
   if (!readiness.ready) {
     await billingCall("ec_billing_refresh", { owner: input.owner, blocked: readiness.blocked });
@@ -71,7 +71,8 @@ export async function checkoutPlatform(input: { owner: string; plan: PaidPlan; t
   if (process.env.NODE_ENV === "production" && app.protocol !== "https:") throw Error("provider_not_ready");
   try {
     await merchant.auth();
-    let attempt = await billingCall<Attempt>("ec_billing_prepare", { owner: input.owner, plan_code: input.plan, expected_total: input.total ?? null });
+    const prepare = { owner: input.owner, plan_code: input.plan, expected_total: input.total ?? null, coupon_code: input.coupon ?? null };
+    let attempt = await billingCall<Attempt>("ec_billing_prepare", prepare);
     if (!attempt.created) {
       if (!attempt.transaction_no) throw Error("payment_pending");
       const result = await verifyPlatformPayment({ transactionNo: attempt.transaction_no }, { source: "checkout" });
@@ -79,7 +80,7 @@ export async function checkoutPlatform(input: { owner: string; plan: PaidPlan; t
       // A decline stays Pending at Paylink: keep the same payable link.
       if (["pending","failed"].includes(result.state) && attempt.payment_url) return attempt.payment_url;
       if (result.state !== "canceled") throw Error("payment_pending");
-      attempt = await billingCall<Attempt>("ec_billing_prepare", { owner: input.owner, plan_code: input.plan, expected_total: input.total ?? null });
+      attempt = await billingCall<Attempt>("ec_billing_prepare", prepare);
       if (!attempt.created) throw Error("payment_pending");
     }
     const created = await merchant.createInvoice({ orderNumber: attempt.order_no, amount: attempt.amount_halalas/100,

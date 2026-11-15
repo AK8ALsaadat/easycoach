@@ -6,11 +6,12 @@ import { normalizeSaudiMobile } from "@/lib/paylink/flow";
 import { POLICY_VERSION } from "@/lib/legal";
 import { z } from "zod";
 
-const Body = z.object({ plan: z.enum(["starter", "pro", "business"]), total: z.number().int().positive(), mobile: z.string().max(24), terms: z.literal(POLICY_VERSION) }).strict();
+const Body = z.object({ plan: z.enum(["starter", "pro", "business"]), total: z.number().int().positive(), mobile: z.string().max(24), terms: z.literal(POLICY_VERSION), coupon: z.string().trim().min(1).max(32).optional() }).strict();
 const messages: Record<string, string> = {
   period_running: "فترتك الحالية مستمرة. يمكنك الدفع بعد انتهائها.",
   quote_changed: "تغيّر السعر. حدّث الصفحة وراجع الإجمالي قبل الدفع.",
-  pending_invoice: "لديك فاتورة قائمة لباقة أخرى. أكملها أو انتظر إلغاءها لدى Paylink.",
+  pending_invoice: "لديك فاتورة قائمة بسعر أو باقة مختلفة. أكملها أو انتظر إلغاءها لدى Paylink قبل تغيير الكوبون.",
+  coupon_invalid: "الكوبون غير صالح أو انتهت صلاحيته. أزله أو طبّق كوبونًا آخر.",
   payment_pending: "طلب الدفع قيد التحقق. لا تنشئ دفعة أخرى؛ راجع فواتيرك أو تواصل مع دعم المنصة.",
   invoice_canceled: "أُلغيت الفاتورة السابقة. اضغط مجددًا لإنشاء فاتورة جديدة.",
   payment_review: "دفعتك قيد المراجعة لدى المنصة. لا تدفع مرة أخرى.",
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
   if (!mobile) return Response.json({ error: "أدخل رقم جوالك بصيغة 05XXXXXXXX." }, { status: 400 });
   try {
     await billingCall("ec_billing_contact", { owner: user.id, mobile, customer_name: user.name || user.email });
-    const url = await checkoutPlatform({ owner: user.id, plan: body.data.plan, total: body.data.total, email: user.email });
+    const url = await checkoutPlatform({ owner: user.id, plan: body.data.plan, total: body.data.total, email: user.email, coupon: body.data.coupon });
     return Response.json({ ok: true, url });
   } catch (error) {
     const currentReadiness = await paymentReadiness().catch(() => null);

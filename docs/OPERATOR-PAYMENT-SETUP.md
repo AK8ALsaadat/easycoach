@@ -51,6 +51,32 @@ environment flag; do not delete historical payment records.
 
 ## Payment behavior
 
+### Subscription coupons
+
+Apply `20261116170000_subscription_coupons.sql` for checkout coupon support.
+It creates the active code `anho` with a 99% discount on any paid plan, without
+an expiry or usage cap. Codes are case-insensitive. The coupon applies to the
+current invoice only and does not stack with campaign discounts; renewal keeps
+the regular account price. Enter it in the coupon field on the payment form,
+press Apply, and review the final total before paying.
+
+The operator approved a minimum payable total of 5.00 SAR, matching Paylink's
+minimum invoice amount. The UI discloses the floor when used: the 499.00 SAR
+Pro plan becomes 5.00 SAR with `anho`, rather than 4.99 SAR. Business becomes
+6.99 SAR when its regular price is 699.00 SAR. Tax, if configured, is recalculated
+after the discount. Amounts and coupon validity are rechecked in SQL at invoice
+creation and recorded in the invoice quote; client totals are never trusted.
+
+Manage codes only from trusted SQL (not browser roles), for example:
+
+```sql
+update private.ec_coupons set enabled=false where code='anho';
+```
+
+A previously issued invoice keeps its agreed amount. Changing its coupon or
+plan is blocked while it has a payment attempt; its Paylink payment URL must
+not be repriced or replaced with a second payable invoice.
+
 `POST /api/payments/paylink/create-invoice` reuses the authenticated platform
 checkout handler. The server recalculates price and VAT; the client cannot set the
 payable amount. For a test fixture with subtotal 499.00 SAR and a deliberately
