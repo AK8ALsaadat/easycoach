@@ -6,9 +6,8 @@ import { isPlan, limitLabel, plans, riyadhDate, sar } from "@/lib/platform/plans
 import { platformQuote, platformState } from "@/lib/platform/server";
 import { actor } from "@/lib/server";
 import { LegalLinks } from "@/components/legal-links";
-import { PlatformCheckout } from "@/components/platform-checkout";
-import { platformProviderReady } from "@/lib/platform/server";
-import { TrialStartForm } from "@/components/trial-start-form";
+import { paymentReadiness } from "@/lib/platform/payment-config";
+import { SubscriptionPurchaseOptions } from "@/components/subscription-purchase-options";
 
 export const dynamic = "force-dynamic";
 export default async function ConfirmPage({ searchParams }: { searchParams: Promise<{ plan?: string; error?: string }> }) {
@@ -18,8 +17,8 @@ export default async function ConfirmPage({ searchParams }: { searchParams: Prom
   if (!user) redirect(`/login?register=1&next=${encodeURIComponent(`/start?plan=${plan}`)}`);
   const [quote, state] = await Promise.all([platformQuote(plan), platformState().catch(() => null)]);
   if (!state) redirect("/coach");
-  const paymentReady = await platformProviderReady();
-  const canPay = Boolean(state.lifecycle_enabled && !state.cancelled_at && (state.period_end ? Date.parse(state.period_end) <= Date.parse(state.server_now)+5*86400000 : state.trial_end && Date.parse(state.trial_end) <= Date.parse(state.server_now)));
+  const readiness = await paymentReadiness();
+  const canPay = Boolean(state.mode === "managed" && !state.cancelled_at && (state.period_end ? Date.parse(state.period_end) <= Date.parse(state.server_now)+5*86400000 : !state.trial_end || Date.parse(state.trial_end) <= Date.parse(state.server_now)));
   const trialEnd = new Date(Date.parse(quote.server_now) + quote.trial_days * 86_400_000).toISOString();
   const tax = quote.tax_mode === "unconfigured" ? "لم تُحدد إعدادات التسجيل الضريبي للمشغّل" : quote.tax_mode === "not_registered" ? "غير مسجل ضريبيًا بحسب إعدادات المشغّل" : `${sar(quote.vat_halalas ?? 0)} ريال (${quote.tax_mode === "inclusive" ? "مشمولة" : "تضاف للسعر"})`;
   return <main dir="rtl" className="plans-page plans-page-narrow">
@@ -35,17 +34,11 @@ export default async function ConfirmPage({ searchParams }: { searchParams: Prom
         {quote.trial_available && <><dt>مدة التجربة</dt><dd>{quote.trial_days} يومًا مجانًا، بدون بطاقة · تنتهي في {riyadhDate(trialEnd)}</dd></>}
         {quote.trial_available && <><dt>مزايا التجربة</dt><dd>كل مزايا باقة الأعمال طوال التجربة. مزايا {plans[plan].name} تبدأ عند تفعيل اشتراكك المدفوع بعدها.</dd></>}
         <dt>حدود {plans[plan].name}</dt><dd>{limitLabel(quote.limits).join(" · ")}</dd>
-        <dt>الضريبة</dt><dd>{tax}</dd>
+        {quote.tax_mode !== "not_registered" && <><dt>الضريبة</dt><dd>{tax}</dd></>}
         <dt>الإجمالي الشهري</dt><dd>{quote.total_halalas === null ? "بانتظار ضبط الضريبة" : `${sar(quote.total_halalas)} ريال`}</dd>
       </dl>
       <ul className="plan-features">{plans[plan].features.map(f => <li key={f}><Check size={15} aria-hidden="true" />{f}</li>)}</ul>
-      {quote.trial_available
-        ? <TrialStartForm plan={plan} days={quote.trial_days} disabled={!paymentReady} />
-        : state.mode === "legacy" || (!canPay && (state.status === "trialing" || state.status === "active"))
-          ? <Link href="/subscription" className="btn w-full">إدارة اشتراكي الحالي</Link>
-          : paymentReady && quote.total_halalas !== null
-            ? <PlatformCheckout plan={plan} total={quote.total_halalas} />
-            : <><button className="btn w-full" disabled>اشترك</button><p role="status" className="plans-alert">التفعيل معطل لحين تأكيد جاهزية وسيلة الدفع</p></>}
+      <SubscriptionPurchaseOptions plan={plan} total={quote.total_halalas} trialAvailable={quote.trial_available} trialDays={quote.trial_days} canPay={canPay} renewal={Boolean(state.period_end)} readiness={readiness} />
       <p className="plans-note">لا نحفظ بطاقة ولا نخصم تلقائيًا. بعد التجربة تصلك فاتورة دفع؛ تستمر المزايا خلال مهلة سماح 3 أيام. بياناتك تبقى محفوظة إذا توقفت الصلاحيات المدفوعة.</p>
       <section className="payment-availability" aria-labelledby="card-availability"><h2 id="card-availability">الدفع لكل فترة دون حفظ بطاقة</h2><p>Paylink يحصّل اشتراكك لصالح المنصة. كل فترة مدفوعة 30 يومًا من تاريخ الدفع؛ الدفع المبكر يبدأ فترة جديدة من تاريخ العملية. يظهر رابط التجديد قبل انتهاء الفترة بـ5 أيام، وتسدده بنفسك دون تفويض خصم تلقائي.</p></section>
     </section>

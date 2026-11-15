@@ -23,7 +23,7 @@ try {
   assert.equal(posts, 0, "Unchecked consent must not send a trial request");
   assert(await page.locator('[name="terms_acceptance"]').evaluate(input => input === document.activeElement));
   await page.screenshot({ path: "artifacts/subscribe-fix/visible-consent-error.png", fullPage: true });
-  await page.locator('[name="mobile"]').fill('0501234567');
+  await page.locator('.trial-confirm-form [name="mobile"]').fill('0501234567');
   await page.locator('[name="terms_acceptance"]').check();
   let release, observed;
   const held = new Promise(resolve => { release = resolve; });

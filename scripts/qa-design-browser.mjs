@@ -67,7 +67,7 @@ try {
   await trial.page.locator(".plan-card.is-featured").getByRole("link", { name: "ابدأ 14 يومًا مجانًا", exact: true }).click();
   await trial.page.waitForURL("**/subscription/confirm?plan=pro");
   await screen(trial.page, "trial-review-mobile");
-  await trial.page.locator('[name="mobile"]').fill('0501234567');
+  await trial.page.locator('.trial-confirm-form [name="mobile"]').fill('0501234567');
   await trial.page.locator('[name="terms_acceptance"]').check();
   await trial.page.getByRole("button", { name: "ابدأ 14 يومًا مجانًا الآن", exact: true }).click();
   await trial.page.waitForURL("**/coach?trial=started");

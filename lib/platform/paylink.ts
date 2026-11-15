@@ -14,11 +14,34 @@ export async function recordProviderIssue(error: unknown, owner?: string) {
     if (owner) await billingCall("ec_billing_refresh", { owner, blocked: "PROVIDER_NOT_READY" }).catch(() => {});
   }
 }
-export async function verifyPlatformPayment(params: { transactionNo?: string | null; orderNumber?: string | null }): Promise<VerifyResult> {
+export type PaymentEventSource = "webhook" | "return" | "callback" | "cancel" | "checkout";
+export type PaymentEventContext = { source: PaymentEventSource; requestId?: string | null };
+type PaymentEventStatus = "paid" | "pending" | "failed" | "canceled" | "review" | "unknown" | "verification_failed" | "unauthorized";
+/** Payment state log. Invoice and expected amount are resolved in SQL from the attempt; no secrets or card data. Never throws. */
+export async function logPaymentEvent(source: PaymentEventSource, status: PaymentEventStatus, details: { attempt?: string | null; providerAmountHalalas?: number | null; requestId?: string | null } = {}) {
+  try {
+    await billingCall("ec_billing_event_log", { event_source: source, event_status: status, attempt: details.attempt ?? null, provider_amount: details.providerAmountHalalas ?? null, request_ref: details.requestId ?? null });
+  } catch { console.error("payments.event_log_failed", { source, status }); }
+}
+export async function verifyPlatformPayment(params: { transactionNo?: string | null; orderNumber?: string | null }, context: PaymentEventContext = { source: "return" }): Promise<VerifyResult> {
+  const trace: { attempt?: string; providerAmountHalalas?: number } = {};
+  let result: VerifyResult;
+  try { result = await verifyOnce(params, trace); }
+  catch (error) {
+    await logPaymentEvent(context.source, "verification_failed", { ...trace, requestId: context.requestId });
+    throw error;
+  }
+  // Unmatched return URLs are not logged: anyone can craft one. Authenticated webhooks are.
+  if (trace.attempt || context.source === "webhook")
+    await logPaymentEvent(context.source, result.state === "error" ? "verification_failed" : result.state, { ...trace, requestId: context.requestId });
+  return result;
+}
+async function verifyOnce(params: { transactionNo?: string | null; orderNumber?: string | null }, trace: { attempt?: string; providerAmountHalalas?: number }): Promise<VerifyResult> {
   const { transactionNo, orderNumber } = params;
   if ((transactionNo && !/^[A-Za-z0-9-]{1,64}$/.test(transactionNo)) || (orderNumber && !/^ECP-[a-f0-9]{32}$/.test(orderNumber)) || (!transactionNo && !orderNumber)) return { state: "unknown", errors: [] };
   const stored = await billingCall<Attempt | null>("ec_billing_lookup", { transaction: transactionNo ?? null, order_no: orderNumber ?? null });
   if (!stored || (orderNumber && stored.order_no !== orderNumber) || (stored.transaction_no && transactionNo && stored.transaction_no !== transactionNo)) return { state: "unknown", errors: [] };
+  trace.attempt = stored.id;
   // Verification remains allowed when new invoice creation is disabled.
   const merchant = platformMerchant(), transaction = stored.transaction_no ?? transactionNo;
   if (!merchant) return { state: "error", errors: [] };
@@ -28,6 +51,7 @@ export async function verifyPlatformPayment(params: { transactionNo?: string | n
     if (remote.transactionNo !== transaction) return { state: "error", errors: [] };
     const amount = Math.round(remote.amount * 100);
     if (!Number.isSafeInteger(amount) || Math.abs(amount-remote.amount*100)>0.00001) return { state: "error", errors: [] };
+    trace.providerAmountHalalas = amount;
     const state = await billingCall<VerifyResult["state"]>("ec_billing_settle", { attempt: stored.id, transaction, order_no: remote.orderNumber, amount, currency_code: remote.currency,
       provider_status: remote.rawStatus ?? remote.orderStatus, provider_paid_at: remote.paidAt ?? null, errors: remote.paymentErrors });
     return { state, errors: [], ...(["paid","review"].includes(state) ? { amount: remote.amount } : {}) };
@@ -50,7 +74,7 @@ export async function checkoutPlatform(input: { owner: string; plan: PaidPlan; t
     let attempt = await billingCall<Attempt>("ec_billing_prepare", { owner: input.owner, plan_code: input.plan, expected_total: input.total ?? null });
     if (!attempt.created) {
       if (!attempt.transaction_no) throw Error("payment_pending");
-      const result = await verifyPlatformPayment({ transactionNo: attempt.transaction_no });
+      const result = await verifyPlatformPayment({ transactionNo: attempt.transaction_no }, { source: "checkout" });
       if (result.state === "paid" || result.state === "review") return `${app.origin}/subscription`;
       // A decline stays Pending at Paylink: keep the same payable link.
       if (["pending","failed"].includes(result.state) && attempt.payment_url) return attempt.payment_url;
@@ -60,7 +84,7 @@ export async function checkoutPlatform(input: { owner: string; plan: PaidPlan; t
     }
     const created = await merchant.createInvoice({ orderNumber: attempt.order_no, amount: attempt.amount_halalas/100,
       clientName: attempt.customer_name || input.email, clientMobile: attempt.mobile, clientEmail: input.email,
-      callBackUrl: `${app.origin}/payments/paylink/callback?orderNumber=${attempt.order_no}`,
+      callBackUrl: `${app.origin}/subscription?payment=return&orderNumber=${attempt.order_no}`,
       cancelUrl: `${app.origin}/payments/paylink/cancel?orderNumber=${attempt.order_no}`,
       products: [{ title: `EasyCoach · ${plans[attempt.plan].name} · 30 يومًا`, price: attempt.amount_halalas/100, qty: 1 }] });
     await billingCall("ec_billing_attach", { attempt: attempt.id, transaction: created.transactionNo, url: created.url });
@@ -80,3 +104,6 @@ export async function runBillingJobs() {
   }
   return { processed, failed };
 }
+
+/** Vercel's request ID, for matching a payment log row to a function log. Not a secret. */
+export function requestRef(headers: Pick<Headers, "get">) { return headers.get("x-vercel-id") ?? headers.get("x-request-id") ?? null; }

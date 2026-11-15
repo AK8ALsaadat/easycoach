@@ -7,6 +7,7 @@ const db = await openDatabase(directory);
 try {
   // Fictional tax/merchant approval, never written to the real platform database.
   await db.exec("update public.ec_config set provider_verified=true,tax_mode='not_registered'");
+  if(process.env.QA_OPERATOR_TAX_FIXTURE==="true")await db.exec("update public.ec_config set tax_mode='exclusive',tax_bps=1500,vat_number='300000000000003'");
   if(process.env.QA_TAX_UNCONFIGURED==="true")await db.exec("update public.ec_config set tax_mode='unconfigured'");
   for (const digit of ["7", "8", "9"]) {
     const id = `${digit.repeat(8)}-${digit.repeat(4)}-4${digit.repeat(3)}-8${digit.repeat(3)}-${digit.repeat(12)}`;

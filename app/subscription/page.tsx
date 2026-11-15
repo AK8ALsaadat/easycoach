@@ -9,14 +9,25 @@ import { PlatformResourceSelection } from "@/components/platform-resource-select
 import { OrganizationForm } from "@/components/organization-controls";
 import { z } from "zod";
 import { SubscriptionLifecycle, type BillingOverview } from "@/components/subscription-lifecycle";
-import { paymentReadiness } from "@/lib/platform/payment-config";
+import { paymentReadiness, paymentReadinessMessage } from "@/lib/platform/payment-config";
 import { PlatformTrialCountdown } from "@/components/platform-trial-countdown";
+import { requestRef, verifyPlatformPayment } from "@/lib/platform/paylink";
+import { headers } from "next/headers";
+import { paylinkReturnParams } from "@/lib/paylink/params";
 export const dynamic="force-dynamic";
 const statusLabel = { free: "الباقة المجانية", trialing: "تجربة مجانية", active: "اشتراك نشط", past_due: "بانتظار الدفع", expired: "انتهت الفترة" } as const;
 const statusTone = { free: "neutral", trialing: "trial", active: "ok", past_due: "warn", expired: "warn" } as const;
-export default async function SubscriptionPage({searchParams}:{searchParams:Promise<{before?:string;id?:string}>}) {
+export default async function SubscriptionPage({searchParams}:{searchParams:Promise<Record<string,string|undefined>>}) {
   const search=await searchParams;
-  const state=await platformState();
+  let state=await platformState();
+  let paymentMessage = "";
+  if (search.payment === "return") {
+    try {
+      const result = await verifyPlatformPayment(paylinkReturnParams(search), { source: "return", requestId: requestRef(await headers()) });
+      paymentMessage = result.state === "paid" ? "تم تأكيد الدفع وتفعيل اشتراكك." : result.state === "review" ? "الدفعة قيد مراجعة المنصة. لا تدفع مرة أخرى." : "لم يتأكد سداد الفاتورة بعد. راجع رابط الدفع أو أعد تحديث الصفحة.";
+      state = await platformState();
+    } catch { paymentMessage = "تعذر التحقق من الدفع الآن. لم نعتمد التحويل وحده؛ لا تدفع مجددًا إذا ظهر خصم."; }
+  }
   const [readiness,overview]=await Promise.all([paymentReadiness(),rpc<BillingOverview>("ec_billing_overview")]);
   const [invoices,resources,team,trialQuote]=await Promise.all([
     rpc<{id:string;amount_halalas:number;status:string;created_at:string}[]>("ec_invoice_page",{before_date:z.iso.datetime({offset:true}).safeParse(search.before).success?search.before:null,before_id:z.uuid().safeParse(search.id).success?search.id:null}),
@@ -29,6 +40,7 @@ export default async function SubscriptionPage({searchParams}:{searchParams:Prom
   return <main dir="rtl" className="subscription-page">
     <div className="plans-topbar"><Brand /><Link href="/coach" className="btn-secondary"><ArrowLeft size={16} aria-hidden="true" />مساحة المدرب</Link></div>
     <h1>اشتراك EasyCoach</h1>
+    {paymentMessage && <p role="status" className="plans-alert">{paymentMessage}</p>}
     <Link href="/pricing" className="subscription-compare">مقارنة الباقات والأسعار</Link>
     <SubscriptionLifecycle state={state} readiness={readiness} overview={overview} />
     {state.status==="trialing"&&state.trial_end&&<PlatformTrialCountdown key={state.server_now} end={state.trial_end} serverNow={state.server_now} plan={state.billing_plan} limits={state.billing_limits} hasPaymentMethod={Boolean(state.has_payment_method)}/>}
@@ -40,7 +52,9 @@ export default async function SubscriptionPage({searchParams}:{searchParams:Prom
           <h2>الباقة المتاحة الآن: {plans[state.effective_plan].name}</h2>
           {(state.status==="trialing"||state.status==="active") && <p className="text-muted">باقتك المختارة: {plans[state.billing_plan].name} · {state.total_halalas===null?"بانتظار ضبط الضريبة":sar(state.total_halalas)+" ريال شهريًا"}{state.trial_end && state.status==="trialing" ? ` · تنتهي التجربة في ${riyadhDate(state.trial_end)}` : ""}</p>}
           {state.status==="expired" && <p className="text-muted">انتهت الفترة السابقة. تظهر صلاحياتك ومهلة السماح الحالية في حالة دورة الاشتراك أعلاه؛ بياناتك محفوظة.</p>}
-          {canStartTrial && <Link href="/start" className="btn" style={{width:"fit-content"}}>ابدأ 14 يومًا مجانًا على أي باقة</Link>}
+          {canStartTrial && readiness.ready && <Link href="/subscription/confirm?plan=pro" className="btn" style={{width:"fit-content"}}>ابدأ التجربة</Link>}
+          {canStartTrial && !readiness.ready && <p role="status" className="plans-alert">{paymentReadinessMessage(readiness)}</p>}
+          {state.status === "free" && readiness.ready && <Link href="/subscription/confirm?plan=pro" className="btn-secondary" style={{width:"fit-content"}}>الاشتراك في الاحترافية</Link>}
           {!canStartTrial && state.status!=="trialing" && state.status!=="active" && <Link href="/pricing" className="btn-secondary" style={{width:"fit-content"}}>مقارنة الباقات</Link>}
         </>}
     </section>

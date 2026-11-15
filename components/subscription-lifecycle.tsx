@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cancelPlatformSubscription } from "@/app/platform-actions";
 import { SubscriptionState, riyadhDate, sar, type PlatformState } from "@/lib/platform/plans";
-import type { PaymentReadiness } from "@/lib/platform/payment-config";
+import { paymentReadinessMessage, type PaymentReadiness } from "@/lib/platform/payment-config";
 
 export type BillingOverview = { notifications: { id: string; body: string; created_at: string }[]; invoices: { id: string; amount_halalas: number; status: string; paid_at: string | null; due_at: string; payment_url: string | null; transaction_no: string | null; order_no: string | null; attempt_status: string | null }[] };
 const copy: Record<SubscriptionState, [string,string]> = {
@@ -27,12 +27,12 @@ export function SubscriptionLifecycle({state,readiness,overview}:{state:Platform
   {[SubscriptionState.TRIAL_ACTIVE,SubscriptionState.TRIAL_ENDING].includes(key)&&<p>المتبقي من التجربة: {remaining} يوم</p>}
   {state.paid_until&&<p>الفترة المدفوعة حتى {riyadhDate(state.paid_until)}</p>}
   {state.grace_ends_at&&[SubscriptionState.AWAITING_PAYMENT,SubscriptionState.PAST_DUE,SubscriptionState.PAYMENT_FAILED].includes(key)&&<p>نهاية مهلة السماح: {riyadhDate(state.grace_ends_at)}</p>}
-  {!readiness.ready&&key!==readiness.blocked&&<p className="plans-alert">{readiness.blocked==="TAX_NOT_CONFIGURED"?"لم تُحدد إعدادات التسجيل الضريبي للمشغّل":"التفعيل معطل لحين تأكيد جاهزية وسيلة الدفع"}</p>}
+  {!readiness.ready&&<p className="plans-alert">{paymentReadinessMessage(readiness)}</p>}
   {[SubscriptionState.NOT_STARTED,SubscriptionState.PROVIDER_NOT_READY,SubscriptionState.TAX_NOT_CONFIGURED].includes(key)&&!state.trial_used_at&&<Link className="btn-secondary" href="/subscription/confirm?plan=pro">مراجعة الاحترافية والتجربة</Link>}
   {overview.invoices.filter(i=>i.status!=="paid").map(i=><div className="card p-4 mt-4 space-y-3" key={i.id}>
    <h3>فاتورة الفترة: <bdi>{sar(i.amount_halalas)} SAR</bdi></h3>
    {i.status==="review"?<p>العملية قيد مراجعة المنصة. لا تدفع مرة أخرى إذا ظهر خصم.</p>:<>
-    {i.payment_url&&!state.cancelled_at&&<a className="btn" href={i.payment_url} rel="noopener noreferrer">فتح رابط الدفع</a>}
+    {i.payment_url&&!state.cancelled_at&&readiness.ready&&<a className="btn" href={i.payment_url} rel="noopener noreferrer">فتح رابط الدفع</a>}
     {!state.cancelled_at&&<Link className="btn-secondary" href={`/subscription/confirm?plan=${state.billing_plan}`}>المحاولة أو تجديد رابط الدفع</Link>}
     <p className="plan-note">صلاحية رابط Paylink نحو 24 ساعة. تحديث الرابط يتحقق من إلغاء السابق أولًا.</p>
    </>}

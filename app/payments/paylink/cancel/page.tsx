@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { translator } from "@/lib/i18n";
-import { verifyPlatformPayment } from "@/lib/platform/paylink";
+import { requestRef, verifyPlatformPayment } from "@/lib/platform/paylink";
 import { paylinkReturnParams } from "@/lib/paylink/params";
 import { PaylinkResult } from "@/components/paylink-result";
 import type { VerifyResult } from "@/lib/paylink/flow";
@@ -15,7 +15,7 @@ export default async function PaylinkCancel({ searchParams }: { searchParams: Pr
   let result: VerifyResult = { state: "canceled", errors: [] };
   if (params.transactionNo || params.orderNumber) {
     try {
-      const verified = await verifyPlatformPayment(params);
+      const verified = await verifyPlatformPayment(params, { source: "cancel", requestId: requestRef(await headers()) });
       if (verified.state === "paid" || verified.state === "review") result = verified;
     } catch {
       // Nothing was confirmed; the cancel message stands.

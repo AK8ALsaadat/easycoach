@@ -15,14 +15,15 @@ const port = await new Promise(resolve => {
 const base = `http://127.0.0.1:${port}`;
 const allScripts = ["qa-design-browser.mjs", "qa-policy-dialogs.mjs", "qa-import-browser.mjs", "qa-session-photos.mjs", "qa-paylink-browser-check.mjs", "qa-platform-subscriptions.mjs", "qa-coach-journey.mjs"];
 const selectedScripts = process.argv.length > 2 ? process.argv.slice(2) : allScripts;
-if (selectedScripts.some(script => ![...allScripts, "qa-subscribe-actions.mjs", "qa-subscription-disabled.mjs", "qa-tiktok-browser.mjs"].includes(script))) throw Error("Unknown QA script");
+if (selectedScripts.some(script => ![...allScripts, "qa-subscribe-actions.mjs", "qa-subscription-disabled.mjs", "qa-tiktok-browser.mjs", "qa-first-payment.mjs"].includes(script))) throw Error("Unknown QA script");
 if(selectedScripts.includes("qa-tiktok-browser.mjs")&&selectedScripts.length!==1)throw Error("Pixel QA must run alone with its TikTok network interception");
 const env = {
   ...process.env, LOCAL_DB_PATH: directory, EASYCOACH_EVIDENCE_DIST_DIR: dist,
   APP_URL: base, TEST_BASE_URL: base,
   NEXT_PUBLIC_TIKTOK_PIXEL_ID:selectedScripts.includes("qa-tiktok-browser.mjs")?"FICTIONALPIXEL1234567":"",
-  PAYMENTS_ENABLED: process.env.QA_PAYMENTS_DISABLED === "true" ? "false" : "true", PAYLINK_SANDBOX: "true", PAYLINK_BASE_URL: "http://127.0.0.1:4017",
+  PAYMENTS_ENABLED: process.env.QA_PAYMENTS_DISABLED === "true" ? "false" : "true", PAYLINK_VERIFIED: process.env.QA_PROVIDER_UNVERIFIED === "true" ? "false" : "true", VAT_NUMBER: "", VAT_RATE: "", PAYLINK_SANDBOX: "true", PAYLINK_BASE_URL: "http://127.0.0.1:4017",
   PAYLINK_API_ID: "synthetic-qa", PAYLINK_SECRET_KEY: "synthetic-qa", PAYLINK_WEBHOOK_SECRET: "qa-local-webhook",
+  QA_OPERATOR_TAX_FIXTURE: selectedScripts.includes("qa-first-payment.mjs") ? "true" : "false",
 };
 function command(args) {
   return new Promise((resolve, reject) => {
@@ -64,7 +65,7 @@ try {
   if (!ready) throw Error("Isolated server failed: " + logs);
   console.log("Isolated design QA: " + base);
   for (const script of selectedScripts) {
-    if(script==="qa-paylink-browser-check.mjs")await stopAuthSimulator();
+    if(script==="qa-paylink-browser-check.mjs"||script==="qa-first-payment.mjs")await stopAuthSimulator();
     else if(!authSimulator)await startAuthSimulator();
     console.log("Running " + script);
     await command(["scripts/" + script]);

@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
-import { verifyPlatformPayment } from "@/lib/platform/paylink";
+import { logPaymentEvent, requestRef, verifyPlatformPayment } from "@/lib/platform/paylink";
 
 const Event = z.object({ transactionNo: z.union([z.string(), z.number()]).transform(String).pipe(z.string().regex(/^[A-Za-z0-9-]{1,64}$/)), merchantOrderNumber: z.string().max(80).optional() });
 export async function POST(request: Request) {
@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   if (!secret) return new Response(null, { status: 503 });
   const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? request.headers.get("x-webhook-secret") ?? "";
   const a = Buffer.from(supplied), b = Buffer.from(secret);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return new Response(null, { status: 401 });
+  if (a.length !== b.length || !timingSafeEqual(a, b)) { await logPaymentEvent("webhook", "unauthorized", { requestId: requestRef(request.headers) }); return new Response(null, { status: 401 }); }
   const raw = await request.text();
   if (raw.length > 20000) return new Response(null, { status: 413 });
   let json: unknown;
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   const parsed = Event.safeParse(json);
   if (!parsed.success) return new Response(null, { status: 400 });
   try {
-    const result = await verifyPlatformPayment({ transactionNo: parsed.data.transactionNo, orderNumber: parsed.data.merchantOrderNumber });
+    const result = await verifyPlatformPayment({ transactionNo: parsed.data.transactionNo, orderNumber: parsed.data.merchantOrderNumber }, { source: "webhook", requestId: requestRef(request.headers) });
     return new Response(null, { status: result.state === "error" ? 503 : 200 });
   } catch { return new Response(null, { status: 503 }); }
 }

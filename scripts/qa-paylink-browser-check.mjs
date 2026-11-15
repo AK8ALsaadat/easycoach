@@ -52,11 +52,11 @@ try {
   assert(await owner.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth),"Billing page overflows");
   await owner.screenshot({path:`artifacts/platform-billing/confirm-${width}-${theme}.png`,fullPage:true});
  }
- await owner.getByRole('button',{name:"اشترك وادفع عبر Paylink"}).click();
+ await owner.getByRole('button',{name:"ادفع الفترة الأولى",exact:true}).click();
  assert.equal(invoices.size,0,"Missing mobile/consent must not create an invoice");
  await owner.getByRole('textbox',{name:"رقم جوالك لفاتورة اشتراك المنصة"}).fill("0501234567");
  await owner.locator('input[type="checkbox"]').check();
- await owner.getByRole('button',{name:"اشترك وادفع عبر Paylink"}).click();
+ await owner.getByRole('button',{name:"ادفع الفترة الأولى",exact:true}).click();
  await owner.waitForURL("http://127.0.0.1:4017/pay/**");
  assert.equal(invoices.size,1);
  const [tx,remote]=[...invoices][0];

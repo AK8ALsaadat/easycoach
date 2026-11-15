@@ -1,7 +1,7 @@
 import "server-only";
 import { rpc, requireCoachIdentity, actor } from "@/lib/server";
 import type { PlatformState, PlatformQuote, PlanCode } from "./plans";
-import { paymentReadiness, platformMerchant, paymentsEnabled } from "./payment-config";
+import { paymentReadiness, platformMerchant } from "./payment-config";
 import { billingCall } from "./billing-store";
 import { normalizeSaudiMobile } from "@/lib/paylink/flow";
 import { recordProviderIssue } from "./paylink";
@@ -15,8 +15,9 @@ export async function platformState() {
   return rpc<PlatformState>("ec_subscription");
 }
 export async function platformQuote(plan: PlanCode) {
+  const readiness = await paymentReadiness();
   const quote = await rpc<PlatformQuote>("ec_quote", { plan_code: plan }, true);
-  return { ...quote, provider_ready: quote.provider_ready && paymentsEnabled() && Boolean(platformMerchant()) };
+  return { ...quote, provider_ready: readiness.ready, ...(!readiness.taxReady ? { tax_mode: "unconfigured", vat_halalas: null, total_halalas: null } : {}) };
 }
 /** The owner's own card-less trial. SQL enforces the campaign window, one trial per account and paid plans only. */
 export async function startPlatformTrial(plan: PlanCode, phone: string) {

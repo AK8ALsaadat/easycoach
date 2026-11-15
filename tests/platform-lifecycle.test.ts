@@ -16,7 +16,7 @@ it("requires actual tax settings and a bounded approved discount campaign",async
  await expect(fx.db.exec("update public.ec_config set discount_enabled=true")).rejects.toThrow();
  await config();
  for(const [plan,price] of [["starter",23920],["pro",39920],["business",55920]]) expect(await fx.call(coach,"ec_quote",{plan_code:plan})).toMatchObject({net_halalas:price,total_halalas:price});
- await fx.db.exec("update public.ec_config set tax_mode='exclusive',tax_bps=1500");
+ await fx.db.exec("update public.ec_config set tax_mode='exclusive',tax_bps=1500,vat_number='300000000000003'");
  expect(await fx.call(coach,"ec_quote",{plan_code:"starter"})).toMatchObject({net_halalas:23920,vat_halalas:3588,total_halalas:27508});
  await fx.db.exec("update public.ec_config set tax_mode='not_registered'");
 });

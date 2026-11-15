@@ -1,6 +1,6 @@
 import { actor, rpc } from "@/lib/server";
 import { checkoutPlatform } from "@/lib/platform/paylink";
-import { paymentReadiness } from "@/lib/platform/payment-config";
+import { paymentReadiness, paymentReadinessMessage } from "@/lib/platform/payment-config";
 import { billingCall } from "@/lib/platform/billing-store";
 import { normalizeSaudiMobile } from "@/lib/paylink/flow";
 import { POLICY_VERSION } from "@/lib/legal";
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   const state = await rpc("ec_subscription").catch(() => null);
   if (!state) return Response.json({ error: messages.owner_required }, { status: 403 });
   const readiness = await paymentReadiness();
-  if (!readiness.ready) return Response.json({ error: readiness.blocked === "TAX_NOT_CONFIGURED" ? "لم تُحدد إعدادات التسجيل الضريبي للمشغّل" : "التفعيل معطل لحين تأكيد جاهزية وسيلة الدفع", code: readiness.blocked }, { status: 503 });
+  if (!readiness.ready) return Response.json({ error: paymentReadinessMessage(readiness), code: readiness.blocked }, { status: 503 });
   const body = Body.safeParse(await request.json().catch(() => null));
   if (!body.success) return Response.json({ error: "راجع الباقة والإجمالي ووافق على الشروط قبل الدفع." }, { status: 400 });
   const mobile = normalizeSaudiMobile(body.data.mobile);
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     return Response.json({ ok: true, url });
   } catch (error) {
     const currentReadiness = await paymentReadiness().catch(() => null);
-    if (currentReadiness && !currentReadiness.ready) return Response.json({ error: currentReadiness.blocked === "TAX_NOT_CONFIGURED" ? messages.tax_not_configured : messages.provider_not_ready, code: currentReadiness.blocked }, { status: 503 });
+    if (currentReadiness && !currentReadiness.ready) return Response.json({ error: paymentReadinessMessage(currentReadiness), code: currentReadiness.blocked }, { status: 503 });
     const code = error instanceof Error ? error.message : "";
     const known = messages[code];
     return Response.json({ error: known ?? "تعذّر فتح الدفع. راجع فواتيرك قبل إعادة المحاولة؛ إذا ظهر خصم فلا تدفع مرة أخرى.", code: known ? code : "billing_unavailable" }, { status: known ? 409 : 503 });
