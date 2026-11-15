@@ -16,7 +16,7 @@ try {
   assert(await page.getByText("بانتظار ضبط الضريبة",{exact:true}).isVisible());
   assert(await page.getByText("لم تُحدد إعدادات التسجيل الضريبي للمشغّل",{exact:true}).isVisible());
  }
- const result=await page.request.post(base+"/api/platform/checkout",{headers:{origin:base},data:{plan:"pro",total:49900,mobile:"0501234567",terms:"2026-11-15.2"}});
+ const result=await page.request.post(base+"/api/platform/checkout",{headers:{origin:base},data:{plan:"pro",total:49900,mobile:"0501234567",terms:"2026-11-15.3"}});
  assert.equal(result.status(),503);
  const payload=await result.json();assert.equal(payload.code,process.env.QA_PAYMENTS_DISABLED==="true"?"PROVIDER_NOT_READY":"TAX_NOT_CONFIGURED");
  await page.screenshot({path:`artifacts/platform-billing/disabled-${process.env.QA_PAYMENTS_DISABLED==="true"?"flag":"tax"}.png`,fullPage:true});

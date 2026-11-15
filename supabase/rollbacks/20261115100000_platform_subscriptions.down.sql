@@ -22,12 +22,13 @@ do $$ begin
   perform cron.unschedule(jobid) from cron.job where jobname='easycoach-subscriptions-hourly';
  end if;
 end $$;
+drop trigger if exists ec_analytics_paid_invoice on public.ec_invoices;
 do $$ declare t record; p record; f record; backup record; begin
  for t in select event_object_schema,event_object_table,trigger_name from information_schema.triggers
  where trigger_name in ('ec_profile_created','ec_resource_guard','ec_client_data_guard','ec_metadata_guard') loop
  execute format('drop trigger if exists %I on %I.%I',t.trigger_name,t.event_object_schema,t.event_object_table);
  end loop;
- for p in select schemaname,tablename,policyname from pg_policies where policyname like 'ec_%' loop
+ for p in select schemaname,tablename,policyname from pg_policies where policyname like 'ec_%' and tablename<>'ec_user_attribution' loop
  execute format('drop policy %I on %I.%I',p.policyname,p.schemaname,p.tablename);
  end loop;
  for backup in select definition from private.ec_rpc_backup loop execute backup.definition; end loop;
@@ -43,7 +44,7 @@ do $$ declare t record; p record; f record; backup record; begin
  execute replace(backup.definition,'portal_access_before_ec.token_hash','portal_access.token_hash');
  grant execute on function private.portal_access(text,text,date,numeric,boolean) to anon,authenticated;
  for f in select proc.oid::regprocedure as signature from pg_proc proc join pg_namespace n on n.oid=proc.pronamespace
- where n.nspname in ('public','private') and proc.proname like 'ec_%' loop execute format('drop function %s',f.signature); end loop;
+ where n.nspname in ('public','private') and proc.proname like 'ec_%' and proc.proname not like 'ec_analytics_%' loop execute format('drop function %s',f.signature); end loop;
 end $$;
 drop table public.ec_report_schedules,public.ec_bulk_previews,public.ec_team_audit,public.ec_rules,public.ec_tasks,public.ec_assignments,public.ec_team,public.ec_branches;
 drop table if exists public.ec_trial_consents;

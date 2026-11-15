@@ -23,6 +23,7 @@ import { registrationPasswordIssue } from "@/lib/password";
 import { beginPendingSignup } from "@/lib/pending-signup";
 import { emailHasAccount } from "@/lib/registered-email";
 import { cleanPendingPhotos } from "@/lib/photo-cleanup";
+import { signupAttribution,issueSignupPixelReceipt } from "@/lib/analytics/server";
 
 export type Result = {
   ok: boolean;
@@ -145,7 +146,7 @@ export async function registerAction(form: FormData): Promise<Result> {
       password: input.password,
       options: {
         emailRedirectTo: `${process.env.APP_URL}/auth/callback?next=${encodeURIComponent(safeNext(form.get("next")))}`,
-        data: { display_name: input.name, role: input.role, policy_version: POLICY_VERSION, policy_accepted_at: new Date().toISOString() },
+        data: { display_name: input.name, role: input.role, policy_version: POLICY_VERSION, policy_accepted_at: new Date().toISOString(), ec_signup: true, marketing_attribution: await signupAttribution() },
       },
     });
     if (error) {
@@ -167,6 +168,7 @@ export async function registerAction(form: FormData): Promise<Result> {
       return { ok: false, message: "تعذر بدء تأكيد البريد. حاول لاحقًا أو تواصل مع الدعم." };
     }
     await beginPendingSignup(input.email, form.get("next"));
+    if(data?.user?.id)await issueSignupPixelReceipt(data.user.id);
     return {
       ok: true,
       message: "تحقق من بريدك وأدخل رمز تأكيد الحساب.",

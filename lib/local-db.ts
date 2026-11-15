@@ -18,6 +18,7 @@ export async function openDatabase(location?: string) {
   await db.exec(`create schema if not exists auth; create schema if not exists private;
  do $$ begin if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if; if not exists(select 1 from pg_roles where rolname='anon') then create role anon nologin; end if; end $$;
  create table if not exists auth.users(id uuid primary key,email text unique not null,encrypted_password text not null,email_confirmed_at timestamptz);
+ alter table auth.users add column if not exists raw_user_meta_data jsonb not null default '{}',add column if not exists raw_app_meta_data jsonb not null default '{}';
  create or replace function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
  grant usage on schema auth to authenticated,anon; grant execute on function auth.uid() to authenticated,anon;
  create table if not exists private.local_sessions(token_hash text primary key,user_id uuid not null references auth.users(id),expires_at timestamptz not null);

@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { PwaManager } from "@/components/pwa-manager";
 import { FormValidation } from "@/components/form-validation";
 import { PWA_THEME } from "@/lib/pwa";
+import { TikTokPixel } from "@/components/TikTokPixel";
 const font = IBM_Plex_Sans_Arabic({
   subsets: ["arabic", "latin"],
   weight: ["400", "500", "600", "700"],
@@ -42,6 +43,7 @@ export default async function RootLayout({
     <html lang={language} dir={language === "en" ? "ltr" : "rtl"} data-theme={theme}>
       <body className={font.className}>
         <LocaleProvider language={language}><ThemeProvider initialTheme={theme}>{children}<PwaManager /><FormValidation /></ThemeProvider></LocaleProvider>
+        <TikTokPixel />
       </body>
     </html>
   );

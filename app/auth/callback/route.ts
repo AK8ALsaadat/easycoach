@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { supabase, localMode, safeNext } from "@/lib/server";
+import { attachGoogleAttribution } from "@/lib/analytics/server";
 
 const OAUTH_ROLE_COOKIE = "ec_oauth_role";
 
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
     const client = await supabase();
     const { data, error } = await client.auth.exchangeCodeForSession(code);
     if (!error) {
+      if(data.user?.id)await attachGoogleAttribution(data.user.id);
       const meta = data.user?.user_metadata ?? {};
       // Google accounts arrive without our role/display name. Set them once, for new
       // accounts only; the profile row is created from these on first snapshot.

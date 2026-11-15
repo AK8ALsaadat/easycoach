@@ -13,7 +13,7 @@ let sentinel: string;
 beforeAll(async () => {
   db = await openDatabase();
   await db.exec(`alter table auth.users add column instance_id uuid, add column aud text, add column role text,
-   add column raw_app_meta_data jsonb,add column raw_user_meta_data jsonb,add column is_super_admin boolean,
+   add column if not exists raw_app_meta_data jsonb,add column if not exists raw_user_meta_data jsonb,add column is_super_admin boolean,
    add column created_at timestamptz,add column updated_at timestamptz,add column confirmation_token text,
    add column recovery_token text,add column email_change_token_new text,add column email_change text,
    add column email_change_token_current text,add column reauthentication_token text;
