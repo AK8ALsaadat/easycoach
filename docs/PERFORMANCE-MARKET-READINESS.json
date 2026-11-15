@@ -1,0 +1,46 @@
+{
+  "scope": "Local production build, anonymous landing, Lighthouse mobile simulation; not a production SLA or TikTok WebView measurement",
+  "lighthouseVersion": "13.6.0",
+  "formFactor": "mobile",
+  "throttling": {
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.5600000000002,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4
+  },
+  "throttlingMethod": "simulate",
+  "scores": {
+    "performance": 99,
+    "accessibility": 100,
+    "best-practices": 77
+  },
+  "metrics": {
+    "first-contentful-paint": {
+      "value": 918.7664,
+      "unit": "millisecond"
+    },
+    "largest-contentful-paint": {
+      "value": 918.7664,
+      "unit": "millisecond"
+    },
+    "total-blocking-time": {
+      "value": 124.00000000000045,
+      "unit": "millisecond"
+    },
+    "cumulative-layout-shift": {
+      "value": 0,
+      "unit": "unitless"
+    },
+    "speed-index": {
+      "value": 1271.0308039840731,
+      "unit": "millisecond"
+    }
+  },
+  "clientEntryGzipBytes": {
+    "coach/[[...path]]": 154368,
+    "me": 175033
+  },
+  "knownLimit": "Best Practices below 90 because the existing TikTok Pixel uses third-party cookies and triggers cookie Issues. The user explicitly chose to preserve existing TikTok tracking and document this exception."
+}
