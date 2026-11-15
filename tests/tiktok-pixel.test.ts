@@ -21,6 +21,18 @@ it("CompleteRegistration is sent once for a server-issued new-account event, not
  expect(firePixelEventOnce(event,queue,seen)).toBe(true);expect(firePixelEventOnce(event,queue,seen)).toBe(false);
  expect(queue.track).toHaveBeenCalledExactlyOnceWith("CompleteRegistration",{content_name:"EasyCoach signup"});
 });
+it("uses the standard registration payload without including server record data",()=>{
+ const queue={page:vi.fn(),track:vi.fn()};
+ firePixelEventOnce({id:"new-google-account",name:"CompleteRegistration",properties:{content_name:"wrong",email:"private@example.test"}},queue,new Set());
+ expect(queue.track).toHaveBeenCalledExactlyOnceWith("CompleteRegistration",{content_name:"EasyCoach signup"});
+});
+it("does not mark an event sent if the pixel queue throws",()=>{
+ const queue={page:vi.fn(),track:vi.fn().mockImplementationOnce(()=>{throw Error("queue unavailable");})},seen=new Set<string>();
+ const event={id:"new-account",name:"CompleteRegistration" as const,properties:{}};
+ expect(()=>firePixelEventOnce(event,queue,seen)).toThrow("queue unavailable");
+ expect(seen.has(event.id)).toBe(false);
+ expect(firePixelEventOnce(event,queue,seen)).toBe(true);
+});
 it("fires once per SPA route/query change, including navigating back, without repeating the initial page",()=>{
  const state={ttq:{page:vi.fn(),track:vi.fn()},__ecTikTokRoute:"/pricing"};
  expect(trackRoutePage(state,"/pricing")).toBe(false);expect(trackRoutePage(state,"/terms")).toBe(true);expect(trackRoutePage(state,"/terms")).toBe(false);

@@ -30,5 +30,20 @@ try{
  await page.reload();await page.waitForLoadState("networkidle");
  assert.equal(await eventCount("CompleteRegistration"),0,"Reload must not repeat a claimed new-account conversion");
  assert.equal(await eventCount("Subscribe"),0);
+ // A second browser uses a separately queued, newly-created Google account.
+ // Provider identity is prepared in the synthetic DB; no real Google login.
+ const googleContext=await browser.newContext();
+ const googlePage=await googleContext.newPage();
+ googlePage.setDefaultTimeout(60000);
+ await googleContext.route("https://**.tiktok.com/**",route=>route.fulfill({status:200,contentType:"application/javascript",body:"/* synthetic QA */"}));
+ await googlePage.goto(base+"/login");
+ await googlePage.locator("#auth-email").fill("pixel-google@example.test");
+ await googlePage.locator("#auth-password").fill("CoachPreview!2026");
+ await googlePage.locator('button[type="submit"]').click();
+ await googlePage.waitForURL("**/coach");
+ await googlePage.waitForFunction(()=>(window.ttq??[]).filter(item=>Array.isArray(item)&&item[0]==="track"&&item[1]==="CompleteRegistration").length===1);
+ await googlePage.reload();await googlePage.waitForLoadState("networkidle");
+ assert.equal(await googlePage.evaluate(()=>(window.ttq??[]).filter(item=>Array.isArray(item)&&item[0]==="track"&&item[1]==="CompleteRegistration").length),0);
+ await googleContext.close();
  console.log("PASS TikTok: base once, SPA page views once, first-touch cookie, registration once across reload, no redirect-based subscription; TikTok network blocked");
 }finally{await browser.close();}

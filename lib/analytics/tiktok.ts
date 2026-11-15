@@ -11,8 +11,15 @@ export function trackRoutePage(state:{ttq?:TikTokQueue;__ecTikTokRoute?:string},
 /** Only events claimed from the server enter this queue. Never infer a conversion from a URL. */
 export function firePixelEventOnce(event:PixelEvent,queue:TikTokQueue,seen:Set<string>) {
  if(seen.has(event.id))return false;
+ // Keep standard conversion names explicit in the shipped browser code.
+ // Only the server's new-account receipt can reach this registration branch.
+ if(event.name==="CompleteRegistration"){
+  queue.track("CompleteRegistration", { content_name: "EasyCoach signup" });
+ }else if(event.name==="Subscribe"){
+  queue.track("Subscribe",event.properties);
+ }else return false;
+ // A failed queue call must not suppress a later attempt in this page.
  seen.add(event.id);
- queue.track(event.name,event.properties);
  return true;
 }
 export function pixelBaseCode(id:string) {
