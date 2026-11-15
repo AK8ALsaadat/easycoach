@@ -51,6 +51,16 @@ environment flag; do not delete historical payment records.
 
 ## Payment behavior
 
+Legacy owners can voluntarily purchase a paid plan after migration
+`20261116190000_voluntary_legacy_checkout.sql`. Pricing and subscription management
+link to checkout rather than hiding purchases behind the legacy entitlement.
+Checkout requires a separate explicit legacy transition checkbox in addition to
+the current terms. SQL checks that consent and saves it in the invoice quote.
+The account stays legacy until a matching provider-verified payment settles;
+failed, pending or mismatched payments cannot withdraw legacy access. Only then
+does it become managed, with the chosen plan limits and normal expiry rules.
+Any existing trial end is preserved by the prepaid-trial settlement logic.
+
 ### Subscription coupons
 
 Apply `20261116170000_subscription_coupons.sql` for checkout coupon support.

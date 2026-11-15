@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Check, Sparkles } from "lucide-react";
-import { TRIAL_DAYS, limitLabel, planCodes, plans, riyadhDate, riyals, type PlanCode, type PlatformQuote, type PlatformState } from "@/lib/platform/plans";
+import { canPayPlatform, TRIAL_DAYS, limitLabel, planCodes, plans, riyadhDate, riyals, type PlanCode, type PlatformQuote, type PlatformState } from "@/lib/platform/plans";
 
 /** Campaign facts shared by the hero and the cards, derived from the quote only (never invented). */
 export function trialOffer(quotes: (PlatformQuote | null)[]) {
@@ -36,14 +36,14 @@ export function PlanCards({ quotes, state, signedIn, highlight, context }: {
       return <article key={code} className={`plan-card${featured ? " is-featured" : ""}${isCurrent ? " is-current" : ""}`} aria-labelledby={`plan-${code}`}>
         <div className="plan-card-head">
           <h2 id={`plan-${code}`}>{plan.name}</h2>
-          {isCurrent ? <span className="plan-tag plan-tag-current">باقتك الحالية</span> : featured && code === "pro" ? <span className="plan-tag">للعمل مع فريقك</span> : null}
+          {isCurrent ? <span className="plan-tag plan-tag-current">{state?.mode === "legacy" ? "مزايا حسابك السابق" : "باقتك الحالية"}</span> : featured && code === "pro" ? <span className="plan-tag">للعمل مع فريقك</span> : null}
         </div>
         <div className="plan-price">
           {quote ? code === "free"
             ? <><strong>0.00</strong><span>ريال / شهر</span></>
             : <>{quote.discount && quote.campaign_active && <del>{riyals(quote.base_halalas)}</del>}<strong>{riyals(quote.net_halalas)}</strong><span>ريال / شهر</span></>
             : <p role="status" className="text-muted">يتعذر تحميل السعر حاليًا</p>}
-          {code !== "free" && offer.active && <p className="plan-trial-line">أول {offer.days} يومًا مجانًا</p>}
+          {code !== "free" && offer.active && state?.mode !== "legacy" && <p className="plan-trial-line">أول {offer.days} يومًا مجانًا</p>}
           {code !== "free" && quote && <p className="plan-tax-note">{quote.total_halalas === null ? "بانتظار ضبط الضريبة" : `الإجمالي الشهري${quote.tax_mode === "inclusive" || quote.tax_mode === "exclusive" ? " مع الضريبة" : ""}: ${riyals(quote.total_halalas)} ريال`}</p>}
         </div>
         {quote && <ul className="plan-limits">{limitLabel(quote.limits).map(line => <li key={line}>{line}</li>)}</ul>}
@@ -63,6 +63,8 @@ function PlanAction({ code, quote, state, signedIn, offer, context, isCurrent }:
     if (!signedIn) return <Link className="btn-secondary w-full" href="/login?register=1">ابدأ مجانًا</Link>;
     return <Link className="btn-secondary w-full" href="/coach">{context === "start" ? "المتابعة بالباقة المجانية" : "مساحة المدرب"}</Link>;
   }
+  if (state?.mode === "legacy") return <Link className="btn w-full" href={`/subscription/confirm?plan=${code}`}>الاشتراك في هذه الباقة</Link>;
+  if (state?.status === "trialing" && canPayPlatform(state)) return <Link className="btn w-full" href={`/subscription/confirm?plan=${code}`}>ادفع الآن لتبدأ بعد التجربة</Link>;
   if (isCurrent) return <Link className="btn-secondary w-full" href="/subscription">إدارة اشتراكي</Link>;
   if (!signedIn) {
     return offer.active
@@ -73,7 +75,6 @@ function PlanAction({ code, quote, state, signedIn, offer, context, isCurrent }:
     if (!quote.provider_ready || quote.total_halalas === null) return <><button className="btn w-full" disabled>ابدأ التجربة</button><p className="plan-note">التفعيل معطل لحين تأكيد جاهزية وسيلة الدفع</p><Link href={`/subscription/confirm?plan=${code}`} className="subscription-compare">مراجعة تفاصيل الباقة</Link></>;
     return <Link className="btn w-full" href={`/subscription/confirm?plan=${code}`}>ابدأ {offer.days} يومًا مجانًا</Link>;
   }
-  if (state?.mode === "legacy") return <p className="plan-note">حسابك سابق ويملك كل المزايا بالفعل.</p>;
   if (state && (state.status === "trialing" || state.status === "active")) return <p className="plan-note">يمكنك تغيير باقتك من صفحة الاشتراك بعد نهاية الفترة الحالية.</p>;
   return <Link className="btn-secondary w-full" href={`/subscription/confirm?plan=${code}`}>تفاصيل الباقة</Link>;
 }

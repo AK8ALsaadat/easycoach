@@ -52,7 +52,7 @@ export const TRIAL_DAYS = 14;
 export const paidPlans = ["starter", "pro", "business"] as const;
 export type PaidPlan = typeof paidPlans[number];
 export function canPayPlatform(state: PlatformState) {
-  return state.mode === "managed" && !state.cancelled_at && (!state.period_end || Date.parse(state.period_end) <= Date.parse(state.server_now) + 5 * 86400000);
+  return !state.cancelled_at && (!state.period_end || Date.parse(state.period_end) <= Date.parse(state.server_now) + 5 * 86400000);
 }
 export function isPaidPlan(value: unknown): value is PaidPlan { return paidPlans.includes(value as PaidPlan); }
 /** Monthly price for display: whole riyals when exact ("299"), otherwise two decimals. */

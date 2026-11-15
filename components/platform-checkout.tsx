@@ -6,7 +6,7 @@ import type { PaidPlan } from "@/lib/platform/plans";
 import { sar } from "@/lib/platform/plans";
 import type { CouponQuote } from "@/lib/platform/coupons";
 
-export function PlatformCheckout({ plan, total, renewal = false }: { plan: PaidPlan; total: number; renewal?: boolean }) {
+export function PlatformCheckout({ plan, total, renewal = false, transitionLegacy = false }: { plan: PaidPlan; total: number; renewal?: boolean; transitionLegacy?: boolean }) {
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [coupon, setCoupon] = useState(""), [couponQuote, setCouponQuote] = useState<CouponQuote | null>(null);
   const [applying, setApplying] = useState(false), [couponError, setCouponError] = useState("");
@@ -29,7 +29,7 @@ export function PlatformCheckout({ plan, total, renewal = false }: { plan: PaidP
     const form = new FormData(event.currentTarget);
     setBusy(true); setError("");
     try {
-      const response = await fetch("/api/payments/paylink/create-invoice", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan, total: payable, mobile: form.get("mobile"), terms: POLICY_VERSION, ...(couponQuote ? { coupon: couponQuote.coupon_code } : {}) }) });
+      const response = await fetch("/api/payments/paylink/create-invoice", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan, total: payable, mobile: form.get("mobile"), terms: POLICY_VERSION, ...(couponQuote ? { coupon: couponQuote.coupon_code } : {}), ...(transitionLegacy ? { transitionLegacy: form.get("legacyTransition") === "on" } : {}) }) });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.url) { setError(result?.error || "تعذّر فتح صفحة الدفع. راجع فواتيرك قبل المحاولة مجددًا."); setBusy(false); return; }
       window.location.assign(result.url);
@@ -57,6 +57,7 @@ export function PlatformCheckout({ plan, total, renewal = false }: { plan: PaidP
       <p><strong>الإجمالي النهائي للدفع: {sar(payable)} ريال</strong></p>
     </div>
     <label className="block">رقم جوالك لفاتورة اشتراك المنصة<input className="field mt-2 w-full" name="mobile" type="tel" inputMode="tel" autoComplete="tel" placeholder="05XXXXXXXX" required maxLength={24} disabled={busy} dir="ltr" /></label>
+    {transitionLegacy && <label className="policy-acceptance"><input type="checkbox" name="legacyTransition" required disabled={busy} /><span>أوافق على نقل حسابي السابق إلى الباقة المختارة وحدودها بعد تأكيد الدفع، وعلى العودة للباقة المجانية عند انتهاء الاشتراك دون تجديد.</span></label>}
     <label className="policy-acceptance"><input type="checkbox" required disabled={busy} /><span>أوافق على <Link href="/terms" target="_blank" rel="noopener">الشروط والأحكام</Link> و<Link href="/privacy" target="_blank" rel="noopener">سياسة الخصوصية</Link> وشراء 30 يومًا من EasyCoach بالمبلغ الموضح، دون تجديد تلقائي.</span></label>
     {error && <p role="alert" className="plans-alert">{error}</p>}
     <button className="btn w-full" disabled={busy || applying || unapplied} aria-busy={busy} type="submit">{busy ? "جارٍ فتح الدفع الآمن…" : renewal ? "ادفع لتجديد الاشتراك" : "ادفع الفترة الأولى"}</button>

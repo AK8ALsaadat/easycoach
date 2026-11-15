@@ -59,7 +59,7 @@ async function verifyOnce(params: { transactionNo?: string | null; orderNumber?:
 }
 
 /** One period can have several historical attempts, but only one payable link at a time. */
-export async function checkoutPlatform(input: { owner: string; plan: PaidPlan; total?: number; email: string; coupon?: string }) {
+export async function checkoutPlatform(input: { owner: string; plan: PaidPlan; total?: number; email: string; coupon?: string; transitionLegacy?: boolean }) {
   const readiness = await paymentReadiness();
   if (!readiness.ready) {
     await billingCall("ec_billing_refresh", { owner: input.owner, blocked: readiness.blocked });
@@ -71,7 +71,7 @@ export async function checkoutPlatform(input: { owner: string; plan: PaidPlan; t
   if (process.env.NODE_ENV === "production" && app.protocol !== "https:") throw Error("provider_not_ready");
   try {
     await merchant.auth();
-    const prepare = { owner: input.owner, plan_code: input.plan, expected_total: input.total ?? null, coupon_code: input.coupon ?? null };
+    const prepare = { owner: input.owner, plan_code: input.plan, expected_total: input.total ?? null, coupon_code: input.coupon ?? null, transition_legacy: input.transitionLegacy ?? false };
     let attempt = await billingCall<Attempt>("ec_billing_prepare", prepare);
     if (!attempt.created) {
       if (!attempt.transaction_no) throw Error("payment_pending");

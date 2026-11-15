@@ -46,7 +46,7 @@ export default async function SubscriptionPage({searchParams}:{searchParams:Prom
     {state.status==="trialing"&&state.trial_end&&<PlatformTrialCountdown key={state.server_now} end={state.trial_end} serverNow={state.server_now} plan={state.billing_plan} limits={state.billing_limits} hasPaymentMethod={Boolean(state.has_payment_method)} prepaid={Boolean(state.period_end)}/>}
     <section className="subscription-status">
       {state.mode==="legacy"
-        ? <><span className="status-chip" data-tone="ok">حساب سابق · كل المزايا</span><h2>بقيت صلاحياتك وبياناتك كما هي</h2><p className="text-muted">الانتقال إلى نظام الباقات الجديد يتطلب سياسة انتقال صريحة وموافقتك.</p></>
+        ? <><span className="status-chip" data-tone="ok">حساب سابق · كل المزايا</span><h2>بقيت صلاحياتك وبياناتك كما هي</h2><p className="text-muted">يمكنك الاشتراك باختيارك. راجع حدود الباقة والكوبون ووافق على الانتقال؛ لا تتغير مزايا حسابك السابق إلا بعد تأكيد الدفع.</p><Link href="/subscription/confirm?plan=pro" className="btn" style={{width:"fit-content"}}>الاشتراك والدفع</Link></>
         : <>
           <span className="status-chip" data-tone={statusTone[state.status]}>{statusLabel[state.status]}</span>
           <h2>الباقة المتاحة الآن: {plans[state.effective_plan].name}</h2>

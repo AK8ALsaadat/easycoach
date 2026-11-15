@@ -15,13 +15,15 @@ const scratch = await mkdtemp(path.join(os.tmpdir(), "easycoach-coupon-qa-"));
 const base = "http://127.0.0.1:3205";
 const merchant = "http://127.0.0.1:4019";
 const owner = "77777777-7777-4777-8777-777777777777";
+const legacy = process.env.QA_LEGACY_CHECKOUT === "true";
 const session = "c".repeat(64);
 const db = await openDatabase(path.join(scratch, "db"));
 try {
   await db.query("insert into auth.users(id,email,encrypted_password,email_confirmed_at) values($1,'coupon@example.test',$2,now())", [owner, passwordHash("FictionalCoupon!2026")]);
   await rpcLocal(db, owner, "init_profile", { display_name: "اختبار الكوبون", requested_role: "coach" });
   await db.exec("update public.ec_config set provider_verified=true,tax_mode='not_registered'");
-  await db.query("select public.ec_billing_start($1,'pro','0501234567','Coupon trial fixture',$2)", [owner, POLICY_VERSION]);
+  if (legacy) await db.query("update public.ec_accounts set mode='legacy' where owner_id=$1", [owner]);
+  else await db.query("select public.ec_billing_start($1,'pro','0501234567','Coupon trial fixture',$2)", [owner, POLICY_VERSION]);
   await db.query("insert into private.local_sessions(token_hash,user_id,expires_at) values($1,$2,now()+interval '2 hours')", [createHash("sha256").update(session).digest("hex"), owner]);
 } finally { await db.close(); }
 let creates = 0;
@@ -59,8 +61,10 @@ try {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await context.addCookies([{ name: "ec_session", value: session, url: base }]);
   const page = await context.newPage(); page.setDefaultTimeout(60000);
-  await page.goto(base + "/subscription/confirm?plan=pro");
-  await page.getByText(/يمكنك الدفع الآن. تبدأ الـ30 يومًا المدفوعة بعد نهاية تجربتك/).waitFor();
+  await page.goto(base + "/pricing");
+  await page.locator('article[aria-labelledby="plan-pro"]').getByRole("link", { name: legacy ? "الاشتراك في هذه الباقة" : "ادفع الآن لتبدأ بعد التجربة", exact: true }).click();
+  await page.waitForURL("**/subscription/confirm?plan=pro");
+  if (!legacy) await page.getByText(/يمكنك الدفع الآن. تبدأ الـ30 يومًا المدفوعة بعد نهاية تجربتك/).waitFor();
   const form = page.locator("form").filter({ has: page.getByRole("button", { name: "ادفع الفترة الأولى", exact: true }) });
   const code = form.getByLabel("كوبون الخصم", { exact: true });
   await code.fill("invalid"); await form.getByRole("button", { name: "تطبيق الكوبون", exact: true }).click();
@@ -78,7 +82,8 @@ try {
   await form.getByText("الإجمالي النهائي للدفع: 5.00 ريال", { exact: true }).waitFor();
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await form.locator('[name="mobile"]').fill("0501234567");
-  await form.locator('input[type="checkbox"]').check();
+  for (const checkbox of await form.locator('input[type="checkbox"]').all()) await checkbox.check();
+  if (legacy) assert(await form.locator('[name="legacyTransition"]').isChecked());
   await form.getByRole("button", { name: "ادفع الفترة الأولى", exact: true }).click();
   await page.waitForURL(merchant + "/pay/coupon-browser");
   assert.equal(creates, 1);
@@ -86,14 +91,14 @@ try {
   const notify = await fetch(base + "/api/payments/paylink/webhook", { method: "POST", headers: { "Content-Type": "application/json", authorization: "Bearer fictional-hook" }, body: JSON.stringify({ transactionNo: "coupon-browser", merchantOrderNumber: invoice.orderNumber }) });
   assert.equal(notify.status, 200);
   await page.goto(invoice.callBackUrl);
-  await page.getByRole("heading", { name: "تم سداد الاشتراك القادم", exact: true }).waitFor();
-  await page.getByRole("heading", { name: "تجربتك المجانية جارية", exact: true }).waitFor();
+  await page.getByRole("heading", { name: legacy ? "الاشتراك نشط" : "تم سداد الاشتراك القادم", exact: true }).waitFor();
+  if (!legacy) await page.getByRole("heading", { name: "تجربتك المجانية جارية", exact: true }).waitFor();
   assert.equal(await page.getByRole("link", { name: "ادفع الآن لتبدأ باقتك بعد التجربة", exact: true }).count(), 0);
   await page.goto(base + "/subscription/confirm?plan=pro");
-  await page.getByText(/تم سداد الفترة القادمة. تبدأ في/).waitFor();
+  if (!legacy) await page.getByText(/تم سداد الفترة القادمة. تبدأ في/).waitFor();
   assert.equal(await page.getByRole("button", { name: "ادفع الفترة الأولى", exact: true }).count(), 0);
   await page.screenshot({ path: "artifacts/trial-prepayment-confirmed.png", fullPage: true });
-  console.log("PASS: trial prepayment with coupon, disclosed SAR 5.00 floor, mobile/desktop, verified scheduled period, preserved trial and no second checkout. Synthetic provider only.");
+  console.log(legacy ? "PASS: legacy pricing card to checkout, explicit consent, anho SAR 5.00, verified migration and no duplicate purchase. Synthetic provider only." : "PASS: trial pricing card to prepaid checkout with coupon, disclosed SAR 5.00 floor, mobile/desktop, verified scheduled period, preserved trial and no second checkout. Synthetic provider only.");
 } finally {
   await browser?.close();
   next.kill();
