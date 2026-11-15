@@ -42,8 +42,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const preferences=await cookies();
-  // A transient database error must not take down every page; data paths still sync strictly.
-  await syncBillingMode().catch(() => console.error("billing.mode_sync_failed"));
+  // Public marketing must not wait for an administrative database write.
+  // RPCs and billing jobs still synchronize strictly before touching data.
+  if (preferences.getAll().some(cookie => /^(sb-|ec_session$|ec_trainee_)/.test(cookie.name))) {
+    await syncBillingMode().catch(() => console.error("billing.mode_sync_failed"));
+  }
   const language = preferences.get("ec_language")?.value === "en" ? "en" : "ar";
   // Light is the first-visit default; keep an explicit dark-mode choice.
   const theme=preferences.get("ec_theme")?.value === "dark" ? "dark" : "light";

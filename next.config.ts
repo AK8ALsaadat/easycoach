@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
+  compress: true,
   // Development action logs include arguments (credentials and private records).
   logging: false,
   // The development overlay otherwise covers the support button during local QA.
@@ -13,6 +14,14 @@ const config: NextConfig = {
   },
   async headers() {
     return [
+      {
+        source: "/exercises/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
+      },
+      {
+        source: "/icons/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
+      },
       {
         // The worker must always be revalidated so updates are detected promptly.
         source: "/sw.js",
