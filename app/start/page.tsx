@@ -1,3 +1,5 @@
+import { redirect as freeRedirect } from "next/navigation";
+import { billingEnabled } from "@/lib/billing-mode";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -12,6 +14,7 @@ import { TrialStartForm } from "@/components/trial-start-form";
 export const metadata: Metadata = { title: "ابدأ تجربتك", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 export default async function StartPage({ searchParams }: { searchParams: Promise<{ plan?: string; error?: string }> }) {
+  if (!billingEnabled()) freeRedirect("/");
   const search = await searchParams;
   const plan = isPaidPlan(search.plan) ? search.plan : "pro";
   if (!(await actor())) redirect(`/login?register=1&next=${encodeURIComponent(`/start?plan=${plan}`)}`);

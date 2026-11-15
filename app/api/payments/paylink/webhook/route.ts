@@ -1,3 +1,4 @@
+import { billingEnabled } from "@/lib/billing-mode";
 import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { logPaymentEvent, requestRef, verifyPlatformPayment } from "@/lib/platform/paylink";
@@ -11,6 +12,7 @@ function reply(status: number, error?: ErrorCode) {
 }
 
 export async function POST(request: Request) {
+  if (!billingEnabled()) return new Response(null, { status: 404 });
   try {
     const secret = process.env.PAYLINK_WEBHOOK_SECRET;
     if (!secret) return reply(503, "not_configured");

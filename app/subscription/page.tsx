@@ -1,3 +1,5 @@
+import { redirect as freeRedirect } from "next/navigation";
+import { billingEnabled } from "@/lib/billing-mode";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { platformQuote, platformState } from "@/lib/platform/server";
@@ -18,6 +20,7 @@ export const dynamic="force-dynamic";
 const statusLabel = { free: "الباقة المجانية", trialing: "تجربة مجانية", active: "اشتراك نشط", past_due: "بانتظار الدفع", expired: "انتهت الفترة" } as const;
 const statusTone = { free: "neutral", trialing: "trial", active: "ok", past_due: "warn", expired: "warn" } as const;
 export default async function SubscriptionPage({searchParams}:{searchParams:Promise<Record<string,string|undefined>>}) {
+  if (!billingEnabled()) freeRedirect("/");
   const search=await searchParams;
   let state=await platformState();
   let paymentMessage = "";

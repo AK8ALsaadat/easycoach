@@ -1,4 +1,5 @@
 "use client";
+import { useBillingEnabled, FreePlatformNotice } from "./billing-mode-provider";
 import { useLocale } from "./locale-provider";
 import { countLabel, nouns } from "@/lib/plural";
 import { useState } from "react";
@@ -31,6 +32,7 @@ export function CoachToday({
   data: Snapshot;
   tutorialDismissed?: boolean;
 }) {
+  const billing = useBillingEnabled();
   const { t: tr, language: locale } = useLocale();
 
   const [filter, setFilter] = useState("all"),
@@ -108,7 +110,7 @@ export function CoachToday({
     if (client) task(client, alert.label, alert.urgent);
   }
   needs.forEach((c) => task(c, "برنامج أول"));
-  renew.forEach((c) => task(c, "تجديد", current(c.id)!.end_date < today));
+  if (billing) renew.forEach((c) => task(c, "تجديد", current(c.id)!.end_date < today));
   stale.forEach((c) => task(c, "مراجعة برنامج"));
   const tasks = [...taskMap.values()].sort(
     (a, b) => Number(b.urgent) - Number(a.urgent),
@@ -180,7 +182,7 @@ export function CoachToday({
             </li>
             <li>
               <span>٣</span>
-              <div><strong>{tr("أرسل رابط بوابته")}</strong><p>{tr("من ملفه انسخ رابطًا خاصًا ليشاهد خطته ويرسل تحديثاته.")}</p></div>
+              <div><strong>{tr("أرسل رابط بوابته")}</strong><p>{tr("من ملفه انسخ رابطًا خاصًا ليشاهد برنامجه ويرسل تحديثاته.")}</p></div>
             </li>
           </ol>
           <div className="coach-guide-actions">
@@ -215,7 +217,7 @@ export function CoachToday({
             icon: Flame,
             key: "draft",
           },
-        ].map((s) => (
+        ].filter(s => billing || s.key !== "renew").map((s) => (
           <button
             key={s.key}
             onClick={() => setFilter(s.key)}
@@ -251,7 +253,7 @@ export function CoachToday({
           />
           <div className="readiness-footer">
             <span>
-              {countLabel(locale, active.length, nouns.activeSubscription)} · {countLabel(locale, data.templates.length, nouns.template)}
+              {billing ? countLabel(locale, active.length, nouns.activeSubscription) : countLabel(locale, clients.length, nouns.trainee)} · {countLabel(locale, data.templates.length, nouns.template)}
             </span>
             <Link
               href={
@@ -265,10 +267,10 @@ export function CoachToday({
             </Link>
           </div>
         </section>
-        <section className="revenue-card">
+        {billing && <section className="revenue-card">
           <div><span className="summary-label">{tr("الاشتراكات والتجديد")}</span><strong className="revenue-number">{active.length}</strong><p>{tr("اشتراك نشط")}</p></div>
           <div className="revenue-secondary"><span>{tr("تجديد خلال 7 أيام")}<strong>{renew.length}</strong></span><Link href="/coach/finance" className="finance-link">{tr("إدارة الاشتراكات")}<ArrowLeft size={16} /></Link></div>
-        </section>
+        </section>}
       </div>
       <div className="mt-6 grid items-start gap-5 xl:grid-cols-[1.6fr_1fr]">
         <section className="card">
@@ -391,7 +393,7 @@ export function CoachToday({
             ["needs", tr("بدون برنامج")],
             ["renew", tr("التجديدات")],
             ["draft", tr("لديهم مسودة")],
-          ].map(([k, v]) => (
+          ].filter(([key]) => billing || key !== "renew").map(([k, v]) => (
             <button
               key={k}
               aria-pressed={filter === k}
@@ -410,7 +412,7 @@ export function CoachToday({
                 <th>{tr("البرنامج")}</th>
                 <th>{tr("التغذية")}</th>
                 <th>{tr("آخر وزن")}</th>
-                <th>{tr("الاشتراك")}</th>
+                {billing && <th>{tr("الاشتراك")}</th>}
                 <th aria-label={tr("افتح ملف المتدرب")} />
               </tr>
             </thead>
@@ -483,11 +485,11 @@ export function CoachToday({
                         "—"
                       )}
                     </td>
-                    <td>
+                    {billing && <td>
                       <span className="text-xs">
                         {s ? formatDate(latestSubscription(data.subscriptions, c.id)!.end_date, locale) : tr("بدون باقة")}
                       </span>
-                    </td>
+                    </td>}
                     <td>
                       <Link
                         className="btn-secondary !px-2"
@@ -540,10 +542,10 @@ export function CoachToday({
                       {weight ? weight.weight + tr(" كجم") : tr("لم يُسجل")}
                     </strong>
                   </span>
-                  <span>
+                  {billing && <span>
                     {tr("نهاية الاشتراك")}
                     <strong>{latestSubscription(data.subscriptions, c.id) ? formatDate(latestSubscription(data.subscriptions, c.id)!.end_date, locale) : tr("بدون اشتراك")}</strong>
-                  </span>
+                  </span>}
                 </div>
               </Link>
             );

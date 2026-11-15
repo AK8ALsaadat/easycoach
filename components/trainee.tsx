@@ -1,4 +1,5 @@
 "use client";
+import { useBillingEnabled, FreePlatformNotice } from "./billing-mode-provider";
 import { LegalLinks } from "./legal-links";
 import { useLocale } from "./locale-provider";
 import { LanguageSwitch } from "./language-switch";
@@ -50,6 +51,7 @@ const forgetDevice = () => {
 };
 
 function TraineeHeader({ name }: { name: string }) {
+  const billing = useBillingEnabled();
   const { t: tr } = useLocale();
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -107,6 +109,7 @@ function TraineeHeader({ name }: { name: string }) {
  * the coach tab and the awaiting-review list both count.
  */
 function WeeklyReviewStart({ clientId, records }: { clientId: string; records: CoachingRecord[] }) {
+  const billing = useBillingEnabled();
   const { t: tr } = useLocale();
   const today = riyadhToday(), weekStart = addDays(today, -6);
   const mine = records.filter((record) => record.client_id === clientId && record.entry_date >= weekStart);
@@ -135,6 +138,7 @@ function WeeklyReviewStart({ clientId, records }: { clientId: string; records: C
 
 const sections = ["today", "training", "nutrition", "client-management-hub"] as const;
 function BottomNav() {
+  const billing = useBillingEnabled();
   const { t: tr } = useLocale();
   const [active, setActive] = useState<string>("today");
   const [hubTab, setHubTab] = useState<"progress" | "messages">("progress");
@@ -188,6 +192,7 @@ export function Trainee({
   data: Snapshot;
   selectedId?: string;
 }) {
+  const billing = useBillingEnabled();
   const { t: tr, language: locale } = useLocale();
 
   const router = useRouter();
@@ -253,6 +258,7 @@ export function Trainee({
     <div className={`trainee-shell min-h-screen ${client ? "has-bottom-nav" : ""}`}>
       {data.profile?.id && <SessionGuard userId={data.profile.id} />}
       <TraineeHeader name={data.profile!.name} />
+      <div className="mx-auto max-w-6xl px-4 pt-4"><FreePlatformNotice/></div>
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-5 sm:py-9">
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -305,7 +311,7 @@ export function Trainee({
             {clients.length > 1 ? (
               <div className="mb-5">
                 <label htmlFor="portal-client">
-                  {tr("اختر اشتراكك مع المدرب")}
+                  {tr("اختر مدربك")}
                 </label>
                 <select
                   id="portal-client"
@@ -324,7 +330,7 @@ export function Trainee({
             <CoachIdentity branding={data.coach_branding?.find(b => b.coach_id === client.coach_id)} />
             <section id="today" className="card mb-6 p-5 trainee-anchor" aria-labelledby="linked-today-title">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div><p className="eyebrow">{tr("اليوم")}</p><h2 id="linked-today-title" className="mt-2 text-xl">{publishedProgram ? tr("خطتك لهذا اليوم") : tr("لا توجد خطة منشورة حاليًا")}</h2><p className="mt-2 text-sm text-muted">{clientWeights[0] ? <>{tr("آخر وزن")}: <bdi dir="ltr">{clientWeights[0].weight}</bdi> {tr("كجم")} · {formatDate(clientWeights[0].entry_date, locale)}</> : tr("لا يوجد وزن مسجل بعد. سجّل تحديثًا سريعًا عندما يناسبك.")}</p><p className="mt-1 text-xs text-muted">{formatDate(today, locale)}</p></div>
+                <div><p className="eyebrow">{tr("اليوم")}</p><h2 id="linked-today-title" className="mt-2 text-xl">{publishedProgram ? tr("برنامجك لهذا اليوم") : tr("لا يوجد برنامج منشور حاليًا")}</h2><p className="mt-2 text-sm text-muted">{clientWeights[0] ? <>{tr("آخر وزن")}: <bdi dir="ltr">{clientWeights[0].weight}</bdi> {tr("كجم")} · {formatDate(clientWeights[0].entry_date, locale)}</> : tr("لا يوجد وزن مسجل بعد. سجّل تحديثًا سريعًا عندما يناسبك.")}</p><p className="mt-1 text-xs text-muted">{formatDate(today, locale)}</p></div>
                 <TraineeCheckinStatus clientId={clientId} today={today} weights={clientWeights} records={data.management?.records ?? []} management={data.management} />
                 <div className="flex flex-wrap items-center gap-2"><WeeklyReviewStart key={clientId} clientId={clientId} records={data.management?.records ?? []} /><a className="btn-secondary" href="#weight">{tr("تسجيل الوزن")}</a><a className="btn-secondary" href="#client-management-hub" onClick={() => window.dispatchEvent(new CustomEvent("easycoach:open-hub-tab", { detail: "progress" }))}>{tr("إرسال تحديث للمدرب")}</a></div>
               </div>
@@ -379,7 +385,7 @@ export function Trainee({
               </aside>
               <div id="nutrition" className="trainee-nutrition trainee-anchor">
                 <ProgramView section="nutrition" nutrition={nutrition} program={publishedProgram} />
-                {!nutrition && !publishedProgram?.content.nutrition && <p className="card p-5 text-sm text-muted">{tr("لم يضف مدربك خطة تغذية بعد.")}</p>}
+                {!nutrition && !publishedProgram?.content.nutrition && <p className="card p-5 text-sm text-muted">{tr("لم يضف مدربك برنامج تغذية بعد.")}</p>}
               </div>
             </div>
           </>
@@ -396,12 +402,12 @@ export function Trainee({
                 data.client_goals?.find((goal) => goal.client_id === clientId)
                   ?.target_weight
               }
-              showRenewalRequest={subscriptions.length > 0}
+              showRenewalRequest={billing && subscriptions.length > 0}
               coachName={coachName}
             />
           </div>
         )}
-        {client && <>
+        {billing && client && <>
                 <div className="trainee-side mt-7 space-y-6">
                   <section className="card p-6">
                     <h2 className="flex items-center gap-2">

@@ -1,4 +1,5 @@
 "use client";
+import { useBillingEnabled, FreePlatformNotice } from "./billing-mode-provider";
 import { LegalLinks } from "./legal-links";
 import { useLocale } from "./locale-provider";
 import { LanguageSwitch } from "./language-switch";
@@ -40,6 +41,7 @@ function PortalConsentPrompt({ clientId, state, coachName, token, onAccepted }: 
   );
 }
 export function ClientPortal({ token, branding }: { token: string; branding?: CoachBranding | null }) {
+  
   const { t: tr } = useLocale();
   const router = useRouter();
   const session = token.startsWith("session:");
@@ -146,6 +148,7 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
         <button className="btn-secondary" disabled={busy} onClick={async () => { setBusy(true); try { const result = await optionalPortalAccount(token); if (result.ok && result.url) router.push(result.url); else setError(result.error ?? "تعذر فتح صفحة الحساب"); } catch { setError("تعذر الاتصال. يمكنك متابعة استخدام البوابة دون حساب."); } finally { setBusy(false); } }}>{tr("ربط حساب اختياري")}</button>
       </header>
       <main className="mx-auto max-w-6xl px-5 py-8">
+        <FreePlatformNotice/>
         <div className="portal-welcome">
           <div>
             <p className="eyebrow">{tr("خطوة جديدة نحو هدفك")}</p>
@@ -193,7 +196,7 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
         ) : null}
         <section className="card mt-6 p-5" aria-labelledby="portal-today-title">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div><p className="eyebrow">{tr("اليوم")}</p><h2 id="portal-today-title" className="mt-2 text-xl">{data.program ? tr("خطتك لهذا اليوم") : tr("لا توجد خطة منشورة حاليًا")}</h2><p className="mt-2 text-sm text-muted">{data.weights.at(-1) ? `${tr("آخر وزن")}: ${data.weights.at(-1)!.weight} ${tr("كجم")} · ${formatDate(data.weights.at(-1)!.entry_date)}` : tr("لا يوجد وزن مسجل بعد. سجّل تحديثًا سريعًا عندما يناسبك.")}</p><p className="mt-1 text-xs text-muted">{formatDate(riyadhToday())}</p></div>
+            <div><p className="eyebrow">{tr("اليوم")}</p><h2 id="portal-today-title" className="mt-2 text-xl">{data.program ? tr("برنامجك لهذا اليوم") : tr("لا يوجد برنامج منشور حاليًا")}</h2><p className="mt-2 text-sm text-muted">{data.weights.at(-1) ? `${tr("آخر وزن")}: ${data.weights.at(-1)!.weight} ${tr("كجم")} · ${formatDate(data.weights.at(-1)!.entry_date)}` : tr("لا يوجد وزن مسجل بعد. سجّل تحديثًا سريعًا عندما يناسبك.")}</p><p className="mt-1 text-xs text-muted">{formatDate(riyadhToday())}</p></div>
             <TraineeCheckinStatus clientId={data.client_id ?? ""} today={riyadhToday()} weights={data.weights} records={data.management?.records ?? []} management={data.management} />
             <div className="flex flex-wrap gap-2"><a className="btn" href="#weight-panel">{tr("تسجيل الوزن")}</a><a className="btn-secondary" href="#client-management-hub" onClick={() => window.dispatchEvent(new CustomEvent("easycoach:open-hub-tab", { detail: "progress" }))}>{tr("إرسال تحديث للمدرب")}</a></div>
           </div>

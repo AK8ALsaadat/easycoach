@@ -1,3 +1,4 @@
+import { billingEnabled } from "@/lib/billing-mode";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/supabase";
@@ -6,6 +7,13 @@ import { ATTRIBUTION_COOKIE,ATTRIBUTION_SECONDS,attributionCookieValue,attributi
 /** Static assets whose responses never depend on the Supabase session. */
 const PUBLIC_FILE = /\.(?:png|jpe?g|svg|gif|webp|avif|ico|txt|xml|webmanifest|js|css|map|woff2?)$/i;
 export async function proxy(request: NextRequest) {
+  if (!billingEnabled()) {
+    const path = request.nextUrl.pathname;
+    if (/^\/(pricing|subscription|start|payments\/paylink)(\/|$)/.test(path))
+      return NextResponse.redirect(new URL("/", request.url));
+    if (/^\/api\/(platform\/(checkout|coupon)|payments\/|health\/payments)/.test(path))
+      return new NextResponse(null, { status: 404 });
+  }
   let firstTouch:string|null=null;
   if(!PUBLIC_FILE.test(request.nextUrl.pathname)&&!request.nextUrl.pathname.startsWith('/api/')&&!request.nextUrl.pathname.startsWith('/_next/')&&!request.cookies.has(ATTRIBUTION_COOKIE)){
     firstTouch=attributionCookieValue(attributionFromUrl(request.nextUrl.searchParams));

@@ -399,7 +399,7 @@ export function ProgramEditor({
             onChange={(targets) => edit((c) => ({ ...c, nutrition: { ...c.nutrition, ...targets } }))}
           /></>}
           <label htmlFor="nutrition-text">
-            {tr("الخطة والملاحظات الغذائية")}
+            {tr("التوجيهات والملاحظات الغذائية")}
           </label>
           <textarea
             id="nutrition-text"

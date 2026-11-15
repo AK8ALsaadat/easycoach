@@ -158,3 +158,5 @@ h1,h2,h3 { letter-spacing:0; }
 @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; }.feature-card,:root .btn { transition:none; }.feature-card:hover,:root .btn:hover { transform:none; } }
 @media(prefers-contrast:more) { .feature-card,.product-preview,.onboarding-card { border-color:var(--ui-text-secondary); }.auth-page .auth-panel,:root .portal-sidebar { background:var(--ui-surface); } }
 @media(prefers-reduced-transparency:reduce) { :root .portal-sidebar,:root .portal-header,.auth-page .auth-panel { background:var(--ui-surface); backdrop-filter:none; } }
+
+.free-platform-notice { display:inline-flex; align-items:center; padding: .5rem .85rem; border-radius:999px; background:var(--teal-soft, #d9f3e9); color:var(--teal, #087f70); font-size:.8rem; font-weight:600; }

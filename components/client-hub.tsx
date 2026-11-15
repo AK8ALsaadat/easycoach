@@ -1,4 +1,5 @@
 "use client";
+import { useBillingEnabled, FreePlatformNotice } from "./billing-mode-provider";
 import { DateInput } from "./date-input";
 import dynamic from "next/dynamic";
 import { ChunkLoading } from "./chunk-loading";
@@ -86,6 +87,7 @@ export function ClientHub({
   onUpdate,
   coachName,
 }: HubProps) {
+  const billing = useBillingEnabled();
   const { t: tr, language } = useLocale();
 
   const router = useRouter();
@@ -923,7 +925,7 @@ export function ClientHub({
             <div className="section-title">
               <h2>{tr("المراسلات داخل المنصة")}</h2>
               <div className="flex flex-wrap gap-2">
-                {!coach && showRenewalRequest && <button type="button" className="btn" disabled={busy || renewalRequested} onClick={async () => {
+                {billing && !coach && showRenewalRequest && <button type="button" className="btn" disabled={busy || renewalRequested} onClick={async () => {
                   if (!renewalRequest.current || renewalRequest.current.clientId !== clientId) renewalRequest.current = {
                     clientId, id: crypto.randomUUID(), day: riyadhToday(),
                     text: tr("أرغب في تجديد اشتراكي. تواصل معي من فضلك لمناقشة المدة والتكلفة."),
@@ -1061,6 +1063,7 @@ function RecordForm({
   entryDate?: string;
   onEntryDateChange?: (date: string) => void;
 }) {
+  
   const { t: tr, language } = useLocale();
 
   const requestId = useRef<string | null>(null);
@@ -1358,7 +1361,7 @@ function RecordForm({
             : kind === "note"
               ? tr("ملاحظة خاصة")
               : kind === "nutrition_target"
-                ? tr("خطة الوجبات أو توجيهات التغذية")
+                ? tr("تنظيم الوجبات أو توجيهات التغذية")
                 : tr("ملاحظات السجل")}
           <textarea
             className="field"

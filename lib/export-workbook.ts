@@ -1,3 +1,4 @@
+import { billingEnabled } from "./billing-mode";
 import ExcelJS from "exceljs";
 import type { Content, Snapshot } from "./model";
 import type { CoachingRecord } from "./management";
@@ -395,7 +396,7 @@ export async function exportWorkbook(data: Snapshot) {
       })),
     ["email", "date", "source_key", "text", "author_type"],
   );
-  sheet(
+  if (billingEnabled()) sheet(
     "Subscriptions",
     data.subscriptions.map((subscription) => ({
       email: emails.get(subscription.client_id),
@@ -416,7 +417,7 @@ export async function exportWorkbook(data: Snapshot) {
       "previous_ref",
     ],
   );
-  sheet(
+  if (billingEnabled()) sheet(
     "Payments",
     data.payments.map((payment) => {
       const subscription = data.subscriptions.find(

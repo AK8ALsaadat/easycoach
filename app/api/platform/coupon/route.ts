@@ -1,9 +1,11 @@
+import { billingEnabled } from "@/lib/billing-mode";
 import { actor } from "@/lib/server";
 import { quoteCoupon } from "@/lib/platform/coupons";
 import { z } from "zod";
 
 const Body = z.object({ plan: z.enum(["starter", "pro", "business"]), coupon: z.string().trim().min(1).max(32) }).strict();
 export async function POST(request: Request) {
+  if (!billingEnabled()) return new Response(null, { status: 404 });
   const user = await actor();
   if (!user) return Response.json({ error: "يلزم تسجيل الدخول" }, { status: 401 });
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");

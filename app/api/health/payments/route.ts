@@ -1,3 +1,4 @@
+import { billingEnabled } from "@/lib/billing-mode";
 import { timingSafeEqual } from "node:crypto";
 import { PAYLINK_HOSTS, normalizeBaseUrl } from "@/lib/paylink/client";
 import { paylinkVerified, paymentReadiness, paymentsEnabled, platformMerchant, vatRegisteredEnv } from "@/lib/platform/payment-config";
@@ -11,6 +12,7 @@ const present = (name: string) => Boolean(process.env[name]?.trim());
  * Anything else gets a bare 404. POST additionally verifies merchant authentication.
  */
 export async function GET(request: Request) {
+  if (!billingEnabled()) return new Response(null, { status: 404 });
   const supplied = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] ?? "";
   const a = Buffer.from(supplied);
   const authorized = [process.env.PAYMENT_HEALTH_SECRET, process.env.CRON_SECRET].some(secret => {
@@ -54,6 +56,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!billingEnabled()) return new Response(null, { status: 404 });
   const response = await GET(request);
   if (response.status !== 200) return response;
   const body = await response.json();

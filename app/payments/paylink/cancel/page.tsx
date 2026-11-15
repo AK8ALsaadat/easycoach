@@ -1,3 +1,5 @@
+import { redirect as freeRedirect } from "next/navigation";
+import { billingEnabled } from "@/lib/billing-mode";
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import { translator } from "@/lib/i18n";
@@ -10,6 +12,7 @@ export const metadata: Metadata = { title: "إلغاء الدفع", robots: { in
 
 /** The payer left Paylink's page. Still ask Paylink, in case the payment went through first. */
 export default async function PaylinkCancel({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  if (!billingEnabled()) freeRedirect("/");
   const tr = translator((await cookies()).get("ec_language")?.value === "en" ? "en" : "ar");
   const params = paylinkReturnParams(await searchParams);
   let result: VerifyResult = { state: "canceled", errors: [] };

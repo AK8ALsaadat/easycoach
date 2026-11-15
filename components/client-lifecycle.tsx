@@ -1,4 +1,5 @@
 "use client";
+import { useBillingEnabled } from "./billing-mode-provider";
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -14,6 +15,7 @@ const sameName = (a: string, b: string) => a.trim().replace(/\s+/g, " ") === b.t
 
 function useLifecycle(client: Client, afterArchive?: string) {
   const router = useRouter();
+  
   const { t: tr } = useLocale();
   async function restore(withToast = true) {
     const result = await setClientArchived(client.id, false);
@@ -37,6 +39,7 @@ function useLifecycle(client: Client, afterArchive?: string) {
 }
 
 export function ArchiveDialog({ client, open, onClose, afterArchive }: { client: Client; open: boolean; onClose: () => void; afterArchive?: string }) {
+  const billing = useBillingEnabled();
   const { t: tr } = useLocale();
   const { archive } = useLifecycle(client, afterArchive);
   const [reason, setReason] = useState("");
@@ -46,13 +49,13 @@ export function ArchiveDialog({ client, open, onClose, afterArchive }: { client:
     <Modal open={open} onClose={() => !busy && onClose()} title={tr("أرشفة {0}", client.name)}>
       <ul className="lifecycle-list">
         <li>{tr("يختفي من قائمة المتدربين الافتراضية ومن إحصائيات النظرة العامة والتنبيهات والتجديدات.")}</li>
-        <li>{tr("تبقى كل بياناته محفوظة: البرامج والأوزان والصور والاشتراكات والرسائل.")}</li>
+        <li>{tr(billing ? "تبقى كل بياناته محفوظة: البرامج والأوزان والصور والاشتراكات والرسائل." : "تبقى كل بياناته محفوظة: البرامج والأوزان والصور والرسائل.")}</li>
         <li>{tr("يتوقف دخوله لبوابة المتدرب، وتنلغي دعواته المعلّقة وروابطه النشطة.")}</li>
         <li>{tr("تقدر تستعيده في أي وقت من تبويب «المؤرشفون».")}</li>
       </ul>
       <label className="mt-4 block">
         {tr("سبب الأرشفة (اختياري)")}
-        <textarea className="field mt-2 min-h-20" maxLength={500} value={reason} disabled={busy} onChange={(event) => setReason(event.target.value)} placeholder={tr("مثال: انتهى الاشتراك ولم يجدد")} />
+        <textarea className="field mt-2 min-h-20" maxLength={500} value={reason} disabled={busy} onChange={(event) => setReason(event.target.value)} placeholder={tr(billing ? "مثال: انتهى الاشتراك ولم يجدد" : "مثال: توقف المتدرب عن التدريب")} />
       </label>
       {error && <p role="alert" className="field-error mt-2">{tr(error)}</p>}
       <div className="mt-5 flex flex-wrap gap-2">
@@ -86,6 +89,7 @@ export function ArchiveDialog({ client, open, onClose, afterArchive }: { client:
 }
 
 export function PurgeDialog({ client, open, onClose }: { client: Client; open: boolean; onClose: () => void }) {
+  const billing = useBillingEnabled();
   const { t: tr, language } = useLocale();
   const router = useRouter();
   const [summary, setSummary] = useState<PurgeSummary | null>(null);
@@ -129,7 +133,7 @@ export function PurgeDialog({ client, open, onClose }: { client: Client; open: b
           <li>{countLabel(language, summary.weights, nouns.weight)}</li>
           <li>{countLabel(language, summary.photos, nouns.photo)}</li>
           <li>{countLabel(language, summary.messages, nouns.message)}</li>
-          <li>{countLabel(language, summary.subscriptions, nouns.subscription)}</li>
+          {billing && <li>{countLabel(language, summary.subscriptions, nouns.subscription)}</li>}
         </ul>
       ) : (
         <p className="mt-2 text-sm text-muted" role="status">{tr(summaryError || "نجهّز ملخص البيانات…")}</p>
@@ -186,6 +190,7 @@ export function PurgeDialog({ client, open, onClose }: { client: Client; open: b
  * button, or above it when there is not enough room underneath.
  */
 export function ClientActionsMenu({ client, afterArchive, compact = false }: { client: Client; afterArchive?: string; compact?: boolean }) {
+  
   const { t: tr, language } = useLocale();
   const { restore } = useLifecycle(client);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -304,6 +309,7 @@ export function ClientActionsMenu({ client, afterArchive, compact = false }: { c
 
 /** Plain button that opens the archive confirmation. */
 export function ArchiveClientTrigger({ client, afterArchive }: { client: Client; afterArchive?: string }) {
+  
   const { t: tr } = useLocale();
   const [open, setOpen] = useState(false);
   return (
@@ -318,6 +324,7 @@ export function ArchiveClientTrigger({ client, afterArchive }: { client: Client;
 
 /** Visible restore button for archived rows. */
 export function RestoreClientButton({ client }: { client: Client }) {
+  
   const { t: tr } = useLocale();
   const { restore } = useLifecycle(client);
   const [busy, setBusy] = useState(false);

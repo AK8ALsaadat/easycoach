@@ -29,7 +29,7 @@ export function ProgramView({
       {nutritionPlan && <section className="card p-6">
         <h2 className="flex items-center gap-2">
           <Utensils size={20} className="text-teal" />
-          {tr("خطة التغذية")}
+          {tr("برنامج التغذية")}
         </h2>
         <div className="my-5 grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
@@ -49,7 +49,7 @@ export function ProgramView({
         </div>
         <MacroSplitBar value={nutritionPlan} className="mb-5" />
         {(nutritionPlan.text || !filledMeals.length) && <p className="whitespace-pre-wrap leading-9 text-muted">
-          {nutritionPlan.text || tr("لم يضف المدرب خطة تغذية نصية بعد.")}
+          {nutritionPlan.text || tr("لم يضف المدرب برنامج تغذية نصية بعد.")}
         </p>}
         {/* A meal with no foods and every value at zero is a row the coach has
             not filled in yet. Showing it as "الفطور · 0 سعرة" read as a plan

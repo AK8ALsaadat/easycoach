@@ -23,3 +23,15 @@ it("keeps a verified user in a recoverable flow when enrollment is unavailable",
   mock.start.mockRejectedValue(Error("trial_unavailable"));expect(await completeSignupTrial("coach","/coach",true)).toBe("/start?error=trial");
   mock.rpc.mockRejectedValue(Error("network"));expect(await completeSignupTrial("coach","/coach",true)).toBe("/start?error=trial");
 });
+it("opens the coach workspace directly in free mode, preserving trainee and invitation routing",async()=>{
+  vi.stubEnv("BILLING_ENABLED","false");
+  try {
+    expect(await completeSignupTrial("coach","/coach",true)).toBe("/coach");
+    expect(await completeSignupTrial("coach","/start?plan=pro",false)).toBe("/coach");
+    expect(await completeSignupTrial("trainee","/coach",true)).toBe("/me");
+    const invite="/invite/"+"a".repeat(64);
+    expect(await completeSignupTrial("coach",invite,true)).toBe(invite);
+    expect(mock.start).not.toHaveBeenCalled();
+    expect(mock.rpc).not.toHaveBeenCalled();
+  } finally { vi.unstubAllEnvs(); }
+});

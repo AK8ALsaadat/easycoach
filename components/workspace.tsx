@@ -1,4 +1,5 @@
 "use client";
+import { useBillingEnabled, FreePlatformNotice } from "./billing-mode-provider";
 import { useLocale } from "./locale-provider";
 import { LanguageSwitch } from "./language-switch";
 import { useState } from "react";
@@ -131,6 +132,7 @@ export function LinkBox({
   kind: "invite" | "join";
   clientId?: string;
 }) {
+  
   const { t: tr } = useLocale();
 
   const [busy, setBusy] = useState(false);
@@ -253,13 +255,14 @@ export function Workspace({
   local: boolean;
   supportOwner?: boolean;
 }) {
+  const billing = useBillingEnabled();
   const { t: tr, language: locale } = useLocale();
 
   const [mobile, setMobile] = useState(false);
   const [trialWelcome, setTrialWelcome] = useState(trialStarted);
   const sidebarRef = useDialog<HTMLElement>(mobile, () => setMobile(false));
   const client = data.clients.find((c) => c.id === clientId && !c.archived);
-  const visibleNav = nav.filter((item) => item.key !== "support" || supportOwner);
+  const visibleNav = nav.filter(item => billing || item.key !== "finance").filter((item) => item.key !== "support" || supportOwner);
   return (
     <div className="portal-shell">
       {data.profile?.id && <SessionGuard userId={data.profile.id} />}
@@ -307,8 +310,8 @@ export function Workspace({
               )}
             </Link>
           ))}
-          <Link href="/subscription" className="nav-item"><FileText size={19} /><span>اشتراك EasyCoach</span></Link>
-          <Link href="/pricing" className="nav-item" onClick={() => setMobile(false)}><Sparkles size={19} /><span>الباقات والأسعار</span></Link>
+          {billing && <Link href="/subscription" className="nav-item"><FileText size={19} /><span>اشتراك EasyCoach</span></Link>}
+          {billing && <Link href="/pricing" className="nav-item" onClick={() => setMobile(false)}><Sparkles size={19} /><span>الباقات والأسعار</span></Link>}
           <Link href="/attendance" className="nav-item"><CalendarDays size={19} /><span>الحضور والحصص</span></Link>
           <Link href="/organization" className="nav-item"><Users size={19} /><span>الفريق والمتابعات</span></Link>
           <Link href="/reports" className="nav-item"><LayoutDashboard size={19} /><span>التقارير</span></Link>
@@ -377,7 +380,8 @@ export function Workspace({
             </button>
           </form>
           <div className="header-tools">
-            {platform?.status === "trialing" && platform.trial_end ? (
+            {!billing && <FreePlatformNotice/>}
+            {billing && platform?.status === "trialing" && platform.trial_end ? (
               <Link href="/subscription" className="trial-pill" title={tr("تفاصيل التجربة المجانية")}>
                 <Sparkles size={14} aria-hidden="true" />
                 <span>{tr("تجربة مجانية")}</span>
@@ -424,7 +428,7 @@ export function Workspace({
           </div>
         ) : null}
         <main id="portal-content" className="portal-content">
-          {trialWelcome && platform?.status === "trialing" && <section className="workspace-trial-welcome" role="status"><span><Sparkles size={20}/></span><div><strong>{tr("تجربتك بدأت. المساحة كلها لك.")}</strong><p>{tr("كل مزايا الأعمال لمدة 14 يومًا، بدون بطاقة أو خصم تلقائي.")}</p></div><Link href="/subscription">{tr("تفاصيل التجربة")}<ArrowLeft size={15}/></Link><button type="button" aria-label={tr("إخفاء رسالة الترحيب")} onClick={()=>setTrialWelcome(false)}><X size={17}/></button></section>}
+          {billing && trialWelcome && platform?.status === "trialing" && <section className="workspace-trial-welcome" role="status"><span><Sparkles size={20}/></span><div><strong>{tr("تجربتك بدأت. المساحة كلها لك.")}</strong><p>{tr("كل مزايا الأعمال لمدة 14 يومًا، بدون بطاقة أو خصم تلقائي.")}</p></div><Link href="/subscription">{tr("تفاصيل التجربة")}<ArrowLeft size={15}/></Link><button type="button" aria-label={tr("إخفاء رسالة الترحيب")} onClick={()=>setTrialWelcome(false)}><X size={17}/></button></section>}
           {section === "support" && supportOwner ? (
             <SupportDesk owner />
           ) : section === "today" ? (
@@ -601,6 +605,7 @@ function ClientDetail({
   appUrl: string;
   initialTab: string;
 }) {
+  const billing = useBillingEnabled();
   const { t: tr, language: locale } = useLocale();
 
   const [tab] = useState(
@@ -693,7 +698,7 @@ function ClientDetail({
           ["profile", tr("البيانات والدعوة")],
           ["progress", tr("الهدف والوزن")],
           ["tracking", tr("السجلات والمراجعات")],
-        ].map(([key, label]) => (
+        ].filter(([key]) => billing || key !== "finance").map(([key, label]) => (
           <Link
             key={key}
             href={key === "overview" ? `/coach/clients/${client.id}` : key === "program" ? `/coach/clients/${client.id}/edit` : key === "nutrition" ? `/coach/clients/${client.id}/edit?tab=nutrition` : `/coach/clients/${client.id}?tab=${key}`}
@@ -870,6 +875,7 @@ function SubscriptionCard({
   client: Client;
   appUrl: string;
 }) {
+  
   const { t: tr, language: locale } = useLocale();
 
   const frozen = data.freezes.filter((f) => f.subscription_id === sub.id);
@@ -946,6 +952,7 @@ function SubscriptionCard({
 }
 const LIBRARY_TABS = ["catalog", "templates", "exercises"] as const;
 function Library({ data, initialTab, initialTemplate }: { data: Snapshot; initialTab?: string; initialTemplate?: string }) {
+  
   const { t: tr, language: locale } = useLocale();
   const router = useRouter();
   const [deletingTemplate, setDeletingTemplate] = useState("");
@@ -1256,6 +1263,7 @@ function Library({ data, initialTab, initialTemplate }: { data: Snapshot; initia
   );
 }
 function Finance({ data }: { data: Snapshot }) {
+  
   const { t: tr, language: locale } = useLocale();
   const clients = data.clients.filter(c => !c.archived);
   const summary = financeSummary(data.subscriptions, clients.map(c => c.id), riyadhToday());
@@ -1282,6 +1290,7 @@ function JoinRequests({
   data: Snapshot;
   compact?: boolean;
 }) {
+  
   const { t: tr } = useLocale();
 
   const pending = data.join_requests.filter((r) => r.status === "pending");
@@ -1339,6 +1348,7 @@ function JoinRequests({
   );
 }
 function SettingsPage({ data }: { data: Snapshot }) {
+  const billing = useBillingEnabled();
   const { t: tr, language: locale } = useLocale();
 
   return (
@@ -1350,7 +1360,7 @@ function SettingsPage({ data }: { data: Snapshot }) {
       <NotificationSettings data={data} />
       <AccountSettings name={data.profile!.name} />
       <CoachBrandingSettings branding={data.coach_branding?.find(b => b.coach_id === data.profile?.id)} defaultName={data.profile!.name} />
-      <section className="card p-5"><h2>اشتراكك في EasyCoach</h2><p className="text-muted mt-2">الدفع عبر Paylink مخصص لاشتراكك في أدوات المنصة. دفعات متدربيك تسجّلها يدويًا في ملفاتهم.</p><Link href="/subscription" className="btn-secondary mt-4">إدارة اشتراك المنصة والفواتير</Link></section>
+      {billing && <section className="card p-5"><h2>اشتراكك في EasyCoach</h2><p className="text-muted mt-2">الدفع عبر Paylink مخصص لاشتراكك في أدوات المنصة. دفعات متدربيك تسجّلها يدويًا في ملفاتهم.</p><Link href="/subscription" className="btn-secondary mt-4">إدارة اشتراك المنصة والفواتير</Link></section>}
       <div className="grid items-start gap-6 xl:grid-cols-2">
         <section className="card p-6">
           <h2 className="mb-3">{tr("رابط طلب الانضمام")}</h2>
@@ -1404,7 +1414,7 @@ function SettingsPage({ data }: { data: Snapshot }) {
                   {r.kind === "deletion" ? (
                     <p className="mb-4 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
                       {tr(
-                        "سيُحذف البرنامج والاسم والإيميل والجوال والدعوات ويُلغى الوصول. تبقى أرقام الدفعات مجهّلة في السجل؛ هذه سياسة أولية تحتاج مراجعة قبل الإطلاق.",
+                        billing ? "سيُحذف البرنامج والاسم والإيميل والجوال والدعوات ويُلغى الوصول. تبقى أرقام الدفعات مجهّلة في السجل؛ هذه سياسة أولية تحتاج مراجعة قبل الإطلاق." : "سيُحذف البرنامج والاسم والبريد والجوال والدعوات ويُلغى الوصول.",
                       )}
                     </p>
                   ) : (

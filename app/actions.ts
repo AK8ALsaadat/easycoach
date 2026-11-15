@@ -1,4 +1,5 @@
 "use server";
+import { billingEnabled } from "@/lib/billing-mode";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
@@ -146,7 +147,7 @@ export async function registerAction(form: FormData): Promise<Result> {
       password: input.password,
       options: {
         emailRedirectTo: `${process.env.APP_URL}/auth/callback?next=${encodeURIComponent(safeNext(form.get("next")))}`,
-        data: { display_name: input.name, role: input.role, policy_version: POLICY_VERSION, policy_accepted_at: new Date().toISOString(), ec_signup: true, ec_signup_trial: input.role === "coach", marketing_attribution: await signupAttribution() },
+        data: { display_name: input.name, role: input.role, policy_version: POLICY_VERSION, policy_accepted_at: new Date().toISOString(), ec_signup: true, ec_signup_trial: billingEnabled() && input.role === "coach", marketing_attribution: await signupAttribution() },
       },
     });
     if (error) {
@@ -290,7 +291,7 @@ export async function googleLoginAction(input: {
       path: "/auth/callback",
     });
     const trialJar = await cookies();
-    if (trialRequested && role === "coach") trialJar.set("ec_oauth_trial", POLICY_VERSION, { httpOnly: true, sameSite: "lax", secure: process.env.APP_URL?.startsWith("https://") ?? false, maxAge: 600, path: "/auth/callback" });
+    if (billingEnabled() && trialRequested && role === "coach") trialJar.set("ec_oauth_trial", POLICY_VERSION, { httpOnly: true, sameSite: "lax", secure: process.env.APP_URL?.startsWith("https://") ?? false, maxAge: 600, path: "/auth/callback" });
     else trialJar.delete({ name: "ec_oauth_trial", path: "/auth/callback" });
     const { data, error } = await (
       await supabase()

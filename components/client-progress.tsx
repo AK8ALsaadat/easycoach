@@ -1,4 +1,5 @@
 "use client";
+import { useBillingEnabled, FreePlatformNotice } from "./billing-mode-provider";
 import { useLocale } from "./locale-provider";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -14,6 +15,7 @@ export function ClientProgress({
   data: Snapshot;
   clientId: string;
 }) {
+  
   const { t: tr } = useLocale();
 
   const router = useRouter();
@@ -130,6 +132,7 @@ export function PortalControl({
   clientId: string;
   link?: Snapshot["portal_links"][number];
 }) {
+  
   const { t: tr } = useLocale();
 
   const router = useRouter();

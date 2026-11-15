@@ -1,4 +1,5 @@
 "use client";
+import { useBillingEnabled } from "./billing-mode-provider";
 import { countLabel, nouns } from "@/lib/plural";
 import { useLocale } from "./locale-provider";
 import { useRef, useState } from "react";
@@ -13,6 +14,7 @@ import { isUnnamedTemplate, suggestCopyName } from "@/lib/template-names";
 import { riyadhToday } from "@/lib/dates";
 
 export function TemplateTools({ data }: { data: Snapshot }) {
+  const billing = useBillingEnabled();
   const { t: tr, language } = useLocale();
 
   const router = useRouter();
@@ -217,7 +219,7 @@ export function TemplateTools({ data }: { data: Snapshot }) {
               </p>
             )}
             {metadata?.kind === "nutrition_targets" && <p className="text-sm text-muted mt-2">{tr("هذا قالب جانبي يتضمن أهدافًا مقترحة. سيستبدل الأهداف الحالية للمتدربين المحددين؛ راجع مناسبتها لكل متدرب أولًا.")}</p>}
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {billing && <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <label>
                 {tr("الباقة")}
                 <select className="field" value={packageName} onChange={(event) => setPackageName(event.target.value)}>
@@ -236,7 +238,7 @@ export function TemplateTools({ data }: { data: Snapshot }) {
                   <option value="none">{tr("بدون اشتراك")}</option>
                 </select>
               </label>
-            </div>
+            </div>}
             <input
               aria-label={tr("بحث قائمة التعيين")}
               className="field my-3"

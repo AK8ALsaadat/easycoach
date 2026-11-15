@@ -66,7 +66,7 @@ export function MealEditor({
     <section className="space-y-4">
       <div className="section-title">
         <div>
-          <p className="eyebrow">{tr("خطة الوجبات")}</p>
+          <p className="eyebrow">{tr("تنظيم الوجبات")}</p>
           <h2>{tr("وزّع اليوم على وجبات")}</h2>
         </div>
         <button

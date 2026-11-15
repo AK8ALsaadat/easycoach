@@ -1,3 +1,5 @@
+import { redirect as freeRedirect } from "next/navigation";
+import { billingEnabled } from "@/lib/billing-mode";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Check } from "lucide-react";
@@ -11,6 +13,7 @@ import { SubscriptionPurchaseOptions } from "@/components/subscription-purchase-
 
 export const dynamic = "force-dynamic";
 export default async function ConfirmPage({ searchParams }: { searchParams: Promise<{ plan?: string; error?: string }> }) {
+  if (!billingEnabled()) freeRedirect("/");
   const { plan = "pro", error } = await searchParams;
   if (!isPlan(plan) || plan === "free") notFound();
   const user = await actor();

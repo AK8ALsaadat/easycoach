@@ -1,3 +1,4 @@
+import { billingEnabled } from "./billing-mode";
 import type { Snapshot } from "./model";
 import { csvCell } from "./import-preview";
 
@@ -10,7 +11,7 @@ export function clientExport(data: Snapshot, clientId: string) {
   const management = data.management;
   return {
     exported_at: new Date().toISOString(),
-    notice: "سجل الدفعات ليس فاتورة ضريبية",
+    ...(billingEnabled() ? {notice: "سجل الدفعات ليس فاتورة ضريبية"} : {}),
     client,
     goal: data.client_goals?.find((g) => g.client_id === clientId) ?? null,
     details: management?.details.find((d) => d.client_id === clientId) ?? null,

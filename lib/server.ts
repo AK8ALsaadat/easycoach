@@ -1,3 +1,5 @@
+import { syncBillingMode } from "./billing-runtime";
+import { billingEnabled } from "./billing-mode";
 import "server-only";
 import { cache } from "react";
 import { cookies, headers } from "next/headers";
@@ -117,6 +119,7 @@ export async function rpc<T>(
   args: Record<string, unknown> = {},
   anonymous = false,
 ): Promise<T> {
+  await syncBillingMode();
   const user = await actor();
   if (!anonymous && !user) throw sessionExpired();
   if (localMode())
@@ -163,6 +166,12 @@ export async function snapshot(page?: { target?: string | null; after_client?: s
   }
   if (data.profile?.role !== "coach") data.paused_access = paused;
   data.coach_branding = branding;
+  if (!billingEnabled()) {
+    data.subscriptions = [];
+    data.payments = [];
+    data.freezes = [];
+    data.audit = data.audit.filter(entry => !/^(subscriptions|payments|freezes):/.test(entry.action));
+  }
   return data;
 }
 /**
@@ -182,6 +191,12 @@ export async function requireCoach() {
   if (!(await actor())) throw sessionExpired();
   const data = await snapshot();
   if (data.profile?.role !== "coach") throw new Error("هذه الصفحة للمدرب فقط");
+  if (!billingEnabled()) {
+    data.subscriptions = [];
+    data.payments = [];
+    data.freezes = [];
+    data.audit = data.audit.filter(entry => !/^(subscriptions|payments|freezes):/.test(entry.action));
+  }
   return data;
 }
 export async function loginLocal(email: string, password: string) {

@@ -1,4 +1,5 @@
 "use client";
+import { useBillingEnabled } from "./billing-mode-provider";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -23,14 +24,15 @@ export function AuthForm({ next, local, google = false, initialRegister = false 
     const [email, setEmail] = useState(local ? "coach@example.test" : "");
     const [password, setPassword] = useState(local ? "CoachPreview!2026" : "");
     const formRef = useRef<HTMLFormElement>(null), submitLock = useRef(false);
-    const freeTrial = register && role === "coach";
+    const billing = useBillingEnabled();
+    const freeTrial = billing && register && role === "coach";
     function switchMode(value: boolean) { setRegister(value); setPassword(""); setResult(null); }
     return <div className="auth-form-wrap">
     <div className="auth-mode-switch" aria-label={tr("الدخول أو التسجيل")}><button type="button" aria-pressed={!register} onClick={() => switchMode(false)} disabled={busy}>{tr("تسجيل الدخول")}</button><button type="button" aria-pressed={register} onClick={() => switchMode(true)} disabled={busy}>{tr("إنشاء حساب")}</button></div>
     <div className="auth-form-heading">
       <p className="eyebrow">{freeTrial ? <><Sparkles size={15}/>{tr("14 يومًا مجانًا · بدون بطاقة")}</> : tr("مساحتك التدريبية")}</p>
       <h1>{freeTrial ? tr("أول خطوة لشغل أرتب.") : register ? tr("أهلًا بك في فريقك.") : tr("أهلًا بعودتك.")}</h1>
-      <p>{freeTrial ? tr("أنشئ حسابك، أكّد بريدك، وابدأ تجربتك مباشرة. الباقة والدفع تختارهما لاحقًا.") : register ? tr("أنشئ حسابك للانضمام إلى مدربك.") : tr("متدربوك، برامجك، وكل التفاصيل بانتظارك.")}</p>
+      <p>{freeTrial ? tr("أنشئ حسابك، أكّد بريدك، وابدأ تجربتك مباشرة. الباقة والدفع تختارهما لاحقًا.") : register ? tr(role === "coach" ? "أنشئ مساحتك، أكّد بريدك، وابدأ متابعة متدربيك." : "أنشئ حسابك للانضمام إلى مدربك.") : tr("متدربوك، برامجك، وكل التفاصيل بانتظارك.")}</p>
     </div>
     <form method="post" ref={formRef} className="auth-fields" onSubmit={async (event) => {
             event.preventDefault();

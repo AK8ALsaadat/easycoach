@@ -1,8 +1,9 @@
+import { billingEnabled } from "@/lib/billing-mode";
 import "server-only";
 import { createPaylinkClient, normalizeBaseUrl, PAYLINK_HOSTS } from "@/lib/paylink/client";
 import { billingCall } from "./billing-store";
 
-export function paymentsEnabled() { return process.env.PAYMENTS_ENABLED === "true"; }
+export function paymentsEnabled() { return billingEnabled() && process.env.PAYMENTS_ENABLED === "true"; }
 export function paylinkVerified() { return process.env.PAYLINK_VERIFIED === "true"; }
 export function platformMerchant() {
   const sandbox = process.env.PAYLINK_SANDBOX !== "false";

@@ -1,3 +1,4 @@
+import { billingEnabled } from "@/lib/billing-mode";
 import "server-only";
 import { rpc, requireCoachIdentity, actor } from "@/lib/server";
 import type { PlatformState, PlatformQuote, PlanCode } from "./plans";
@@ -8,6 +9,7 @@ import { POLICY_VERSION } from "@/lib/legal";
 
 export async function platformState() {
   await requireCoachIdentity();
+  if (!billingEnabled()) return rpc<PlatformState>("ec_subscription");
   const user = await actor();
   const readiness = await paymentReadiness();
   const current = await rpc<PlatformState>("ec_subscription");

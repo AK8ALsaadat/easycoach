@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+// layout.tsx mirrors BILLING_ENABLED to the database; not under test here.
+vi.mock("server-only", () => ({}));
+vi.mock("@/lib/billing-runtime", () => ({ syncBillingMode: async () => {} }));
 vi.mock("next/font/google", () => ({ IBM_Plex_Sans_Arabic: () => ({ className: "" }) }));
 import { readFile } from "node:fs/promises";
 import path from "node:path";

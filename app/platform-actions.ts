@@ -1,4 +1,5 @@
 "use server";
+import { billingEnabled } from "@/lib/billing-mode";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -45,6 +46,7 @@ export async function publishTeamProgram(owner:string,program:string,revision:nu
 
 /** Starts the signed-in owner's card-less free trial for the chosen paid plan, then opens the workspace. */
 export async function startTrialAction(form: FormData) {
+  if (!billingEnabled()) redirect("/coach");
   const plan = String(form.get("plan") ?? "");
   const back = isPaidPlan(plan) ? `/start?plan=${plan}` : "/start";
   if (!isPaidPlan(plan)) redirect("/start?error=plan");
@@ -64,6 +66,7 @@ export async function startTrialAction(form: FormData) {
 }
 
 export async function cancelPlatformSubscription() {
+  if (!billingEnabled()) redirect("/coach");
   await requireCoachIdentity();
   await rpc("ec_billing_cancel");
   revalidatePath("/", "layout");

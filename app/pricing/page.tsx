@@ -1,3 +1,5 @@
+import { redirect as freeRedirect } from "next/navigation";
+import { billingEnabled } from "@/lib/billing-mode";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { PlanCards, TrialHero } from "@/components/plan-cards";
@@ -8,6 +10,7 @@ import { LegalLinks } from "@/components/legal-links";
 
 export const dynamic = "force-dynamic";
 export default async function PricingPage() {
+  if (!billingEnabled()) freeRedirect("/");
   const user = await actor();
   const [quotes, state] = await Promise.all([
     Promise.all(planCodes.map(code => platformQuote(code).catch(() => null))),

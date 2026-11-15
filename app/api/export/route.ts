@@ -1,3 +1,4 @@
+import { billingEnabled } from "@/lib/billing-mode";
 import { NextResponse, type NextRequest } from "next/server";
 import { snapshot } from "@/lib/server";
 import { csvCell } from "@/lib/import-preview";
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
     {
       ...data,
       exported_at: new Date().toISOString(),
-      notice: "سجل الدفعات ليس فاتورة ضريبية",
+      ...(billingEnabled() ? { notice: "سجل الدفعات ليس فاتورة ضريبية" } : {}),
     },
     {
       headers: {

@@ -1,3 +1,4 @@
+import { billingEnabled } from "@/lib/billing-mode";
 import { cookies } from "next/headers";
 import { translator } from "@/lib/i18n";
 import { LanguageSwitch } from "@/components/language-switch";
@@ -37,7 +38,7 @@ export default async function Login({
       <section className="auth-panel flex flex-col px-6 py-8 sm:px-16 lg:px-24">
         <div className="auth-topbar flex justify-between gap-3">
           <Brand />
-          <div className="flex flex-wrap items-center gap-3"><Link className="auth-pricing-link" href="/pricing">الباقات</Link><LanguageSwitch /></div>
+          <div className="flex flex-wrap items-center gap-3">{billingEnabled() && <Link className="auth-pricing-link" href="/pricing">الباقات</Link>}<LanguageSwitch /></div>
         </div>
         <div className="my-auto w-full max-w-md self-center py-14">
           {params.error ? (
@@ -59,7 +60,7 @@ export default async function Login({
         <h2 className="auth-aside-title">
           {tr("كل جولة محسوبة.")}
           <br />
-          <span className="auth-aside-accent">{tr("وكل متدرب له خطته.")}</span>
+          <span className="auth-aside-accent">{tr("وكل متدرب له برنامجه.")}</span>
         </h2>
         <ProductPreview compact/>
         <p className="auth-aside-note">

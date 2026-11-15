@@ -1,3 +1,4 @@
+import { billingEnabled } from "@/lib/billing-mode";
 import Link from "next/link";
 import { z } from "zod";
 import { rpc, requireCoachIdentity } from "@/lib/server";
@@ -27,6 +28,11 @@ export default async function OrganizationPage({ searchParams }: {
   const homes = await rpc<{ owner: string; name: string; accepted: boolean }[]>("ec_team_homes");
   let org: Org | null = null;
   try { org = await rpc<Org>("ec_org_page", { owner, after_client: nullable(search.after), branch: nullable(search.branch), member: nullable(search.member) }); } catch { }
+  const expiryRules = new Set(org?.rules.filter(rule => rule.event === "expiry").map(rule => rule.id));
+  if (org && !billingEnabled()) {
+    org.rules = org.rules.filter(rule => rule.event !== "expiry");
+    org.tasks = org.tasks.filter(task => ![...expiryRules].some(id => (task as Task & {source?:string}).source?.startsWith(`rule:${id}:`)));
+  }
   const business = org?.features.includes("branches") ?? false;
   const templates = own && business ? (await rpc<{ templates: Option[] }>("ec_resource_options")).templates : [];
   const members = org?.members.filter(member => member.active && member.accepted) ?? [];
@@ -37,18 +43,20 @@ export default async function OrganizationPage({ searchParams }: {
     after_due: z.iso.datetime({ offset: true }).safeParse(search.task_after).success ? search.task_after : null,
     after_id: nullable(search.task_id),
   });
+  // The reloaded task page must hide expiry-rule tasks in free mode too.
+  if (org && !billingEnabled()) org.tasks = org.tasks.filter(task => ![...expiryRules].some(id => (task as Task & {source?:string}).source?.startsWith(`rule:${id}:`)));
   const filteredParams = new URLSearchParams({ owner });
   if (nullable(search.branch)) filteredParams.set("branch", search.branch!);
   if (nullable(search.member)) filteredParams.set("member", search.member!);
   const lastTask = org?.tasks.at(-1);
   return <main dir="rtl" className="platform-page platform-page-wide">
-    <div className="flex justify-between"><Link href="/coach" className="platform-back">← مساحة المدرب</Link><Link href="/subscription" className="btn-secondary">الاشتراك</Link></div>
+    <div className="flex justify-between"><Link href="/coach" className="platform-back">← مساحة المدرب</Link>{billingEnabled() && <Link href="/subscription" className="btn-secondary">الاشتراك</Link>}</div>
     <h1>الفريق والفروع والمتابعات</h1>
     {homes.length > 0 && <section className="space-y-3"><h2>مساحات الفريق</h2>{homes.map(home => <div key={home.owner} className="border p-3 rounded-xl">
       <Link href={`/organization?owner=${home.owner}`}>{home.name}</Link>
       {!home.accepted && <OrganizationForm operation="ec_team_accept" defaults={{ owner: home.owner }} fields={[]} label="قبول الانضمام للفريق" />}
     </div>)}</section>}
-    {!org ? <p className="border p-5 rounded-xl">هذه المساحة تحتاج باقة تدعم الفريق أو دعوة فريق مقبولة. <Link href="/pricing">عرض الباقات</Link></p> : <>
+    {!org ? <p className="border p-5 rounded-xl">{billingEnabled() ? "هذه المساحة تحتاج باقة تدعم الفريق أو دعوة فريق مقبولة. " : "تحتاج هذه المساحة إلى صلاحية إدارة فريق أو دعوة فريق مقبولة. "}{billingEnabled() && <Link href="/pricing">عرض الباقات</Link>}</p> : <>
       <form className="flex flex-wrap gap-3">
         <input type="hidden" name="owner" value={owner} />
         {business && <label>الفرع<select name="branch" className="field" defaultValue={search.branch ?? ""}><option value="">الجميع</option>{branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label>}
@@ -97,7 +105,7 @@ export default async function OrganizationPage({ searchParams }: {
       {own && org.features.includes("reminders") && <section className="border rounded-xl p-5 space-y-3"><h2>{business ? "أتمتة: حدث ← شرط ← إجراء" : "تذكيرات البريد القابلة للضبط"}</h2>
         <p>البريد يضاف للطابور؛ الإرسال الفعلي غير مفعّل بعد.</p>
         <OrganizationForm operation="ec_rule_save" defaults={business ? {} : { action_name: "email" }} fields={[
-          { name: "event_name", label: "الحدث", options: events }, { name: "threshold_value", label: "الحد", type: "number" },
+          { name: "event_name", label: "الحدث", options: events.filter(event => billingEnabled() || event.id !== "expiry") }, { name: "threshold_value", label: "الحد", type: "number" },
           ...(business ? [{ name: "action_name", label: "الإجراء", options: actions }] : []),
         ]} />
         {org.rules.map(rule => <div key={rule.id}><p>{events.find(event => event.id === rule.event)?.name} ← {rule.threshold} ← {actions.find(action => action.id === rule.action)?.name}</p><OrganizationForm operation="ec_rule_save" defaults={{ rule: rule.id, event_name: rule.event, threshold_value: rule.threshold, action_name: rule.action, enabled: !rule.enabled }} fields={[]} label={rule.enabled ? "إيقاف القاعدة" : "تفعيل القاعدة"} /></div>)}

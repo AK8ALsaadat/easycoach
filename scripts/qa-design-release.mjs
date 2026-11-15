@@ -18,7 +18,7 @@ const selectedScripts = process.argv.length > 2 ? process.argv.slice(2) : allScr
 if (selectedScripts.some(script => ![...allScripts, "qa-subscribe-actions.mjs", "qa-subscription-disabled.mjs", "qa-tiktok-browser.mjs", "qa-first-payment.mjs"].includes(script))) throw Error("Unknown QA script");
 if(selectedScripts.includes("qa-tiktok-browser.mjs")&&selectedScripts.length!==1)throw Error("Pixel QA must run alone with its TikTok network interception");
 const env = {
-  ...process.env, LOCAL_DB_PATH: directory, EASYCOACH_EVIDENCE_DIST_DIR: dist,
+  ...process.env, BILLING_ENABLED: "true", LOCAL_DB_PATH: directory, EASYCOACH_EVIDENCE_DIST_DIR: dist,
   APP_URL: base, TEST_BASE_URL: base,
   NEXT_PUBLIC_TIKTOK_PIXEL_ID:selectedScripts.includes("qa-tiktok-browser.mjs")?"FICTIONALPIXEL1234567":"",
   PAYMENTS_ENABLED: process.env.QA_PAYMENTS_DISABLED === "true" ? "false" : "true", PAYLINK_VERIFIED: process.env.QA_PROVIDER_UNVERIFIED === "true" ? "false" : "true", VAT_NUMBER: "", VAT_RATE: "", PAYLINK_SANDBOX: "true", PAYLINK_BASE_URL: "http://127.0.0.1:4017",

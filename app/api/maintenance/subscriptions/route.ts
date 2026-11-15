@@ -1,3 +1,5 @@
+import { syncBillingMode } from "@/lib/billing-runtime";
+import { billingEnabled } from "@/lib/billing-mode";
 import { timingSafeEqual } from "node:crypto";
 import { adminSupportClient } from "@/lib/supabase/admin";
 import { runBillingJobs } from "@/lib/platform/paylink";
@@ -9,6 +11,8 @@ export async function GET(request:Request) {
   if(!secret || secret.length<32) return Response.json({error:"Subscription schedule not configured"},{status:503,headers});
   const expected=Buffer.from(`Bearer ${secret}`),given=Buffer.from(request.headers.get("authorization")??"");
   if(expected.length!==given.length || !timingSafeEqual(expected,given)) return Response.json({error:"Unauthorized"},{status:401,headers});
+  await syncBillingMode();
+  if (!billingEnabled()) return Response.json({ skipped: true }, { headers });
   const {data,error}=await adminSupportClient().rpc("ec_reconcile");
   if(error) return Response.json({error:"Subscription reconciliation failed"},{status:503,headers});
   const billing = await runBillingJobs();

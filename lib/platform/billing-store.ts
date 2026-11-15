@@ -1,3 +1,5 @@
+import { billingEnabled } from "@/lib/billing-mode";
+import { syncBillingMode } from "@/lib/billing-runtime";
 import "server-only";
 import { localMode, localGuard } from "@/lib/server";
 import { getLocalDatabase } from "@/lib/local-db";
@@ -5,6 +7,8 @@ import { adminSupportClient } from "@/lib/supabase/admin";
 
 /** Only trusted server code can call lifecycle mutations. Never accept an RPC name from a request. */
 export async function billingCall<T>(name: string, args: Record<string, unknown> = {}): Promise<T> {
+  await syncBillingMode();
+  if (!billingEnabled()) throw Error("billing_disabled");
   if (!/^ec_billing_[a-z_]+$/.test(name) || Object.keys(args).some(k => !/^[a-z_]+$/.test(k))) throw Error("Invalid billing operation");
   if (localMode()) {
     await localGuard();

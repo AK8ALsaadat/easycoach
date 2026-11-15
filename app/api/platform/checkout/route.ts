@@ -1,3 +1,4 @@
+import { billingEnabled } from "@/lib/billing-mode";
 import { actor, rpc } from "@/lib/server";
 import { checkoutPlatform } from "@/lib/platform/paylink";
 import { paymentReadiness, paymentReadinessMessage } from "@/lib/platform/payment-config";
@@ -23,6 +24,7 @@ const messages: Record<string, string> = {
   subscription_cancelled: "اشتراكك ملغى. لا يُنشأ طلب دفع جديد بعد الإلغاء.",
 };
 export async function POST(request: Request) {
+  if (!billingEnabled()) return new Response(null, { status: 404 });
   const user = await actor();
   if (!user) return Response.json({ error: "يلزم تسجيل الدخول" }, { status: 401 });
   const origin = request.headers.get("origin"), host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");

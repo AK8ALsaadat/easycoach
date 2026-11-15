@@ -1,3 +1,6 @@
+import { billingEnabled } from "@/lib/billing-mode";
+import { syncBillingMode } from "@/lib/billing-runtime";
+import { BillingModeProvider } from "@/components/billing-mode-provider";
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
@@ -17,7 +20,7 @@ const font = IBM_Plex_Sans_Arabic({
 export const metadata: Metadata = {
   title: { default: "إيزي كوتش", template: "%s | إيزي كوتش" },
   description:
-    "مساحة عربية لإدارة المتدربين والبرامج والاشتراكات للمدربين الشخصيين.",
+    "مساحة عربية لإدارة المتدربين والبرامج والمتابعة للمدربين الشخصيين.",
   robots: { index: false, follow: false },
   applicationName: "إيزي كوتش",
   appleWebApp: { capable: true, title: "إيزي كوتش", statusBarStyle: "black-translucent" },
@@ -37,13 +40,15 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const preferences=await cookies();
+  // A transient database error must not take down every page; data paths still sync strictly.
+  await syncBillingMode().catch(() => console.error("billing.mode_sync_failed"));
   const language = preferences.get("ec_language")?.value === "en" ? "en" : "ar";
   // Light is the first-visit default; keep an explicit dark-mode choice.
   const theme=preferences.get("ec_theme")?.value === "dark" ? "dark" : "light";
   return (
     <html lang={language} dir={language === "en" ? "ltr" : "rtl"} data-theme={theme}>
       <body className={font.className}>
-        <LocaleProvider language={language}><ThemeProvider initialTheme={theme}>{children}<PwaManager /><FormValidation /></ThemeProvider></LocaleProvider>
+        <BillingModeProvider enabled={billingEnabled()}><LocaleProvider language={language}><ThemeProvider initialTheme={theme}>{children}<PwaManager /><FormValidation /></ThemeProvider></LocaleProvider></BillingModeProvider>
         <TikTokPixel />
       </body>
     </html>

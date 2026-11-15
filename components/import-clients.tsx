@@ -1,4 +1,6 @@
-﻿"use client";
+"use client";
+import { useBillingEnabled } from "./billing-mode-provider";
+
 import { countLabel, nouns } from "@/lib/plural";
 import Link from "next/link";
 import { useLocale } from "./locale-provider";
@@ -62,6 +64,7 @@ export function ImportClients({
   emails: string[];
   batches?: ManagementData["import_batches"];
 }) {
+  const billing = useBillingEnabled();
   const { t: tr, language } = useLocale();
 
   const router = useRouter();
@@ -146,7 +149,7 @@ export function ImportClients({
             const data = await response.json();
             if (!response.ok) throw Error(data.error);
             setFile(data);
-            setMappings(workbookSheets(data).map(autoMapping));
+            setMappings(workbookSheets(data).map(autoMapping).map(mapping => !billing && ["subscriptions", "payments"].includes(mapping.category) ? {...mapping, category:"skip"} : mapping));
             setSheetIndex(0);
             setPartial(false);
             setIgnoreUnmapped(false);
@@ -213,7 +216,7 @@ export function ImportClients({
                   setPage(0);
                 }}
               >
-                {Object.entries(categories).map(([key, label]) => (
+                {Object.entries(categories).filter(([key]) => billing || !["subscriptions", "payments"].includes(key)).map(([key, label]) => (
                   <option key={key} value={key}>
                     {tr(label)}
                   </option>
@@ -263,7 +266,7 @@ export function ImportClients({
                       onChange={(e) => mapColumn(column, e.target.value)}
                     >
                       <option value="">{tr("غير مربوط")}</option>
-                      {Object.entries(fieldLabels).map(([key, label]) => (
+                      {Object.entries(fieldLabels).filter(([key]) => billing || !["subscription_ref", "price", "amount", "method", "reference", "payment_kind", "reverses_ref"].includes(key)).map(([key, label]) => (
                         <option key={key} value={key}>
                           {tr(label)}
                         </option>
@@ -581,7 +584,7 @@ export function ImportClients({
                   onClick={async () => {
                     if (
                       !window.confirm(
-                        "التراجع يزيل تغييرات الدفعة التي لم تُعدل بعدها. العمليات المالية لا تُحذف. تتابع؟",
+                        billing ? "التراجع يزيل تغييرات الدفعة التي لم تُعدل بعدها. العمليات المالية لا تُحذف. تتابع؟" : "التراجع يزيل تغييرات الاستيراد التي لم تُعدل بعدها. تتابع؟",
                       )
                     )
                       return;
@@ -605,3 +608,4 @@ export function ImportClients({
     </div>
   );
 }
+

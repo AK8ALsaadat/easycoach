@@ -6,8 +6,9 @@ export const other = LOCAL_IDS.other;
 export const trainee = LOCAL_IDS.trainee;
 
 /** Fresh in-memory PostgreSQL with every migration, RLS policy and role applied. */
-export async function fixtureDatabase(options: { platformManaged?: boolean } = {}) {
+export async function fixtureDatabase(options: { platformManaged?: boolean; billingEnabled?: boolean } = {}) {
   const db = await openDatabase();
+  await db.query("select public.ec_billing_runtime($1)", [options.billingEnabled ?? true]);
   for (const [id, role] of [
     [coach, "coach"],
     [other, "coach"],

@@ -1,3 +1,4 @@
+import { billingEnabled } from "@/lib/billing-mode";
 import "server-only";
 import { rpc, requireCoachIdentity } from "@/lib/server";
 import { startPlatformTrial } from "./server";
@@ -6,6 +7,7 @@ import { signupDestination } from "@/lib/email-otp";
 
 /** Only called after verified signup. SQL enforces ownership, eligibility and one trial. */
 export async function completeSignupTrial(role: string | undefined, next: string, requested: boolean) {
+  if (!billingEnabled()) return next.startsWith("/invite/") ? next : role === "coach" ? (next.startsWith("/coach") ? next : "/coach") : "/me";
   if (role !== "coach" || next.startsWith("/invite/") || !requested) return signupDestination(role, next);
   try {
     await requireCoachIdentity();
