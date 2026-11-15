@@ -44,7 +44,7 @@ it("replayed and concurrent paid webhooks activate exactly one 30-day period",as
 it("auth/permission errors remove verification, retain paid access, and expose no raw provider error",async()=>{
  const log=vi.spyOn(console,"error").mockImplementation(()=>{});
  mock.getInvoice.mockRejectedValueOnce(new PaylinkError("auth_failed",403));
- const result=await POST(request());expect(result.status).toBe(503);expect(await result.text()).toBe("");
+ const result=await POST(request());expect(result.status).toBe(503);expect(result.headers.get("content-type")).toContain("application/json");expect(await result.json()).toEqual({success:false,error:"verification_unavailable"});
  expect((await fx.db.query<{provider_verified:boolean}>("select provider_verified from public.ec_config")).rows[0].provider_verified).toBe(false);
  expect(await fx.call(coach,"ec_subscription")).toMatchObject({subscription_state:"PROVIDER_NOT_READY",effective_plan:"pro"});
  expect(JSON.stringify(log.mock.calls)).not.toContain("fictional-hook-secret");log.mockRestore();
