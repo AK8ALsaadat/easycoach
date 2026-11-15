@@ -1,7 +1,7 @@
 "use client";
 import { useEffect,useState } from "react";
 import { plans,type PlanCode,type PlatformState } from "@/lib/platform/plans";
-export function PlatformTrialCountdown({end,serverNow,plan,limits,hasPaymentMethod=false}:{end:string;serverNow:string;plan:PlanCode;limits:PlatformState["limits"];hasPaymentMethod?:boolean}) {
+export function PlatformTrialCountdown({end,serverNow,plan,limits,hasPaymentMethod=false,prepaid=false}:{end:string;serverNow:string;plan:PlanCode;limits:PlatformState["limits"];hasPaymentMethod?:boolean;prepaid?:boolean}) {
   const initial=Math.max(0,Date.parse(end)-Date.parse(serverNow));
   const [remaining,setRemaining]=useState(initial);
   useEffect(()=>{
@@ -16,8 +16,8 @@ export function PlatformTrialCountdown({end,serverNow,plan,limits,hasPaymentMeth
     <h2>تجربتك المجانية جارية</h2>
     <div className="trial-countdown-units" dir="ltr"><span>{days}<small>يوم</small></span><span>{hours}<small>ساعة</small></span><span>{minutes}<small>دقيقة</small></span></div>
     <p>كل مزايا باقة الأعمال مفتوحة لك الآن. باقتك المختارة عند تفعيل اشتراكك المدفوع: {selected.name} ({after}).</p>
-    {remaining<=3*86_400_000&&<p>{hasPaymentMethod
+    {!prepaid&&remaining<=3*86_400_000&&<p>{hasPaymentMethod
       ? `عند تأكيد الدفع تتحول صلاحياتك إلى ${selected.name}؛ وإن لم يتأكد تصبح الصلاحيات مجانية مع بقاء بياناتك محفوظة.`
-      : "عند انتهاء التجربة يظهر رابط دفع الفترة وتستمر المزايا 3 أيام للسداد؛ بعدها تعود للمجانية مع حفظ البيانات."}</p>}
+      : "يمكنك سداد الفترة أثناء التجربة لتبدأ بعد نهايتها. إن لم تسدد، تستمر المزايا 3 أيام بعد التجربة للسداد؛ بعدها تعود للمجانية مع حفظ البيانات."}</p>}
   </section>;
 }

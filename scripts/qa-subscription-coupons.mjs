@@ -9,6 +9,7 @@ import os from "node:os";
 import path from "node:path";
 import assert from "node:assert/strict";
 import { openDatabase, rpcLocal, passwordHash } from "../lib/local-db.ts";
+import { POLICY_VERSION } from "../lib/legal.ts";
 
 const scratch = await mkdtemp(path.join(os.tmpdir(), "easycoach-coupon-qa-"));
 const base = "http://127.0.0.1:3205";
@@ -20,18 +21,24 @@ try {
   await db.query("insert into auth.users(id,email,encrypted_password,email_confirmed_at) values($1,'coupon@example.test',$2,now())", [owner, passwordHash("FictionalCoupon!2026")]);
   await rpcLocal(db, owner, "init_profile", { display_name: "اختبار الكوبون", requested_role: "coach" });
   await db.exec("update public.ec_config set provider_verified=true,tax_mode='not_registered'");
+  await db.query("select public.ec_billing_start($1,'pro','0501234567','Coupon trial fixture',$2)", [owner, POLICY_VERSION]);
   await db.query("insert into private.local_sessions(token_hash,user_id,expires_at) values($1,$2,now()+interval '2 hours')", [createHash("sha256").update(session).digest("hex"), owner]);
 } finally { await db.close(); }
 let creates = 0;
+let invoice;
+let paid = false;
+let paidAt;
 const provider = createServer(async (req, res) => {
   res.setHeader("Content-Type", "application/json");
   let raw = ""; for await (const chunk of req) raw += chunk;
   if (req.url === "/api/auth") return res.end(JSON.stringify({ id_token: "fictional-token" }));
   if (req.url === "/api/addInvoice") {
     const body = JSON.parse(raw);
+    invoice = body;
     assert.equal(body.amount, 5); assert.equal(body.products[0].price, 5); assert.equal(body.currency, "SAR"); creates++;
     return res.end(JSON.stringify({ success: true, transactionNo: "coupon-browser", url: merchant + "/pay/coupon-browser", orderStatus: "Pending" }));
   }
+  if (req.url === "/api/getInvoice/coupon-browser") return res.end(JSON.stringify({ transactionNo: "coupon-browser", amount: 5, orderStatus: paid ? "Paid" : "Pending", gatewayOrderRequest: { orderNumber: invoice.orderNumber, currency: "SAR" }, paymentReceipt: paid ? { paymentDate: paidAt, paymentMethod: "MADA" } : null, paymentErrors: [] }));
   if (req.url === "/pay/coupon-browser") { res.setHeader("Content-Type", "text/html"); return res.end("<h1>Synthetic Paylink: SAR 5.00</h1>"); }
   res.statusCode = 404; res.end("{}");
 });
@@ -53,6 +60,7 @@ try {
   await context.addCookies([{ name: "ec_session", value: session, url: base }]);
   const page = await context.newPage(); page.setDefaultTimeout(60000);
   await page.goto(base + "/subscription/confirm?plan=pro");
+  await page.getByText(/يمكنك الدفع الآن. تبدأ الـ30 يومًا المدفوعة بعد نهاية تجربتك/).waitFor();
   const form = page.locator("form").filter({ has: page.getByRole("button", { name: "ادفع الفترة الأولى", exact: true }) });
   const code = form.getByLabel("كوبون الخصم", { exact: true });
   await code.fill("invalid"); await form.getByRole("button", { name: "تطبيق الكوبون", exact: true }).click();
@@ -74,7 +82,18 @@ try {
   await form.getByRole("button", { name: "ادفع الفترة الأولى", exact: true }).click();
   await page.waitForURL(merchant + "/pay/coupon-browser");
   assert.equal(creates, 1);
-  console.log("PASS: invalid coupon, 99% preview, disclosed SAR 5.00 floor, removal, mobile/desktop, server-priced hosted checkout. Synthetic provider only.");
+  paid = true; paidAt = new Date().toISOString();
+  const notify = await fetch(base + "/api/payments/paylink/webhook", { method: "POST", headers: { "Content-Type": "application/json", authorization: "Bearer fictional-hook" }, body: JSON.stringify({ transactionNo: "coupon-browser", merchantOrderNumber: invoice.orderNumber }) });
+  assert.equal(notify.status, 200);
+  await page.goto(invoice.callBackUrl);
+  await page.getByRole("heading", { name: "تم سداد الاشتراك القادم", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "تجربتك المجانية جارية", exact: true }).waitFor();
+  assert.equal(await page.getByRole("link", { name: "ادفع الآن لتبدأ باقتك بعد التجربة", exact: true }).count(), 0);
+  await page.goto(base + "/subscription/confirm?plan=pro");
+  await page.getByText(/تم سداد الفترة القادمة. تبدأ في/).waitFor();
+  assert.equal(await page.getByRole("button", { name: "ادفع الفترة الأولى", exact: true }).count(), 0);
+  await page.screenshot({ path: "artifacts/trial-prepayment-confirmed.png", fullPage: true });
+  console.log("PASS: trial prepayment with coupon, disclosed SAR 5.00 floor, mobile/desktop, verified scheduled period, preserved trial and no second checkout. Synthetic provider only.");
 } finally {
   await browser?.close();
   next.kill();

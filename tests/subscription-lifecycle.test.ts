@@ -30,7 +30,6 @@ it("NOT_STARTED -> TRIAL_ACTIVE after confirmation; 14 days of Business with no 
  expect(await sql("select recurring_ref is null and payment_method_ref is null as r from public.ec_accounts where owner_id=$1",[coach])).toBe(true);
  expect((await fx.db.query("select id from public.ec_invoices")).rows).toHaveLength(0);
  await expect(start()).rejects.toThrow("trial_used");
- await expect(prepare()).rejects.toThrow("period_running");
 });
 it("TRIAL_ACTIVE -> TRIAL_ENDING; hourly reconciliation creates at most one reminder per Riyadh day",async()=>{
  await trialHours(72);

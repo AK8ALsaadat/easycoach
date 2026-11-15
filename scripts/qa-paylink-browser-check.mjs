@@ -30,7 +30,7 @@ async function login(email){
  await page.locator('#auth-email').fill(email);await page.locator('#auth-password').fill("CoachPreview!2026");
  await page.locator('button[type="submit"]').click();await page.waitForURL(email.startsWith("trainee")?"**/me":"**/coach");return page;
 }
-const checkout=(page,origin=base)=>page.request.post(base+"/api/platform/checkout",{headers:{origin},data:{plan:"pro",total:49900,mobile:"0501234567",terms:"2026-11-15.3"}});
+const checkout=(page,origin=base)=>page.request.post(base+"/api/platform/checkout",{headers:{origin},data:{plan:"pro",total:49900,mobile:"0501234567",terms:"2026-11-15.4"}});
 const webhook=(page,tx,secret="qa-local-webhook")=>page.request.post(base+"/api/payments/paylink/webhook",{headers:{authorization:`Bearer ${secret}`},data:{transactionNo:tx,merchantOrderNumber:invoices.get(tx).gatewayOrderRequest.orderNumber,orderStatus:"Paid",amount:0}});
 const callback=(tx)=>`${base}/payments/paylink/callback?transactionNo=${tx}&orderNumber=${invoices.get(tx).gatewayOrderRequest.orderNumber}`;
 try {

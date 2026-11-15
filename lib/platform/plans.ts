@@ -28,7 +28,7 @@ export type PlatformState = {
   billing_mobile?: string | null;
   mode: "legacy" | "managed"; status: "free" | "trialing" | "active" | "past_due" | "expired";
   billing_plan: PlanCode; effective_plan: PlanCode; cancel_at_period_end: boolean;
-  trial_end: string | null; period_end: string | null; trial_used_at: string | null; has_payment_method?: boolean;
+  trial_end: string | null; period_start?: string | null; period_end: string | null; trial_used_at: string | null; has_payment_method?: boolean;
   locked_price_halalas: number | null; total_halalas: number | null; currency: "SAR";
   usage: { clients: number; templates: number; coaches: number };
   limits: { clients: number | null; templates: number | null; coaches: number };
@@ -51,6 +51,9 @@ export type PlatformQuote = {
 export const TRIAL_DAYS = 14;
 export const paidPlans = ["starter", "pro", "business"] as const;
 export type PaidPlan = typeof paidPlans[number];
+export function canPayPlatform(state: PlatformState) {
+  return state.mode === "managed" && !state.cancelled_at && (!state.period_end || Date.parse(state.period_end) <= Date.parse(state.server_now) + 5 * 86400000);
+}
 export function isPaidPlan(value: unknown): value is PaidPlan { return paidPlans.includes(value as PaidPlan); }
 /** Monthly price for display: whole riyals when exact ("299"), otherwise two decimals. */
 export function riyals(halalas: number) { return sar(halalas); }

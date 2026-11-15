@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { cancelPlatformSubscription } from "@/app/platform-actions";
-import { SubscriptionState, riyadhDate, sar, type PlatformState } from "@/lib/platform/plans";
+import { canPayPlatform, SubscriptionState, riyadhDate, sar, type PlatformState } from "@/lib/platform/plans";
 import { paymentReadinessMessage, type PaymentReadiness } from "@/lib/platform/payment-config";
 
 export type BillingOverview = { notifications: { id: string; body: string; created_at: string }[]; invoices: { id: string; amount_halalas: number; status: string; paid_at: string | null; due_at: string; payment_url: string | null; transaction_no: string | null; order_no: string | null; attempt_status: string | null }[] };
 const copy: Record<SubscriptionState, [string,string]> = {
  NOT_STARTED:["لم تبدأ التجربة","الاحترافية 499.00 ريال لكل 30 يومًا. التجربة تمنحك مزايا الأعمال لمدة 14 يومًا بعد التأكيد وجاهزية الدفع."],
- TRIAL_ACTIVE:["التجربة نشطة","كل مزايا الأعمال متاحة لمدة 14 يومًا. لا نحفظ بطاقة ولا نخصم تلقائيًا."],
- TRIAL_ENDING:["تجربتك تنتهي قريبًا","باقي 3 أيام أو أقل. سنعرض رابط دفع الفترة عند انتهاء التجربة، مع مهلة سماح 3 أيام."],
+ TRIAL_ACTIVE:["التجربة نشطة","كل مزايا الأعمال متاحة لمدة 14 يومًا. يمكنك سداد الفترة الآن لتبدأ بعد نهاية التجربة."],
+ TRIAL_ENDING:["تجربتك تنتهي قريبًا","باقي 3 أيام أو أقل. يمكنك سداد الفترة الآن لتبدأ بعد نهاية التجربة، أو السداد خلال مهلة السماح."],
  AWAITING_PAYMENT:["بانتظار سداد الفترة","ادفع بنفسك عبر الرابط للاحتفاظ بالمزايا. إنشاء الفاتورة لا يعني خصم المبلغ."],
  ACTIVE:["الاشتراك نشط","تم تأكيد دفع الفترة. تظهر فاتورة التجديد قبل نهايتها بـ5 أيام دون خصم تلقائي."],
  PAST_DUE:["مهلة سماح للسداد","انتهت الفترة المدفوعة. تستمر المزايا 3 أيام، ثم تعود للباقة المجانية إذا لم يتم الدفع."],
@@ -22,8 +22,12 @@ export function SubscriptionLifecycle({state,readiness,overview}:{state:Platform
  const key=state.subscription_state??SubscriptionState.NOT_STARTED;
  const [title,body]=copy[key];
  const remaining=state.trial_end?Math.max(0,Math.ceil((Date.parse(state.trial_end)-Date.parse(state.server_now))/86400000)):0;
+ const prepaid=Boolean(!state.cancelled_at && state.period_start && Date.parse(state.period_start)>Date.parse(state.server_now) && state.paid_until);
+ const trial=[SubscriptionState.TRIAL_ACTIVE,SubscriptionState.TRIAL_ENDING].includes(key);
  return <section className="subscription-section" dir="rtl" aria-label="حالة دورة الاشتراك">
-  <h2>{title}</h2><p role="status">{body}</p>
+  <h2>{prepaid ? "تم سداد الاشتراك القادم" : title}</h2><p role="status">{prepaid ? "تستمر مزايا التجربة حتى نهايتها، ثم تبدأ باقتك المدفوعة تلقائيًا دون دفعة أخرى." : body}</p>
+  {prepaid&&<p>تبدأ الفترة المدفوعة في {riyadhDate(state.period_start!)}</p>}
+  {trial&&canPayPlatform(state)&&readiness.ready&&<Link className="btn" href={`/subscription/confirm?plan=${state.billing_plan}`}>ادفع الآن لتبدأ باقتك بعد التجربة</Link>}
   {[SubscriptionState.TRIAL_ACTIVE,SubscriptionState.TRIAL_ENDING].includes(key)&&<p>المتبقي من التجربة: {remaining} يوم</p>}
   {state.paid_until&&<p>الفترة المدفوعة حتى {riyadhDate(state.paid_until)}</p>}
   {state.grace_ends_at&&[SubscriptionState.AWAITING_PAYMENT,SubscriptionState.PAST_DUE,SubscriptionState.PAYMENT_FAILED].includes(key)&&<p>نهاية مهلة السماح: {riyadhDate(state.grace_ends_at)}</p>}

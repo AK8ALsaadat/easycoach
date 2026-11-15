@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Check } from "lucide-react";
 import { Brand } from "@/components/brand";
-import { isPlan, limitLabel, plans, riyadhDate, sar } from "@/lib/platform/plans";
+import { canPayPlatform, isPlan, limitLabel, plans, riyadhDate, sar } from "@/lib/platform/plans";
 import { platformQuote, platformState } from "@/lib/platform/server";
 import { actor } from "@/lib/server";
 import { LegalLinks } from "@/components/legal-links";
@@ -18,7 +18,8 @@ export default async function ConfirmPage({ searchParams }: { searchParams: Prom
   const [quote, state] = await Promise.all([platformQuote(plan), platformState().catch(() => null)]);
   if (!state) redirect("/coach");
   const readiness = await paymentReadiness();
-  const canPay = Boolean(state.mode === "managed" && !state.cancelled_at && (state.period_end ? Date.parse(state.period_end) <= Date.parse(state.server_now)+5*86400000 : !state.trial_end || Date.parse(state.trial_end) <= Date.parse(state.server_now)));
+  const canPay = canPayPlatform(state);
+  const trialRunning = Boolean(state.trial_end && Date.parse(state.trial_end) > Date.parse(state.server_now));
   const trialEnd = new Date(Date.parse(quote.server_now) + quote.trial_days * 86_400_000).toISOString();
   const tax = quote.tax_mode === "unconfigured" ? "لم تُحدد إعدادات التسجيل الضريبي للمشغّل" : quote.tax_mode === "not_registered" ? "غير مسجل ضريبيًا بحسب إعدادات المشغّل" : `${sar(quote.vat_halalas ?? 0)} ريال (${quote.tax_mode === "inclusive" ? "مشمولة" : "تضاف للسعر"})`;
   return <main dir="rtl" className="plans-page plans-page-narrow">
@@ -39,8 +40,9 @@ export default async function ConfirmPage({ searchParams }: { searchParams: Prom
       </dl>
       <ul className="plan-features">{plans[plan].features.map(f => <li key={f}><Check size={15} aria-hidden="true" />{f}</li>)}</ul>
       <SubscriptionPurchaseOptions plan={plan} total={quote.total_halalas} trialAvailable={quote.trial_available} trialDays={quote.trial_days} canPay={canPay} renewal={Boolean(state.period_end)} readiness={readiness} />
-      <p className="plans-note">لا نحفظ بطاقة ولا نخصم تلقائيًا. بعد التجربة تصلك فاتورة دفع؛ تستمر المزايا خلال مهلة سماح 3 أيام. بياناتك تبقى محفوظة إذا توقفت الصلاحيات المدفوعة.</p>
-      <section className="payment-availability" aria-labelledby="card-availability"><h2 id="card-availability">الدفع لكل فترة دون حفظ بطاقة</h2><p>Paylink يحصّل اشتراكك لصالح المنصة. كل فترة مدفوعة 30 يومًا من تاريخ الدفع؛ الدفع المبكر يبدأ فترة جديدة من تاريخ العملية. يظهر رابط التجديد قبل انتهاء الفترة بـ5 أيام، وتسدده بنفسك دون تفويض خصم تلقائي.</p></section>
+      {trialRunning && <p className="rounded-2xl border border-current/10 p-4 text-sm" role="status">{state.period_end ? `تم سداد الفترة القادمة. تبدأ في ${riyadhDate(state.period_start ?? state.trial_end!)} وتنتهي في ${riyadhDate(state.period_end)}.` : `يمكنك الدفع الآن. تبدأ الـ30 يومًا المدفوعة بعد نهاية تجربتك في ${riyadhDate(state.trial_end!)}، وتبقى مزايا التجربة حتى ذلك الموعد.`}</p>}
+      <p className="plans-note">لا نحفظ بطاقة ولا نخصم تلقائيًا. يمكنك سداد الفترة أثناء التجربة؛ تبدأ بعد نهايتها. إذا لم تسدد، تستمر المزايا خلال مهلة سماح 3 أيام بعد التجربة. بياناتك تبقى محفوظة إذا توقفت الصلاحيات المدفوعة.</p>
+      <section className="payment-availability" aria-labelledby="card-availability"><h2 id="card-availability">الدفع لكل فترة دون حفظ بطاقة</h2><p>Paylink يحصّل اشتراكك لصالح المنصة. الفترة المدفوعة 30 يومًا؛ عند السداد أثناء التجربة تبدأ بعد نهاية التجربة، وفي غير ذلك تبدأ من تاريخ الدفع المتحقق منه. يظهر رابط التجديد قبل انتهاء الفترة المدفوعة بـ5 أيام، وتسدده بنفسك دون تفويض خصم تلقائي.</p></section>
     </section>
     <LegalLinks />
   </main>;

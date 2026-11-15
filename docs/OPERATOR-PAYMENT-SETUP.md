@@ -101,7 +101,14 @@ Invoice API: <https://developer.paylink.sa/docs/add-invoice>.
 When any readiness gate fails, payment/trial submit buttons are hidden and Arabic
 reasons are shown. Starting an available trial grants Business features for 14
 days without creating a paid invoice. Direct purchase is available separately.
-Existing trials continue until their promised end before payment becomes due.
+Existing trials continue until their promised end. Migration
+`20261116180000_prepay_during_trial.sql` allows an owner to pay during the trial:
+the verified first paid period starts at the later of the provider payment time
+and the promised trial end, and lasts 30 days from that start. Business trial
+features continue until the trial ends, even when a lower paid plan is selected.
+The paid invoice records the actual payment time separately from its service
+period. Duplicate notifications never extend it. The UI shows the scheduled
+start/end and blocks another purchase of the already-paid upcoming period.
 
 ## Operator not registered for VAT
 
