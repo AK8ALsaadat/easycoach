@@ -1,6 +1,6 @@
 # Card-less subscription lifecycle
 
-Apply `20261116150000_subscription_lifecycle.sql` before deploying the application. It is additive: existing coach/trainee records, other plans, and legacy-account privileges are preserved. Professional remains 499.00 SAR per 30-day period; trials grant Business features for exactly 336 hours.
+Apply `20261116150000_subscription_lifecycle.sql` and `20261116151000_hourly_subscription_schedule.sql` before deploying the application. It is additive: existing coach/trainee records, other plans, and legacy-account privileges are preserved. Professional remains 499.00 SAR per 30-day period; trials grant Business features for exactly 336 hours.
 
 New database fields and tables:
 
@@ -15,7 +15,7 @@ Environment variables:
 - `PAYMENTS_ENABLED=false` by default. Starting a trial and creating invoices both require true, verified Paylink, and configured tax. Previously issued payments can still be verified while issuance is disabled.
 - `PAYLINK_SANDBOX=true|false` selects `PAYLINK_SANDBOX_API_ID` / `PAYLINK_SANDBOX_SECRET_KEY` or `PAYLINK_LIVE_API_ID` / `PAYLINK_LIVE_SECRET_KEY`. No cross-environment fallback. Existing generic `PAYLINK_API_ID` / `PAYLINK_SECRET_KEY` remain aliases only on the matching selected host.
 - Optional `PAYLINK_BASE_URL` must match the selected official host; loopback is allowed only in local development. `PAYLINK_WEBHOOK_SECRET`, `APP_URL`, and existing service-role credentials are still required.
-- `CRON_SECRET` must match the GitHub repository secret. The public repository's `.github/workflows/subscriptions-hourly.yml` invokes the protected maintenance endpoint hourly without a paid Vercel plan. Keep the existing daily Vercel job as a fallback. GitHub scheduled workflows can be delayed; access checks independently use database time, not cron punctuality.
+- `CRON_SECRET` must match the encrypted Supabase Vault secret named `easycoach_subscription_cron_secret`. Native Supabase `pg_cron` runs `private.ec_invoke_hourly_billing()` hourly and `pg_net` invokes the protected endpoint. The cron command contains only the function name, never a secret. Keep the existing daily Vercel job as a fallback. Access checks independently use database time, not scheduler punctuality. GitHub Actions was tested but cannot start runners because the account is billing-locked; its new workflow was disabled and removed in favor of the existing Supabase project, with no paid upgrade.
 
 Operator configuration remains explicit in `ec_config.provider_verified`, `tax_mode`, and `tax_bps`. Empty tax displays **بانتظار ضبط الضريبة** and blocks both trial activation and paid invoice creation. Auth/permission errors remove provider verification and generate a safe operator log; user messages never expose provider responses or keys.
 
@@ -26,5 +26,7 @@ Renewal invoices are generated five days before paidUntil; trial invoices at tri
 Paylink pending invoices expire after about 24 hours. Declined cards usually leave the invoice Pending with errors. Reuse the same payable attempt until Get Invoice confirms cancellation; then create a new attempt for the same period. A lost create response stays reserved and can be recovered by an authenticated webhook carrying the order/transaction. Do not blindly retry uncertain creations. Webhook/callback verification compares the merchant order, transaction, exact amount and SAR before activation; replays cannot extend access twice.
 
 `ec_reconcile` persists time transitions and queues daily reminders. Invoice jobs are bounded and rotate by last check to avoid starving later accounts. All entitlement checks remain server-side. The old browser trial/reservation RPCs are retired so they cannot bypass the environment flag. Service-only lifecycle mutations are not exposed to browsers. Historical migration rollback refuses to discard consent or invoice evidence.
+
+The scheduler migration installs `pg_cron` and `pg_net` on hosted Supabase when available; the existing Vault extension encrypts the scheduler secret. After setting it, verify both `cron.job` and the HTTP status in `net._http_response`, without printing decrypted secrets. Secret rotation must update Vercel and Vault together.
 
 Validation: lifecycle transition tests, readiness/environment tests, real webhook-handler tests against PostgreSQL-compatible PGlite, trial-consent/RLS tests, and the synthetic browser suite. No real card or charge is required for these tests.

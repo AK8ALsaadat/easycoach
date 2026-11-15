@@ -17,6 +17,11 @@ do $$ begin
  raise exception 'Export/reconcile platform and attendance history before rollback; no data was removed';
  end if;
 end $$;
+do $$ begin
+ if to_regnamespace('cron') is not null then
+  perform cron.unschedule(jobid) from cron.job where jobname='easycoach-subscriptions-hourly';
+ end if;
+end $$;
 do $$ declare t record; p record; f record; backup record; begin
  for t in select event_object_schema,event_object_table,trigger_name from information_schema.triggers
  where trigger_name in ('ec_profile_created','ec_resource_guard','ec_client_data_guard','ec_metadata_guard') loop
