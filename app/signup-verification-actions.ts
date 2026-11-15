@@ -6,6 +6,14 @@ import { EMAIL_OTP_LENGTH, EMAIL_RESEND_SECONDS, normalizeEmailOtp, signupDestin
 
 export type VerificationResult = { ok: boolean; message: string; url?: string; retryAt?: number };
 
+export async function signOutForSignupVerification() {
+  if (localMode() || !await readPendingSignup()) redirect("/login?register=1");
+  const { error } = await (await supabase()).auth.signOut({ scope: "local" });
+  if (error) throw new Error("تعذر تسجيل الخروج. حاول مرة أخرى لإكمال التحقق.");
+  // Keep the pending signup cookie: signing out must not lose the new email.
+  redirect("/verify-email");
+}
+
 export async function verifySignupCode(form: FormData): Promise<VerificationResult> {
   try {
     if (localMode()) return { ok: false, message: "التحقق بالبريد متاح مع Supabase فقط." };

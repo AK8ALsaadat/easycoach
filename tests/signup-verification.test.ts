@@ -2,17 +2,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { normalizeEmailOtp, validEmailOtp } from "@/lib/email-otp";
 const state = vi.hoisted(() => ({
   pending: null as null | { email: string; next: string; resendAt: number; expiresAt: number },
-  verify: vi.fn(), resend: vi.fn(), actor: vi.fn(), snapshot: vi.fn(), write: vi.fn(), clear: vi.fn(),
+  verify: vi.fn(), resend: vi.fn(), signOut: vi.fn(), actor: vi.fn(), snapshot: vi.fn(), write: vi.fn(), clear: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/server", () => ({
   localMode: () => false,
   safeNext: (next: unknown) => typeof next === "string" && /^\/(coach|me|start(?:\?plan=(?:starter|pro|business))?|invite\/[a-f0-9]{64})$/.test(next) ? next : "/coach",
   actor: state.actor, snapshot: state.snapshot,
-  supabase: async () => ({ auth: { verifyOtp: state.verify, resend: state.resend } }),
+  supabase: async () => ({ auth: { verifyOtp: state.verify, resend: state.resend, signOut: state.signOut } }),
 }));
+vi.mock("next/navigation", () => ({ redirect: (url: string) => { throw new Error(`redirect:${url}`); } }));
 vi.mock("@/lib/pending-signup", () => ({ readPendingSignup: async () => state.pending, writePendingSignup: state.write, clearPendingSignup: state.clear }));
-import { resendSignupCode, verifySignupCode } from "@/app/signup-verification-actions";
+import { resendSignupCode, signOutForSignupVerification, verifySignupCode } from "@/app/signup-verification-actions";
 
 const codeForm = (code: string) => { const form = new FormData(); form.set("code", code); return form; };
 beforeEach(() => {
@@ -20,8 +21,29 @@ beforeEach(() => {
   state.pending = { email: "otp@example.test", next: "/coach", resendAt: 0, expiresAt: Date.now() + 86400000 };
   state.verify.mockReset().mockResolvedValue({ data: { session: { access_token: "synthetic" }, user: { email: "otp@example.test", email_confirmed_at: "2026-11-14T00:00:00Z" } }, error: null });
   state.resend.mockReset().mockResolvedValue({ error: null });
+  state.signOut.mockReset().mockResolvedValue({ error: null });
   state.actor.mockReset().mockResolvedValue({ id: "test", email: "otp@example.test" });
   state.snapshot.mockReset().mockResolvedValue({ profile: { role: "coach" } });
+});
+
+describe("explicit account change for signup verification", () => {
+  it("signs out only the current browser session and preserves the pending email", async () => {
+    await expect(signOutForSignupVerification()).rejects.toThrow("redirect:/verify-email");
+    expect(state.signOut).toHaveBeenCalledWith({ scope: "local" });
+    expect(state.clear).not.toHaveBeenCalled();
+    expect(state.verify).not.toHaveBeenCalled();
+    expect(state.pending?.email).toBe("otp@example.test");
+  });
+  it("does not sign out when there is no pending registration", async () => {
+    state.pending = null;
+    await expect(signOutForSignupVerification()).rejects.toThrow("redirect:/login?register=1");
+    expect(state.signOut).not.toHaveBeenCalled();
+  });
+  it("does not report a successful account change when signout fails", async () => {
+    state.signOut.mockResolvedValue({ error: { message: "private provider error" } });
+    await expect(signOutForSignupVerification()).rejects.toThrow("تعذر تسجيل الخروج");
+    expect(state.clear).not.toHaveBeenCalled();
+  });
 });
 
 it("normalizes pasted Arabic/Persian digits and whitespace, retaining leading zeros", () => {
