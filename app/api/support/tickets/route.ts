@@ -6,6 +6,7 @@ import { actor, localMode, rpc } from "@/lib/server";
 import { getLocalDatabase } from "@/lib/local-db";
 import { adminSupportClient } from "@/lib/supabase/admin";
 import { validPhoto } from "@/lib/progress-photos";
+import { readLimitedBody, RequestBodyTooLarge } from "@/lib/request-body";
 
 export const runtime = "nodejs";
 const owner = (id: string) => Boolean(process.env.SUPPORT_OWNER_USER_ID && id === process.env.SUPPORT_OWNER_USER_ID);
@@ -43,7 +44,8 @@ export async function POST(request: NextRequest) {
   if (contentLength > 5.5 * 1024 * 1024) return Response.json({ error: "حجم الطلب أكبر من المسموح" }, { status: 413, headers: noStore });
   let pathKey: string | null = null;
   try {
-    const form = await request.formData();
+    const body = await readLimitedBody(request, Math.floor(5.5 * 1024 * 1024));
+    const form = await new Response(body, { headers: { "Content-Type": request.headers.get("content-type") ?? "" } }).formData();
     const kind = String(form.get("kind") ?? "");
     const title = String(form.get("title") ?? "").trim();
     const description = String(form.get("description") ?? "").trim();
@@ -71,6 +73,7 @@ export async function POST(request: NextRequest) {
     });
     return Response.json({ ok: true, ticket }, { status: 201, headers: noStore });
   } catch (error) {
+    if (error instanceof RequestBodyTooLarge) return Response.json({ error: error.message }, { status: 413, headers: noStore });
     if (pathKey) {
       try {
         if (!localMode()) await adminSupportClient().storage.from("support-attachments").remove([pathKey]);

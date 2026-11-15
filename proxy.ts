@@ -46,7 +46,7 @@ export async function proxy(request: NextRequest) {
             ...c.options,
             httpOnly: true,
             sameSite: "lax",
-            secure: process.env.APP_URL?.startsWith("https://") ?? false,
+            secure: process.env.NODE_ENV === "production" || (process.env.APP_URL?.startsWith("https://") ?? false),
           }),
         );
       },

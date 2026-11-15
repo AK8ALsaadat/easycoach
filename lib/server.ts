@@ -53,7 +53,7 @@ export const supabase = cache(async () => {
               ...c.options,
               httpOnly: true,
               sameSite: "lax",
-              secure: process.env.APP_URL?.startsWith("https://") ?? false,
+              secure: process.env.NODE_ENV === "production" || (process.env.APP_URL?.startsWith("https://") ?? false),
             }),
           );
         } catch {
@@ -248,7 +248,7 @@ export async function loginLocal(email: string, password: string) {
   });
 }
 export function readableError(error: unknown) {
-  const e = error as { message?: string; code?: string };
+  const e = (error && typeof error === "object" ? error : {}) as { message?: string; code?: string };
   // Zod errors carry a JSON message; show the first Arabic issue instead.
   if (error instanceof ZodError) {
     const message = error.issues.find((issue) => /[؀-ۿ]/.test(issue.message))?.message;
@@ -259,7 +259,8 @@ export function readableError(error: unknown) {
     return "السجل مكرر أو العملية مطبقة سابقًا. راجع البيانات والمرجع.";
   if (e.code === "23503" || e.code === "42501")
     return "السجل غير متاح لهذا الحساب.";
-  if (e.message && /[\u0600-\u06ff]/.test(e.message))
+  if (typeof e.message === "string" && /[\u0600-\u06ff]/.test(e.message))
     return traineeTerms(e.message).slice(0, 250);
+  console.error("app.operation_failed", { code: typeof e.code === "string" ? e.code.slice(0, 40) : "unknown" });
   return "لم تكتمل العملية. راجع المدخلات وحاول مرة أخرى.";
 }

@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
   compress: true,
+  poweredByHeader: false,
   // Development action logs include arguments (credentials and private records).
   logging: false,
   // The development overlay otherwise covers the support button during local QA.
@@ -34,6 +35,7 @@ const config: NextConfig = {
       {
         source: "/(.*)",
         headers: [
+          ...(process.env.APP_URL?.startsWith("https://") ? [{ key: "Strict-Transport-Security", value: "max-age=31536000" }] : []),
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "same-origin" },
           { key: "X-Frame-Options", value: "DENY" },
@@ -43,7 +45,7 @@ const config: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
+            value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'",
           },
         ],
       },
