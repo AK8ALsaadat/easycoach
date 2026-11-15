@@ -132,7 +132,6 @@ export function LinkBox({
   kind: "invite" | "join";
   clientId?: string;
 }) {
-  
   const { t: tr } = useLocale();
 
   const [busy, setBusy] = useState(false);
@@ -875,7 +874,6 @@ function SubscriptionCard({
   client: Client;
   appUrl: string;
 }) {
-  
   const { t: tr, language: locale } = useLocale();
 
   const frozen = data.freezes.filter((f) => f.subscription_id === sub.id);
@@ -952,7 +950,6 @@ function SubscriptionCard({
 }
 const LIBRARY_TABS = ["catalog", "templates", "exercises"] as const;
 function Library({ data, initialTab, initialTemplate }: { data: Snapshot; initialTab?: string; initialTemplate?: string }) {
-  
   const { t: tr, language: locale } = useLocale();
   const router = useRouter();
   const [deletingTemplate, setDeletingTemplate] = useState("");
@@ -1263,7 +1260,6 @@ function Library({ data, initialTab, initialTemplate }: { data: Snapshot; initia
   );
 }
 function Finance({ data }: { data: Snapshot }) {
-  
   const { t: tr, language: locale } = useLocale();
   const clients = data.clients.filter(c => !c.archived);
   const summary = financeSummary(data.subscriptions, clients.map(c => c.id), riyadhToday());
@@ -1290,7 +1286,6 @@ function JoinRequests({
   data: Snapshot;
   compact?: boolean;
 }) {
-  
   const { t: tr } = useLocale();
 
   const pending = data.join_requests.filter((r) => r.status === "pending");

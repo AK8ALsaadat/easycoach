@@ -15,7 +15,6 @@ const sameName = (a: string, b: string) => a.trim().replace(/\s+/g, " ") === b.t
 
 function useLifecycle(client: Client, afterArchive?: string) {
   const router = useRouter();
-  
   const { t: tr } = useLocale();
   async function restore(withToast = true) {
     const result = await setClientArchived(client.id, false);
@@ -190,7 +189,6 @@ export function PurgeDialog({ client, open, onClose }: { client: Client; open: b
  * button, or above it when there is not enough room underneath.
  */
 export function ClientActionsMenu({ client, afterArchive, compact = false }: { client: Client; afterArchive?: string; compact?: boolean }) {
-  
   const { t: tr, language } = useLocale();
   const { restore } = useLifecycle(client);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -309,7 +307,6 @@ export function ClientActionsMenu({ client, afterArchive, compact = false }: { c
 
 /** Plain button that opens the archive confirmation. */
 export function ArchiveClientTrigger({ client, afterArchive }: { client: Client; afterArchive?: string }) {
-  
   const { t: tr } = useLocale();
   const [open, setOpen] = useState(false);
   return (
@@ -324,7 +321,6 @@ export function ArchiveClientTrigger({ client, afterArchive }: { client: Client;
 
 /** Visible restore button for archived rows. */
 export function RestoreClientButton({ client }: { client: Client }) {
-  
   const { t: tr } = useLocale();
   const { restore } = useLifecycle(client);
   const [busy, setBusy] = useState(false);

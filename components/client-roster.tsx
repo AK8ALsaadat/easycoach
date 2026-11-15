@@ -1,5 +1,5 @@
 "use client";
-import { useBillingEnabled, FreePlatformNotice } from "./billing-mode-provider";
+import { useBillingEnabled } from "./billing-mode-provider";
 import {useMemo,useState,type ComponentProps} from "react";
 import { daysLeft } from "@/lib/plural";
 import Link from "next/link";

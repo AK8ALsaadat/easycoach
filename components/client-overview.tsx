@@ -1,5 +1,4 @@
 "use client";
-import { useBillingEnabled, FreePlatformNotice } from "./billing-mode-provider";
 import { countLabel, formatNumber, formatSigned, nouns } from "@/lib/plural";
 import Link from "next/link";
 import { ArrowUpLeft, Dumbbell, Flame, Scale, Target } from "lucide-react";

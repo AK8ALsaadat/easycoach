@@ -1,5 +1,5 @@
 "use client";
-import { useBillingEnabled, FreePlatformNotice } from "./billing-mode-provider";
+import { useBillingEnabled } from "./billing-mode-provider";
 import { DateInput } from "./date-input";
 import dynamic from "next/dynamic";
 import { ChunkLoading } from "./chunk-loading";
@@ -1063,7 +1063,6 @@ function RecordForm({
   entryDate?: string;
   onEntryDateChange?: (date: string) => void;
 }) {
-  
   const { t: tr, language } = useLocale();
 
   const requestId = useRef<string | null>(null);

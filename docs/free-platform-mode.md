@@ -15,7 +15,9 @@ The root layout and authenticated RPC boundary mirror the environment flag into
 `private.ec_runtime_flags` using `ec_billing_runtime(boolean)`. Only the service
 role can execute that function; a browser cannot choose its own entitlements.
 The private row is an implementation mirror, not an independently configured
-switch. The migration starts it disabled. Apply migrations before deployment.
+switch. The migration initially preserves commercial behavior so it can be
+applied before deployment. The first new application request mirrors the
+environment value. Apply migrations before deployment.
 
 SQL guards grant existing coach accounts all Business features without client,
 template or team-seat quotas. Authentication, tenant isolation, invitations,

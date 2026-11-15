@@ -1,5 +1,5 @@
 "use client";
-import { useBillingEnabled, FreePlatformNotice } from "./billing-mode-provider";
+import { FreePlatformNotice } from "./billing-mode-provider";
 import { LegalLinks } from "./legal-links";
 import { useLocale } from "./locale-provider";
 import { LanguageSwitch } from "./language-switch";
@@ -41,7 +41,6 @@ function PortalConsentPrompt({ clientId, state, coachName, token, onAccepted }: 
   );
 }
 export function ClientPortal({ token, branding }: { token: string; branding?: CoachBranding | null }) {
-  
   const { t: tr } = useLocale();
   const router = useRouter();
   const session = token.startsWith("session:");

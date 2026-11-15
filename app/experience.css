@@ -160,3 +160,4 @@ h1,h2,h3 { letter-spacing:0; }
 @media(prefers-reduced-transparency:reduce) { :root .portal-sidebar,:root .portal-header,.auth-page .auth-panel { background:var(--ui-surface); backdrop-filter:none; } }
 
 .free-platform-notice { display:inline-flex; align-items:center; padding: .5rem .85rem; border-radius:999px; background:var(--teal-soft, #d9f3e9); color:var(--teal, #087f70); font-size:.8rem; font-weight:600; }
+.coach-home .command-deck:not(:has(.revenue-card)) { grid-template-columns: minmax(0, 1fr); }

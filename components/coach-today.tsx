@@ -1,5 +1,5 @@
 "use client";
-import { useBillingEnabled, FreePlatformNotice } from "./billing-mode-provider";
+import { useBillingEnabled } from "./billing-mode-provider";
 import { useLocale } from "./locale-provider";
 import { countLabel, nouns } from "@/lib/plural";
 import { useState } from "react";
