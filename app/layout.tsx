@@ -14,12 +14,14 @@ import { PwaManager } from "@/components/pwa-manager";
 import { FormValidation } from "@/components/form-validation";
 import { PWA_THEME } from "@/lib/pwa";
 import { TikTokPixel } from "@/components/TikTokPixel";
+import { siteUrl } from "@/lib/site-url";
 const font = IBM_Plex_Sans_Arabic({
   subsets: ["arabic", "latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 export const metadata: Metadata = {
+  metadataBase: siteUrl(),
   title: { default: "إيزي كوتش", template: "%s | إيزي كوتش" },
   description:
     "مساحة عربية لإدارة المتدربين والبرامج والمتابعة للمدربين الشخصيين.",

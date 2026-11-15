@@ -1,0 +1,11 @@
+/* This document replaces root layout; it needs its own theme and system font. */
+:root { --fatal-canvas:#f0f5f4; --fatal-surface:#fff; --fatal-text:#143139; --fatal-primary:#087e73; --fatal-on-primary:#fff; --fatal-border:#d4e2df; }
+.fatal-page { margin:0; min-height:100dvh; display:grid; place-items:center; padding:24px; box-sizing:border-box; background:var(--fatal-canvas); color:var(--fatal-text); font:17px/1.8 Tahoma,Arial,sans-serif; }
+.fatal-card { width:100%; max-width:480px; padding:24px; box-sizing:border-box; border:1px solid var(--fatal-border); border-radius:20px; background:var(--fatal-surface); overflow-wrap:anywhere; }
+.fatal-card h1 { font-size:1.5rem; line-height:1.5; }
+.fatal-actions { display:flex; flex-wrap:wrap; gap:12px; }
+.fatal-actions button,.fatal-actions a { min-height:44px; padding:10px 16px; box-sizing:border-box; border:1px solid var(--fatal-primary); border-radius:12px; font:inherit; text-decoration:none; cursor:pointer; }
+.fatal-actions button { background:var(--fatal-primary); color:var(--fatal-on-primary); }
+.fatal-actions a { color:var(--fatal-text); }
+.fatal-actions :focus-visible { outline:3px solid var(--fatal-primary); outline-offset:3px; }
+@media(prefers-color-scheme:dark) { :root { --fatal-canvas:#08181f; --fatal-surface:#102831; --fatal-text:#eff9f6; --fatal-primary:#50d4b4; --fatal-on-primary:#082d27; --fatal-border:#2b4b54; } }

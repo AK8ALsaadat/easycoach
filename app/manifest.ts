@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-// Colors follow the default (dark) theme canvas so the splash matches the app.
+// Colors follow the default light theme so the first-visit splash matches the app.
 import { PWA_THEME } from "@/lib/pwa";
 
 export default function manifest(): MetadataRoute.Manifest {
@@ -14,8 +14,8 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait",
     dir: "rtl",
     lang: "ar",
-    theme_color: PWA_THEME.dark,
-    background_color: PWA_THEME.dark,
+    theme_color: PWA_THEME.light,
+    background_color: PWA_THEME.light,
     categories: ["health", "fitness", "lifestyle"],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

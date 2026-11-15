@@ -1,0 +1,4 @@
+import sharp from "sharp";
+// A code-generated brand card: no remote image, tracking URL, or licensed photo.
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><rect width="1200" height="630" fill="#f0f5f4"/><rect x="70" y="70" width="1060" height="490" rx="40" fill="#102e35"/><text x="140" y="230" font-family="Arial,sans-serif" font-size="86" font-weight="700" fill="#eff9f6">EasyCoach</text><text x="145" y="295" font-family="Arial,sans-serif" font-size="28" fill="#b5ced2">Coaching. Progress. Connection.</text><path d="M145 450L290 420L435 440L580 360L725 385L870 310L1030 330" fill="none" stroke="#50d4b4" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/><circle cx="1030" cy="330" r="16" fill="#50d4b4"/></svg>`;
+await sharp(Buffer.from(svg)).png().toFile("public/social-card.png");

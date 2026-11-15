@@ -8,6 +8,21 @@ import { Brand } from "@/components/brand";
 import { ProductPreview } from "@/components/product-preview";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LegalLinks } from "@/components/legal-links";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "إيزي كوتش | إدارة المتدربين وبرامج التدريب",
+  description: "مساحة عربية تجمع متدربيك وبرامج التدريب والتغذية وتتبع التقدم. بوابة خاصة لكل متدرب تعمل من الجوال، مع قوالب ومتابعات في مكان واحد.",
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website", locale: "ar_SA", siteName: "إيزي كوتش", url: "/",
+    title: "إيزي كوتش — وقتك للتدريب، والباقي علينا",
+    description: "برامج التدريب والتغذية والتقدم في مساحة عربية واحدة للمدرب والمتدرب.",
+    images: [{ url: "/social-card.png", width: 1200, height: 630, alt: "EasyCoach — مساحة المدرب والمتدرب" }],
+  },
+  twitter: { card: "summary_large_image", title: "إيزي كوتش", description: "مساحة عربية لإدارة المتدربين والبرامج والمتابعة.", images: ["/social-card.png"] },
+};
 
 export default async function Home() {
   if (await actor()) redirect("/coach");

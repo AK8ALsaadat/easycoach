@@ -10,10 +10,10 @@ import { AlertTriangle } from "lucide-react";
  */
 export default function ErrorPage({
   error,
-  reset,
+  retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  retry: () => void;
 }) {
   return (
     <main className="mx-auto mt-20 max-w-lg p-6">
@@ -27,7 +27,7 @@ export default function ErrorPage({
           المحاولة، وإذا تكرر الأمر سجّل الخروج والدخول من جديد أو تواصل مع الدعم.
         </p>
         <div className="flex flex-wrap gap-2">
-          <button className="btn" onClick={reset}>
+          <button className="btn" onClick={() => retry()}>
             حاول مرة ثانية
           </button>
           <Link href="/login" className="btn-secondary">
