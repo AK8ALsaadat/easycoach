@@ -17,7 +17,7 @@ export function TrialHero({ quotes, title, lead }: { quotes: (PlatformQuote | nu
     {offer.active && <p className="trial-ribbon"><Sparkles size={15} aria-hidden="true" />عرض لفترة محدودة · {offer.days} يومًا مجانًا على كل الباقات المدفوعة</p>}
     <h1>{title ?? (offer.active ? `جرّب أي باقة ${offer.days} يومًا مجانًا` : "باقة تناسب مساحة تدريبك")}</h1>
     <p className="plans-lead">{lead ?? (offer.active
-      ? "بدون بطاقة وبدون التزام. خلال التجربة تحصل على كل مزايا باقة الأعمال، وبعدها تعود للباقة المجانية حتى تفعّل اشتراكك، مع بقاء بياناتك محفوظة."
+      ? "بدون بطاقة وبدون التزام. خلال التجربة تحصل على كل مزايا باقة الأعمال، وبعدها لديك مهلة سماح 3 أيام للسداد عبر رابط دفع، مع بقاء بياناتك محفوظة."
       : "اشتراكك في EasyCoach مستقل عن باقات الحصص التي تبيعها للمتدربين.")}</p>
     {offer.active && <p className="plans-deadline">{offer.end ? `العرض متاح حتى ${riyadhDate(offer.end)} بتوقيت الرياض` : "عرض لفترة محدودة · قد يُغلق في أي وقت، ومن بدأ تجربته يكملها كاملة"}</p>}
   </header>;
@@ -40,11 +40,11 @@ export function PlanCards({ quotes, state, signedIn, highlight, context }: {
         </div>
         <div className="plan-price">
           {quote ? code === "free"
-            ? <><strong>0</strong><span>ريال / شهر</span></>
+            ? <><strong>0.00</strong><span>ريال / شهر</span></>
             : <>{quote.discount && quote.campaign_active && <del>{riyals(quote.base_halalas)}</del>}<strong>{riyals(quote.net_halalas)}</strong><span>ريال / شهر</span></>
             : <p role="status" className="text-muted">يتعذر تحميل السعر حاليًا</p>}
           {code !== "free" && offer.active && <p className="plan-trial-line">أول {offer.days} يومًا مجانًا</p>}
-          {code !== "free" && quote && <p className="plan-tax-note">{quote.total_halalas === null ? "يُعرض الإجمالي بعد تحديد الضريبة وقبل أي دفع" : `الإجمالي الشهري${quote.tax_mode === "inclusive" || quote.tax_mode === "exclusive" ? " مع الضريبة" : ""}: ${riyals(quote.total_halalas)} ريال`}</p>}
+          {code !== "free" && quote && <p className="plan-tax-note">{quote.total_halalas === null ? "بانتظار ضبط الضريبة" : `الإجمالي الشهري${quote.tax_mode === "inclusive" || quote.tax_mode === "exclusive" ? " مع الضريبة" : ""}: ${riyals(quote.total_halalas)} ريال`}</p>}
         </div>
         {quote && <ul className="plan-limits">{limitLabel(quote.limits).map(line => <li key={line}>{line}</li>)}</ul>}
         <ul className="plan-features">{plan.features.map(feature => <li key={feature}><Check size={15} aria-hidden="true" />{feature}</li>)}</ul>
@@ -66,10 +66,11 @@ function PlanAction({ code, quote, state, signedIn, offer, context, isCurrent }:
   if (isCurrent) return <Link className="btn-secondary w-full" href="/subscription">إدارة اشتراكي</Link>;
   if (!signedIn) {
     return offer.active
-      ? <Link className="btn w-full" href={`/login?register=1&next=${encodeURIComponent(`/start?plan=${code}`)}`}>أنشئ حسابك وابدأ {offer.days} يومًا مجانًا</Link>
+      ? <Link className="btn w-full" href={`/login?register=1&next=${encodeURIComponent(`/start?plan=${code}`)}`}>{quote?.provider_ready && quote.total_halalas !== null ? `أنشئ حسابك وابدأ ${offer.days} يومًا مجانًا` : "أنشئ حسابك وراجع الباقة"}</Link>
       : <Link className="btn-secondary w-full" href={`/subscription/confirm?plan=${code}`}>تفاصيل الباقة</Link>;
   }
   if (quote?.trial_available) {
+    if (!quote.provider_ready || quote.total_halalas === null) return <><button className="btn w-full" disabled>ابدأ التجربة</button><p className="plan-note">التفعيل معطل لحين تأكيد جاهزية وسيلة الدفع</p><Link href={`/subscription/confirm?plan=${code}`} className="subscription-compare">مراجعة تفاصيل الباقة</Link></>;
     return <Link className="btn w-full" href={`/subscription/confirm?plan=${code}`}>ابدأ {offer.days} يومًا مجانًا</Link>;
   }
   if (state?.mode === "legacy") return <p className="plan-note">حسابك سابق ويملك كل المزايا بالفعل.</p>;

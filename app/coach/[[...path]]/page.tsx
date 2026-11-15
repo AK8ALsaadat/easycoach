@@ -71,6 +71,7 @@ export default async function CoachPage({
         <p>كل مزايا باقة الأعمال مفتوحة لك حتى {new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { dateStyle: "long", timeZone: "Asia/Riyadh" }).format(new Date(platform.trial_end))}. لا بطاقة ولا خصم؛ تفاصيل اشتراكك في <Link href="/subscription">صفحة الاشتراك</Link>.</p>
       </div>
     )}
+    {platform?.subscription_state === "TRIAL_ENDING" && <div className="trial-banner" role="status"><strong>تجربتك تنتهي خلال 3 أيام أو أقل</strong><p>ستظهر فاتورة الفترة عند انتهاء التجربة. <Link href="/subscription">راجع اشتراكك وتذكيراته</Link>.</p></div>}
     <Workspace
       data={data}
       platform={platform}

@@ -1,0 +1,35 @@
+name: Subscription lifecycle (hourly)
+on:
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: subscription-lifecycle
+  cancel-in-progress: false
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Reconcile subscriptions and issue period payment links
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: ${{ vars.APP_URL || 'https://easycoach.space' }}
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          if (!process.env.CRON_SECRET || process.env.CRON_SECRET.length < 32) {
+            console.error('Configure the CRON_SECRET repository secret before enabling subscription scheduling.');
+            process.exit(1);
+          }
+          const url = new URL('/api/maintenance/subscriptions', process.env.APP_URL);
+          if (url.protocol !== 'https:') throw Error('A secure production APP_URL is required.');
+          const response = await fetch(url, {
+            headers: { authorization: `Bearer ${process.env.CRON_SECRET}` },
+            signal: AbortSignal.timeout(240000),
+            redirect: 'error',
+          });
+          if (!response.ok) throw Error(`Subscription reconciliation returned HTTP ${response.status}.`);
+          console.log('Subscription reconciliation completed. No payment cards are stored or charged.');
+          NODE

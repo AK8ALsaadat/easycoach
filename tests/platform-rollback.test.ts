@@ -5,7 +5,8 @@ import { POLICY_VERSION } from "@/lib/legal";
 it("preserves recorded trial acceptance even if an operator has reset the account to Free", async () => {
  const fx=await fixtureDatabase({platformManaged:true});
  try {
-  await fx.call(coach,"ec_start_trial_accepted",{plan_code:"pro",accepted_version:POLICY_VERSION});
+  await fx.db.exec("update public.ec_config set provider_verified=true,tax_mode='not_registered'");
+  await fx.db.query("select public.ec_billing_start($1,'pro','0501234567','Fictional owner',$2)",[coach,POLICY_VERSION]);
   await fx.db.query("update public.ec_accounts set status='free' where owner_id=$1",[coach]);
   await expect(fx.db.exec(await readFile("supabase/rollbacks/20261115100000_platform_subscriptions.down.sql","utf8"))).rejects.toThrow(/consent evidence/);
  } finally {await fx.db.close();}

@@ -52,7 +52,7 @@ export async function startTrialAction(form: FormData) {
   if (form.get("terms_acceptance") !== POLICY_VERSION) redirect(`/subscription/confirm?plan=${plan}&error=terms`);
   let failed = false;
   try {
-    await startPlatformTrial(plan);
+    await startPlatformTrial(plan, String(form.get("mobile") ?? ""));
   } catch (error) {
     if (isSessionExpired(error)) redirect(`/login?next=${encodeURIComponent(back)}`);
     failed = true;
@@ -61,4 +61,11 @@ export async function startTrialAction(form: FormData) {
   if (failed) redirect(`/subscription/confirm?plan=${plan}&error=start`);
   revalidatePath("/", "layout");
   redirect("/coach?trial=started");
+}
+
+export async function cancelPlatformSubscription() {
+  await requireCoachIdentity();
+  await rpc("ec_billing_cancel");
+  revalidatePath("/", "layout");
+  redirect("/subscription");
 }

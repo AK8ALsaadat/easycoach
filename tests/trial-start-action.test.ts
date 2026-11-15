@@ -10,7 +10,7 @@ vi.mock("@/lib/server", () => ({
 vi.mock("@/lib/platform/server", () => ({ startPlatformTrial: state.start }));
 import { startTrialAction } from "@/app/platform-actions";
 function form(accepted = true) {
-  const value = new FormData(); value.set("plan", "starter");
+  const value = new FormData(); value.set("plan", "starter"); value.set("mobile", "0501234567");
   if (accepted) value.set("terms_acceptance", POLICY_VERSION);
   return value;
 }
@@ -27,7 +27,7 @@ it("shows a visible review error on a failed trial request instead of navigating
 });
 it("starts the selected plan once and opens the successful workspace", async () => {
   await expect(startTrialAction(form())).rejects.toThrow("redirect:/coach?trial=started");
-  expect(state.start).toHaveBeenCalledExactlyOnceWith("starter");
+  expect(state.start).toHaveBeenCalledExactlyOnceWith("starter", "0501234567");
   expect(state.revalidate).toHaveBeenCalledWith("/", "layout");
 });
 it("preserves the chosen plan when login is required", async () => {

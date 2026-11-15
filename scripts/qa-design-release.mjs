@@ -4,6 +4,7 @@ import { mkdtemp, readFile, writeFile, mkdir } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import net from "node:net";
+import { createServer } from "node:http";
 
 const directory = await mkdtemp(path.join(os.tmpdir(), "easycoach-platform-design-"));
 const dist = ".local-dev/design-release";
@@ -14,11 +15,11 @@ const port = await new Promise(resolve => {
 const base = `http://127.0.0.1:${port}`;
 const allScripts = ["qa-design-browser.mjs", "qa-policy-dialogs.mjs", "qa-import-browser.mjs", "qa-session-photos.mjs", "qa-paylink-browser-check.mjs", "qa-platform-subscriptions.mjs", "qa-coach-journey.mjs"];
 const selectedScripts = process.argv.length > 2 ? process.argv.slice(2) : allScripts;
-if (selectedScripts.some(script => ![...allScripts, "qa-subscribe-actions.mjs"].includes(script))) throw Error("Unknown QA script");
+if (selectedScripts.some(script => ![...allScripts, "qa-subscribe-actions.mjs", "qa-subscription-disabled.mjs"].includes(script))) throw Error("Unknown QA script");
 const env = {
   ...process.env, LOCAL_DB_PATH: directory, EASYCOACH_EVIDENCE_DIST_DIR: dist,
   APP_URL: base, TEST_BASE_URL: base,
-  PAYLINK_BASE_URL: "http://127.0.0.1:4017",
+  PAYMENTS_ENABLED: process.env.QA_PAYMENTS_DISABLED === "true" ? "false" : "true", PAYLINK_SANDBOX: "true", PAYLINK_BASE_URL: "http://127.0.0.1:4017",
   PAYLINK_API_ID: "synthetic-qa", PAYLINK_SECRET_KEY: "synthetic-qa", PAYLINK_WEBHOOK_SECRET: "qa-local-webhook",
 };
 function command(args) {
@@ -28,12 +29,23 @@ function command(args) {
     child.on("close", code => code ? reject(Error(`${args.join(" ")} exited ${code}`)) : resolve());
   });
 }
-let server, stopping = false;
+let server, authSimulator, stopping = false;
+async function startAuthSimulator() {
+  authSimulator=createServer((request,response)=>{
+    response.setHeader("Content-Type","application/json");
+    if(request.url==="/api/auth")response.end(JSON.stringify({id_token:"fictional-local-auth-only"}));
+    else {response.statusCode=404;response.end("{}");}
+  });
+  await new Promise(resolve=>authSimulator.listen(4017,"127.0.0.1",resolve));
+}
+async function stopAuthSimulator() {
+  if(authSimulator){await new Promise(resolve=>authSimulator.close(resolve));authSimulator=undefined;}
+}
 try {
   await mkdir("artifacts/design-release", { recursive: true });
   await command(["--experimental-strip-types", "scripts/prepare-platform-qa.ts", directory]);
   await command(["--experimental-strip-types", "scripts/prepare-trial-qa.ts", directory]);
-  if (selectedScripts.includes("qa-paylink-browser-check.mjs")) await command(["--experimental-strip-types", "scripts/prepare-billing-qa.ts", directory]);
+  await command(["--experimental-strip-types", "scripts/prepare-billing-qa.ts", directory]);
   server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "dev", "--webpack", "-H", "127.0.0.1", "-p", String(port)], {
     env, stdio: ["ignore", "pipe", "pipe"], windowsHide: true,
   });
@@ -49,12 +61,15 @@ try {
   if (!ready) throw Error("Isolated server failed: " + logs);
   console.log("Isolated design QA: " + base);
   for (const script of selectedScripts) {
+    if(script==="qa-paylink-browser-check.mjs")await stopAuthSimulator();
+    else if(!authSimulator)await startAuthSimulator();
     console.log("Running " + script);
     await command(["scripts/" + script]);
   }
   console.log("DESIGN RELEASE QA PASSED");
 } finally {
   stopping = true;
+  await stopAuthSimulator();
   if (server?.pid) {
     try {
       if (process.platform === "win32") execFileSync("taskkill", ["/PID", String(server.pid), "/T", "/F"], { stdio: "ignore", windowsHide: true });

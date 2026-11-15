@@ -8,6 +8,8 @@ import { LegalLinks } from "@/components/legal-links";
 import { PlatformResourceSelection } from "@/components/platform-resource-selection";
 import { OrganizationForm } from "@/components/organization-controls";
 import { z } from "zod";
+import { SubscriptionLifecycle, type BillingOverview } from "@/components/subscription-lifecycle";
+import { paymentReadiness } from "@/lib/platform/payment-config";
 import { PlatformTrialCountdown } from "@/components/platform-trial-countdown";
 export const dynamic="force-dynamic";
 const statusLabel = { free: "الباقة المجانية", trialing: "تجربة مجانية", active: "اشتراك نشط", past_due: "بانتظار الدفع", expired: "انتهت الفترة" } as const;
@@ -15,6 +17,7 @@ const statusTone = { free: "neutral", trialing: "trial", active: "ok", past_due:
 export default async function SubscriptionPage({searchParams}:{searchParams:Promise<{before?:string;id?:string}>}) {
   const search=await searchParams;
   const state=await platformState();
+  const [readiness,overview]=await Promise.all([paymentReadiness(),rpc<BillingOverview>("ec_billing_overview")]);
   const [invoices,resources,team,trialQuote]=await Promise.all([
     rpc<{id:string;amount_halalas:number;status:string;created_at:string}[]>("ec_invoice_page",{before_date:z.iso.datetime({offset:true}).safeParse(search.before).success?search.before:null,before_id:z.uuid().safeParse(search.id).success?search.id:null}),
     rpc<{clients:{id:string;name:string}[];templates:{id:string;name:string}[];next_client:string|null;next_template:string|null}>("ec_resource_options"),
@@ -27,6 +30,7 @@ export default async function SubscriptionPage({searchParams}:{searchParams:Prom
     <div className="plans-topbar"><Brand /><Link href="/coach" className="btn-secondary"><ArrowLeft size={16} aria-hidden="true" />مساحة المدرب</Link></div>
     <h1>اشتراك EasyCoach</h1>
     <Link href="/pricing" className="subscription-compare">مقارنة الباقات والأسعار</Link>
+    <SubscriptionLifecycle state={state} readiness={readiness} overview={overview} />
     {state.status==="trialing"&&state.trial_end&&<PlatformTrialCountdown key={state.server_now} end={state.trial_end} serverNow={state.server_now} plan={state.billing_plan} limits={state.billing_limits} hasPaymentMethod={Boolean(state.has_payment_method)}/>}
     <section className="subscription-status">
       {state.mode==="legacy"
@@ -34,8 +38,8 @@ export default async function SubscriptionPage({searchParams}:{searchParams:Prom
         : <>
           <span className="status-chip" data-tone={statusTone[state.status]}>{statusLabel[state.status]}</span>
           <h2>الباقة المتاحة الآن: {plans[state.effective_plan].name}</h2>
-          {(state.status==="trialing"||state.status==="active") && <p className="text-muted">باقتك المختارة: {plans[state.billing_plan].name} · {state.total_halalas===null?"الإجمالي الشهري يُعرض بعد ضبط الضريبة":sar(state.total_halalas)+" ريال شهريًا"}{state.trial_end && state.status==="trialing" ? ` · تنتهي التجربة في ${riyadhDate(state.trial_end)}` : ""}</p>}
-          {state.status==="expired" && <p className="text-muted">انتهت تجربتك المجانية وعادت صلاحياتك إلى الباقة المجانية. بياناتك ومتدربوك محفوظون كما هم.</p>}
+          {(state.status==="trialing"||state.status==="active") && <p className="text-muted">باقتك المختارة: {plans[state.billing_plan].name} · {state.total_halalas===null?"بانتظار ضبط الضريبة":sar(state.total_halalas)+" ريال شهريًا"}{state.trial_end && state.status==="trialing" ? ` · تنتهي التجربة في ${riyadhDate(state.trial_end)}` : ""}</p>}
+          {state.status==="expired" && <p className="text-muted">انتهت الفترة السابقة. تظهر صلاحياتك ومهلة السماح الحالية في حالة دورة الاشتراك أعلاه؛ بياناتك محفوظة.</p>}
           {canStartTrial && <Link href="/start" className="btn" style={{width:"fit-content"}}>ابدأ 14 يومًا مجانًا على أي باقة</Link>}
           {!canStartTrial && state.status!=="trialing" && state.status!=="active" && <Link href="/pricing" className="btn-secondary" style={{width:"fit-content"}}>مقارنة الباقات</Link>}
         </>}
@@ -45,7 +49,7 @@ export default async function SubscriptionPage({searchParams}:{searchParams:Prom
       return <div key={kind} className="usage-card"><h2>{({clients:"المتدربون النشطون",coaches:"حسابات المدربين",templates:"القوالب الخاصة"})[kind]}</h2><p><bdi dir="ltr">{state.usage[kind]} / {limit??"∞"}</bdi></p>{limit!==null&&limit>0&&<progress max={limit} value={Math.min(state.usage[kind],limit)} aria-label="نسبة الاستخدام"/>}</div>;
     })}</section>
     {state.features.includes("branding")&&<section className="subscription-section"><h2>لون بوابة المتدرب</h2><OrganizationForm operation="ec_brand_color" fields={[{name:"color",label:"اللون الأساسي",type:"color"}]} label="حفظ لون البوابة"/></section>}
-    <section className="subscription-section" id="payment-method"><h2>دفع اشتراك المنصة والتجديد</h2>{state.period_end && state.status === "active" && <p>تستمر المزايا المدفوعة حتى {riyadhDate(state.period_end)}. لا يُخصم مبلغ جديد تلقائيًا.</p>}<p>تدفع اشتراكك في أدوات EasyCoach لصالح المنصة عبر Paylink عند إتاحة الدفع وإعداداته. كل دفعة تغطي شهرًا واحدًا، والتجديد يدوي بعد انتهائه. التجربة مجانية دون بطاقة أو خصم تلقائي. دفعات المتدربين لا تُحصّل عبر هذه البوابة.</p><Link href="/terms#cancellation" className="subscription-compare">الإلغاء والاسترداد</Link></section>
+    <section className="subscription-section" id="payment-method"><h2>دفع اشتراك المنصة والتجديد</h2>{state.period_end && state.status === "active" && <p>تستمر المزايا المدفوعة حتى {riyadhDate(state.period_end)}. لا يُخصم مبلغ جديد تلقائيًا.</p>}<p>تدفع اشتراكك في أدوات EasyCoach لصالح المنصة عبر Paylink عند إتاحة الدفع وإعداداته. كل دفعة تغطي 30 يومًا من تاريخ الدفع. تصدر فاتورة التجديد قبل نهاية الفترة بـ5 أيام، وتسددها بنفسك دون خصم تلقائي. التجربة مجانية دون بطاقة أو خصم تلقائي. دفعات المتدربين لا تُحصّل عبر هذه البوابة.</p><Link href="/terms#cancellation" className="subscription-compare">الإلغاء والاسترداد</Link></section>
     {exceeded&&<section className="subscription-section"><h2>اختر السجلات التي ستبقى نشطة ضمن حدود باقتك</h2><PlatformResourceSelection clients={resources.clients} templates={resources.templates} selectedClients={state.locked_clients} selectedTemplates={state.locked_templates} nextClient={resources.next_client} nextTemplate={resources.next_template}/></section>}
     {state.usage.coaches>state.limits.coaches&&<section className="subscription-section"><h2>اختر أعضاء الفريق الذين سيبقون نشطين</h2><p>المالك يحتسب ضمن الحد. تبقى بيانات الأعضاء الموقوفين محفوظة.</p>{team.map(member=><div className="border p-4 rounded-xl" key={member.id}><p>{member.name}</p><OrganizationForm operation="ec_team_deactivate" defaults={{member:member.id}} fields={[]} label="إيقاف العضو"/></div>)}</section>}
     <section className="subscription-section"><h2>فواتير اشتراك EasyCoach</h2><p>هذه فواتير اشتراكك المدفوعة لمشغّل المنصة. سجلات دفعات المتدربين موجودة في ملفاتهم وتُحدّث يدويًا.</p>{invoices.length?<ul>{invoices.map(i=><li key={i.id}><span>{sar(i.amount_halalas)} ريال</span><span className="text-muted">{({pending:"بانتظار الدفع",paid:"مدفوعة",failed:"ملغاة",review:"قيد المراجعة"} as Record<string,string>)[i.status] ?? i.status}</span></li>)}</ul>:<p>لا توجد فواتير مسجلة.</p>}{invoices.length===50&&<Link className="btn-secondary" href={`/subscription?before=${encodeURIComponent(invoices.at(-1)!.created_at)}&id=${invoices.at(-1)!.id}`}>الفواتير الأقدم</Link>}</section>

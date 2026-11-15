@@ -13,13 +13,13 @@ export function PlatformCheckout({ plan, total }: { plan: PaidPlan; total: numbe
     setBusy(true); setError("");
     try {
       const response = await fetch("/api/platform/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan, total, mobile: form.get("mobile"), terms: POLICY_VERSION }) });
-      const result = await response.json();
-      if (!response.ok || !result.url) throw Error(result.error || "تعذّر فتح صفحة الدفع.");
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.url) { setError(result?.error || "تعذّر فتح صفحة الدفع. راجع فواتيرك قبل المحاولة مجددًا."); setBusy(false); return; }
       window.location.assign(result.url);
-    } catch (e) { setError(e instanceof Error ? e.message : "تعذّر الاتصال. راجع فواتيرك قبل المحاولة مجددًا."); setBusy(false); }
+    } catch { setError("تعذّر الاتصال بخدمة الدفع. راجع فواتيرك، ولا تدفع مرة أخرى إذا ظهر خصم."); setBusy(false); }
   }}>
     <label className="block">رقم جوالك لفاتورة اشتراك المنصة<input className="field mt-2 w-full" name="mobile" type="tel" inputMode="tel" autoComplete="tel" placeholder="05XXXXXXXX" required maxLength={24} disabled={busy} dir="ltr" /></label>
-    <label className="policy-acceptance"><input type="checkbox" required disabled={busy} /><span>أوافق على <Link href="/terms" target="_blank" rel="noopener">الشروط والأحكام</Link> و<Link href="/privacy" target="_blank" rel="noopener">سياسة الخصوصية</Link> وشراء شهر واحد من EasyCoach بالمبلغ الموضح، دون تجديد تلقائي.</span></label>
+    <label className="policy-acceptance"><input type="checkbox" required disabled={busy} /><span>أوافق على <Link href="/terms" target="_blank" rel="noopener">الشروط والأحكام</Link> و<Link href="/privacy" target="_blank" rel="noopener">سياسة الخصوصية</Link> وشراء 30 يومًا من EasyCoach بالمبلغ الموضح، دون تجديد تلقائي.</span></label>
     {error && <p role="alert" className="plans-alert">{error}</p>}
     <button className="btn w-full" disabled={busy} aria-busy={busy} type="submit">{busy ? "جارٍ فتح الدفع الآمن…" : "اشترك وادفع عبر Paylink"}</button>
     <p className="plan-note">تُدفع قيمة اشتراكك لمشغّل EasyCoach. أدخل بيانات بطاقتك في صفحة Paylink الآمنة فقط.</p>

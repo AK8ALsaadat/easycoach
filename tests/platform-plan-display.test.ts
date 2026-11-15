@@ -31,6 +31,12 @@ it("does not offer coach trial actions to a signed-in account without an owner s
 it("preserves a guest's chosen plan through registration and discloses tax uncertainty", () => {
   const html = renderToStaticMarkup(createElement(PlanCards, { quotes, state: null, signedIn: false, context: "pricing" }));
   for (const plan of ["starter", "pro", "business"]) expect(html).toContain(encodeURIComponent(`/start?plan=${plan}`));
-  expect(html).toContain("يُعرض الإجمالي بعد تحديد الضريبة وقبل أي دفع");
+  expect(html).toContain("بانتظار ضبط الضريبة");
   expect(html).not.toContain("2099");
+});
+it("disables trial activation when the provider or tax is not ready while retaining plan review", () => {
+  const html = renderToStaticMarkup(createElement(PlanCards, { quotes, state: freeState, signedIn: true, context: "pricing" }));
+  expect(html.match(/disabled=""/g)).toHaveLength(3);
+  expect(html).toContain("التفعيل معطل لحين تأكيد جاهزية وسيلة الدفع");
+  expect(html).toContain("/subscription/confirm?plan=pro");
 });

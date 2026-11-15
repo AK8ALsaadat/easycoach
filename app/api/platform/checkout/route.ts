@@ -1,5 +1,7 @@
 import { actor, rpc } from "@/lib/server";
-import { checkoutPlatform, platformMerchant } from "@/lib/platform/paylink";
+import { checkoutPlatform } from "@/lib/platform/paylink";
+import { paymentReadiness } from "@/lib/platform/payment-config";
+import { billingCall } from "@/lib/platform/billing-store";
 import { normalizeSaudiMobile } from "@/lib/paylink/flow";
 import { POLICY_VERSION } from "@/lib/legal";
 import { z } from "zod";
@@ -14,6 +16,9 @@ const messages: Record<string, string> = {
   payment_review: "دفعتك قيد المراجعة لدى المنصة. لا تدفع مرة أخرى.",
   owner_required: "الدفع مخصص لمالك حساب المدرب فقط.",
   rate_limited: "انتظر قليلًا قبل إنشاء فاتورة أخرى.",
+  provider_not_ready: "التفعيل معطل لحين تأكيد جاهزية وسيلة الدفع",
+  tax_not_configured: "لم تُحدد إعدادات التسجيل الضريبي للمشغّل",
+  subscription_cancelled: "اشتراكك ملغى. لا يُنشأ طلب دفع جديد بعد الإلغاء.",
 };
 export async function POST(request: Request) {
   const user = await actor();
@@ -23,15 +28,19 @@ export async function POST(request: Request) {
   catch { return Response.json({ error: "طلب غير مسموح" }, { status: 403 }); }
   const state = await rpc("ec_subscription").catch(() => null);
   if (!state) return Response.json({ error: messages.owner_required }, { status: 403 });
-  if (!platformMerchant() || !await rpc<boolean>("ec_paylink_ready")) return Response.json({ error: "دفع اشتراك المنصة غير متاح بعد. لم يُنشأ أي طلب دفع.", code: "billing_unavailable" }, { status: 503 });
+  const readiness = await paymentReadiness();
+  if (!readiness.ready) return Response.json({ error: readiness.blocked === "TAX_NOT_CONFIGURED" ? "لم تُحدد إعدادات التسجيل الضريبي للمشغّل" : "التفعيل معطل لحين تأكيد جاهزية وسيلة الدفع", code: readiness.blocked }, { status: 503 });
   const body = Body.safeParse(await request.json().catch(() => null));
   if (!body.success) return Response.json({ error: "راجع الباقة والإجمالي ووافق على الشروط قبل الدفع." }, { status: 400 });
   const mobile = normalizeSaudiMobile(body.data.mobile);
   if (!mobile) return Response.json({ error: "أدخل رقم جوالك بصيغة 05XXXXXXXX." }, { status: 400 });
   try {
-    const url = await checkoutPlatform({ ...body.data, mobile, email: user.email, name: user.name || user.email });
+    await billingCall("ec_billing_contact", { owner: user.id, mobile, customer_name: user.name || user.email });
+    const url = await checkoutPlatform({ owner: user.id, plan: body.data.plan, total: body.data.total, email: user.email });
     return Response.json({ ok: true, url });
   } catch (error) {
+    const currentReadiness = await paymentReadiness().catch(() => null);
+    if (currentReadiness && !currentReadiness.ready) return Response.json({ error: currentReadiness.blocked === "TAX_NOT_CONFIGURED" ? messages.tax_not_configured : messages.provider_not_ready, code: currentReadiness.blocked }, { status: 503 });
     const code = error instanceof Error ? error.message : "";
     const known = messages[code];
     return Response.json({ error: known ?? "تعذّر فتح الدفع. راجع فواتيرك قبل إعادة المحاولة؛ إذا ظهر خصم فلا تدفع مرة أخرى.", code: known ? code : "billing_unavailable" }, { status: known ? 409 : 503 });

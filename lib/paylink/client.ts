@@ -45,6 +45,8 @@ export type CreateInvoiceInput = {
 export type CreatedInvoice = { transactionNo: string; url: string; orderStatus: string };
 
 export type PaylinkInvoice = {
+  rawStatus?: string;
+  paidAt?: string | null;
   transactionNo: string;
   orderNumber: string | null;
   currency?: string | null;
@@ -125,7 +127,7 @@ const InvoiceResponse = z
     orderStatus: z.string().min(1).max(40),
     amount: z.coerce.number().finite(),
     gatewayOrderRequest: z.object({ orderNumber: z.union([z.string(), z.number()]).transform(String).nullish(), currency: z.string().nullish() }).passthrough().nullish(),
-    paymentReceipt: z.object({ paymentMethod: z.string().nullish() }).passthrough().nullish(),
+    paymentReceipt: z.object({ paymentMethod: z.string().nullish(), paymentDate: z.string().nullish() }).passthrough().nullish(),
     paymentErrors: z.unknown().optional(),
   })
   .passthrough();
@@ -236,6 +238,8 @@ export function createPaylinkClient(credentials: PaylinkCredentials, fetcher: ty
     if (!parsed.success) throw new PaylinkError("invalid_response");
     return {
       transactionNo: parsed.data.transactionNo,
+      rawStatus: parsed.data.orderStatus,
+      paidAt: parsed.data.paymentReceipt?.paymentDate && /^\d{4}-\d\d-\d\dT.*(?:Z|[+-]\d\d:\d\d)$/.test(parsed.data.paymentReceipt.paymentDate) && Number.isFinite(Date.parse(parsed.data.paymentReceipt.paymentDate)) ? new Date(parsed.data.paymentReceipt.paymentDate).toISOString() : null,
       orderNumber: parsed.data.gatewayOrderRequest?.orderNumber ?? null,
       currency: parsed.data.gatewayOrderRequest?.currency ?? null,
       orderStatus: normalizeStatus(parsed.data.orderStatus),

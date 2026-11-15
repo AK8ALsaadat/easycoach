@@ -42,10 +42,13 @@ do $$ declare t record; p record; f record; backup record; begin
 end $$;
 drop table public.ec_report_schedules,public.ec_bulk_previews,public.ec_team_audit,public.ec_rules,public.ec_tasks,public.ec_assignments,public.ec_team,public.ec_branches;
 drop table if exists public.ec_trial_consents;
+drop table if exists public.ec_billing_notifications;
+drop table if exists private.ec_payment_attempts;
 drop table if exists private.ec_paylink_checkouts;
 drop table public.ec_email_outbox,public.ec_events,public.ec_invoices,public.ec_consents,public.ec_accounts,public.ec_config,public.ec_plans;
 drop table public.session_attendance;
 alter table public.subscriptions drop column session_limit;
 drop index public.ec_active_client_page,public.ec_template_page,public.ec_package_expiry;
 drop table private.ec_rpc_backup;
+drop type if exists public.ec_subscription_state;
 commit;

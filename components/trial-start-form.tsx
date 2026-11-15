@@ -7,29 +7,36 @@ import { startTrialAction } from "@/app/platform-actions";
 import { POLICY_VERSION } from "@/lib/legal";
 import type { PaidPlan } from "@/lib/platform/plans";
 
-function SubmitTrial({ days }: { days: number }) {
+function SubmitTrial({ days, disabled }: { days: number; disabled?: boolean }) {
   const { pending } = useFormStatus();
-  return <button type="submit" className="btn w-full" disabled={pending} aria-busy={pending}>
+  return <button type="submit" className="btn w-full" disabled={pending || disabled} aria-busy={pending}>
     {pending && <LoaderCircle size={18} className="animate-spin" aria-hidden="true" />}
     {pending ? "جارٍ بدء تجربتك المجانية…" : `ابدأ ${days} يومًا مجانًا الآن`}
   </button>;
 }
 
 /** Native server action remains usable without JS; validation also runs on the server. */
-export function TrialStartForm({ plan, days }: { plan: PaidPlan; days: number }) {
+export function TrialStartForm({ plan, days, disabled = false }: { plan: PaidPlan; days: number; disabled?: boolean }) {
   const [error, setError] = useState("");
   const checkbox = useRef<HTMLInputElement>(null);
   const errorId = useId();
   return <form action={startTrialAction} className="trial-confirm-form" noValidate onSubmit={event => {
+    if (disabled) { event.preventDefault(); return; }
     if (!checkbox.current?.checked) {
       event.preventDefault();
       setError("لبدء التجربة، وافق على الشروط والأحكام وسياسة الخصوصية أولًا.");
       checkbox.current?.focus();
-    } else setError("");
+    } else {
+      const field = event.currentTarget.elements.namedItem("mobile") as HTMLInputElement;
+      if (!field.value.trim()) { event.preventDefault(); setError("أدخل رقم جوالك لإصدار رابط دفع الفترة لاحقًا؛ لا نطلب بطاقة."); field.focus(); }
+      else setError("");
+    }
   }}>
     <input type="hidden" name="plan" value={plan} />
+    <label>رقم الجوال للفواتير<input className="field mt-2 w-full" name="mobile" type="tel" autoComplete="tel" inputMode="tel" dir="ltr" placeholder="05XXXXXXXX" required maxLength={24} disabled={disabled} /></label>
     <label className="policy-acceptance"><input ref={checkbox} type="checkbox" name="terms_acceptance" value={POLICY_VERSION} required aria-invalid={Boolean(error)} aria-describedby={error ? errorId : undefined} onChange={() => setError("")} /><span>قرأت وأوافق على <Link href="/terms" target="_blank" rel="noopener">الشروط والأحكام</Link> و<Link href="/privacy" target="_blank" rel="noopener">سياسة الخصوصية</Link>، وأفهم أن التجربة لا تتجدد تلقائيًا.</span></label>
     {error && <p id={errorId} role="alert" className="plans-alert">{error}</p>}
-    <SubmitTrial days={days} />
+    <SubmitTrial days={days} disabled={disabled} />
+    {disabled && <p role="status" className="plans-alert">التفعيل معطل لحين تأكيد جاهزية وسيلة الدفع</p>}
   </form>;
 }

@@ -20,6 +20,12 @@ export function discountedPrice(halalas: number) {
   return Number((BigInt(halalas) * 80n + 50n) / 100n);
 }
 export type PlatformState = {
+  subscription_state?: SubscriptionState;
+  lifecycle_enabled?: boolean;
+  paid_until?: string | null;
+  grace_ends_at?: string | null;
+  cancelled_at?: string | null;
+  billing_mobile?: string | null;
   mode: "legacy" | "managed"; status: "free" | "trialing" | "active" | "past_due" | "expired";
   billing_plan: PlanCode; effective_plan: PlanCode; cancel_at_period_end: boolean;
   trial_end: string | null; period_end: string | null; trial_used_at: string | null; has_payment_method?: boolean;
@@ -30,6 +36,11 @@ export type PlatformState = {
   locked_clients: string[] | null; locked_templates: string[] | null;
   features: string[]; server_now: string;
 };
+export enum SubscriptionState {
+  NOT_STARTED="NOT_STARTED", TRIAL_ACTIVE="TRIAL_ACTIVE", TRIAL_ENDING="TRIAL_ENDING", AWAITING_PAYMENT="AWAITING_PAYMENT",
+  ACTIVE="ACTIVE", PAST_DUE="PAST_DUE", SUSPENDED="SUSPENDED", CANCELLED="CANCELLED", PAYMENT_FAILED="PAYMENT_FAILED",
+  PROVIDER_NOT_READY="PROVIDER_NOT_READY", TAX_NOT_CONFIGURED="TAX_NOT_CONFIGURED",
+}
 export type PlatformQuote = {
   limits: PlatformState["limits"];
   plan: PlanCode; base_halalas: number; net_halalas: number; vat_halalas: number | null;
@@ -42,7 +53,7 @@ export const paidPlans = ["starter", "pro", "business"] as const;
 export type PaidPlan = typeof paidPlans[number];
 export function isPaidPlan(value: unknown): value is PaidPlan { return paidPlans.includes(value as PaidPlan); }
 /** Monthly price for display: whole riyals when exact ("299"), otherwise two decimals. */
-export function riyals(halalas: number) { return halalas % 100 === 0 ? String(halalas / 100) : sar(halalas); }
+export function riyals(halalas: number) { return sar(halalas); }
 export function riyadhDate(iso: string, style: "long" | "medium" = "long") {
   return new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { dateStyle: style, timeZone: "Asia/Riyadh" }).format(new Date(iso));
 }
