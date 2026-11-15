@@ -6,7 +6,7 @@ export default function Loading() {
       </p>
       <div className="grid gap-5 md:grid-cols-3">
         {[1, 2, 3].map((n) => (
-          <div key={n} className="card h-40 animate-pulse bg-white" />
+          <div key={n} aria-hidden="true" className="card h-40 skeleton-surface" />
         ))}
       </div>
     </main>

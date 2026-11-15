@@ -36,31 +36,62 @@ function message(field: Field, english: boolean) {
  */
 export function FormValidation() {
   useEffect(() => {
-    const onInvalid = (event: Event) => {
-      const field = event.target as Field;
-      if (!("validity" in field)) return;
+    const notices = new Map<Field, { node: HTMLParagraphElement; original: string | null; invalid: string | null }>();
+    let counter = 0;
+    const clear = (field: Field) => {
+      const entry = notices.get(field);
+      if (!entry) return;
+      const tokens = (field.getAttribute("aria-describedby") ?? "").split(/\s+/).filter(token => token && token !== entry.node.id);
+      if (tokens.length) field.setAttribute("aria-describedby", tokens.join(" "));
+      else field.removeAttribute("aria-describedby");
+      if (entry.invalid !== null) field.setAttribute("aria-invalid", entry.invalid);
+      else field.removeAttribute("aria-invalid");
+      entry.node.remove();
+      notices.delete(field);
+    };
+    const validate = (field: Field) => {
+      if (!field.willValidate) return clear(field);
       if (field.validity.customError && !field.dataset[FLAG]) return;
-      const english = document.documentElement.lang === "en";
       field.setCustomValidity("");
-      const text = message(field, english);
-      if (!text) return;
+      delete field.dataset[FLAG];
+      const text = message(field, document.documentElement.lang === "en");
+      if (!text) return clear(field);
       field.setCustomValidity(text);
       field.dataset[FLAG] = "1";
+      let entry = notices.get(field);
+      if (!entry) {
+        const node = document.createElement("p");
+        node.id = `ec-inline-error-${++counter}`;
+        node.className = "field-error";
+        node.setAttribute("aria-live", "polite");
+        entry = { node, original: field.getAttribute("aria-describedby"), invalid: field.getAttribute("aria-invalid") };
+        notices.set(field, entry);
+        // Keep React-owned wrappers (password reveal, date controls) intact.
+        const anchor = field.closest(".password-field") ?? field;
+        anchor.insertAdjacentElement("afterend", node);
+        field.setAttribute("aria-describedby", [entry.original, node.id].filter(Boolean).join(" "));
+      }
+      entry.node.textContent = text;
+      field.setAttribute("aria-invalid", "true");
+    };
+    const isField = (target: EventTarget | null): target is Field => target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement;
+    const onInvalid = (event: Event) => {
+      if (isField(event.target)) validate(event.target);
     };
     const onEdit = (event: Event) => {
-      const field = event.target as Field;
-      if (field?.dataset?.[FLAG]) {
-        field.setCustomValidity("");
-        delete field.dataset[FLAG];
-      }
+      if (isField(event.target) && notices.has(event.target)) validate(event.target);
     };
+    const onBlur = (event: Event) => { if (isField(event.target)) validate(event.target); };
     document.addEventListener("invalid", onInvalid, true);
     document.addEventListener("input", onEdit, true);
     document.addEventListener("change", onEdit, true);
+    document.addEventListener("focusout", onBlur, true);
     return () => {
       document.removeEventListener("invalid", onInvalid, true);
       document.removeEventListener("input", onEdit, true);
       document.removeEventListener("change", onEdit, true);
+      document.removeEventListener("focusout", onBlur, true);
+      for (const field of notices.keys()) clear(field);
     };
   }, []);
   return null;

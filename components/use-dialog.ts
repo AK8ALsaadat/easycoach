@@ -26,9 +26,9 @@ export function useDialog<T extends HTMLElement = HTMLDivElement>(
         close.current();
       }
       if (event.key !== "Tab") return;
-      const elements = ref.current?.querySelectorAll<HTMLElement>(
-        'button:not(:disabled), a[href], input, select, textarea, [tabindex="0"]',
-      );
+      const elements = Array.from(ref.current?.querySelectorAll<HTMLElement>(
+        'button, a[href], input, select, textarea, [tabindex]',
+      ) ?? []).filter(element => element.tabIndex >= 0 && !element.matches(':disabled, [hidden], [aria-disabled="true"]') && !element.closest('[inert]') && element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden");
       if (!elements?.length) {
         event.preventDefault();
         return;

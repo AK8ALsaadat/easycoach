@@ -5,6 +5,8 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import "./experience.css";
+import "./product.css";
+import { CoachNavigation } from "@/components/coach-navigation";
 import { cookies } from "next/headers";
 import { LocaleProvider } from "@/components/locale-provider";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -48,7 +50,7 @@ export default async function RootLayout({
   return (
     <html lang={language} dir={language === "en" ? "ltr" : "rtl"} data-theme={theme}>
       <body className={font.className}>
-        <BillingModeProvider enabled={billingEnabled()}><LocaleProvider language={language}><ThemeProvider initialTheme={theme}>{children}<PwaManager /><FormValidation /></ThemeProvider></LocaleProvider></BillingModeProvider>
+        <BillingModeProvider enabled={billingEnabled()}><LocaleProvider language={language}><ThemeProvider initialTheme={theme}>{children}<CoachNavigation /><PwaManager /><FormValidation /></ThemeProvider></LocaleProvider></BillingModeProvider>
         <TikTokPixel />
       </body>
     </html>
