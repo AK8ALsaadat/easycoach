@@ -150,7 +150,8 @@ try {
     if(width===360){await audit("/coach");assert(await page.locator(".coach-bottom-nav").isVisible());}
   }
   results.push("Coach primary pages and editor at 360px/1440px in both themes, no horizontal overflow");
-  for(const route of ["/pricing","/subscription","/payments/paylink/callback"])assert.equal((await page.request.get(base+route,{maxRedirects:0})).status(),307);
+  assert.equal((await page.request.get(base+"/pricing",{maxRedirects:0})).status(),200);
+  for(const route of ["/subscription","/payments/paylink/callback"])assert.equal((await page.request.get(base+route,{maxRedirects:0})).status(),307);
   for(const route of ["/api/platform/checkout","/api/payments/paylink/create-invoice"])assert.equal((await page.request.post(base+route)).status(),404);
   await context.clearCookies();await login(trainee,"/me");
   for(const width of [1440,360])for(const theme of ["light","dark"]) {

@@ -1,7 +1,16 @@
 export type PixelEvent = { id: string; name: "CompleteRegistration" | "Subscribe"; properties: Record<string,string|number> };
 export type TikTokQueue = { page: () => void; track: (name:string,properties:Record<string,string|number>)=>void };
 declare global {
- interface Window { ttq?: TikTokQueue; __ecTikTokLoaded?: boolean; __ecTikTokRoute?: string; }
+ interface Window { ttq?: TikTokQueue; __ecTikTokLoaded?: boolean; __ecTikTokRoute?: string; __ecTikTokContentRoute?: string; }
+}
+const PRICING_CONTENT = { content_id: "easycoach-pricing", content_type: "product", content_name: "EasyCoach pricing" };
+/** A content view is not a registration/payment conversion and contains no URL data. */
+export function trackPricingContent(state: { ttq?: TikTokQueue; __ecTikTokContentRoute?: string }, route: string) {
+ if (!state.ttq?.track || state.__ecTikTokContentRoute === route) return false;
+ if (route.split("?")[0] !== "/pricing") { state.__ecTikTokContentRoute = route; return false; }
+ state.ttq.track("ViewContent", PRICING_CONTENT);
+ state.__ecTikTokContentRoute = route;
+ return true;
 }
 export function validPixelId(value: string | undefined) { return value && /^[A-Za-z0-9]{10,64}$/.test(value) ? value : null; }
 export function trackRoutePage(state:{ttq?:TikTokQueue;__ecTikTokRoute?:string},route:string){

@@ -2,7 +2,7 @@
 import Script from "next/script";
 import { Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { firePixelEventOnce, pixelBaseCode, validPixelId, trackRoutePage, type PixelEvent } from "@/lib/analytics/tiktok";
+import { firePixelEventOnce, pixelBaseCode, validPixelId, trackRoutePage, trackPricingContent, type PixelEvent } from "@/lib/analytics/tiktok";
 
 const seen = new Set<string>();
 let inFlight: Promise<void> | null = null;
@@ -22,6 +22,7 @@ function page() {
  if(!window.__ecTikTokLoaded || !window.ttq?.page)return;
  const route=window.location.pathname+window.location.search;
  trackRoutePage(window,route);
+ trackPricingContent(window,route);
  void syncEvents();
 }
 function Pixel({id}:{id:string}) {

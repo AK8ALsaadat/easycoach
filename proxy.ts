@@ -9,7 +9,7 @@ const PUBLIC_FILE = /\.(?:png|jpe?g|svg|gif|webp|avif|ico|txt|xml|webmanifest|js
 export async function proxy(request: NextRequest) {
   if (!billingEnabled()) {
     const path = request.nextUrl.pathname;
-    if (/^\/(pricing|subscription|start|payments\/paylink)(\/|$)/.test(path))
+    if (/^\/(subscription|start|payments\/paylink)(\/|$)/.test(path))
       return NextResponse.redirect(new URL("/", request.url));
     if (/^\/api\/(platform\/(checkout|coupon)|payments\/|health\/payments)/.test(path))
       return new NextResponse(null, { status: 404 });

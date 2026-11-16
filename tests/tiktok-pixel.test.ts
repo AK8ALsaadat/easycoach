@@ -4,7 +4,7 @@ import {afterEach,expect,it,vi} from "vitest";
 vi.mock("next/navigation",()=>({usePathname:()=>"/pricing",useSearchParams:()=>new URLSearchParams()}));
 vi.mock("next/script",()=>({default:({id,strategy,children}:{id:string;strategy:string;children:string})=>createElement("script",{id,"data-strategy":strategy},children)}));
 import {TikTokPixel} from "@/components/TikTokPixel";
-import {firePixelEventOnce,pixelBaseCode,trackRoutePage} from "@/lib/analytics/tiktok";
+import {firePixelEventOnce,pixelBaseCode,trackRoutePage,trackPricingContent} from "@/lib/analytics/tiktok";
 import {attributionCookieValue,readAttributionCookie,attributionFromUrl} from "@/lib/analytics/attribution";
 afterEach(()=>vi.unstubAllEnvs());
 it("renders no script when the public pixel ID is missing",()=>{
@@ -42,4 +42,20 @@ it("captures only bounded first-touch fields, without arbitrary URL data or toke
  const data=attributionFromUrl(new URLSearchParams("utm_source=tiktok&utm_campaign=launch&ttclid=click_123&token=private&email=private"));
  expect(readAttributionCookie(attributionCookieValue(data))).toEqual({utm_source:"tiktok",utm_campaign:"launch",ttclid:"click_123"});
  expect(readAttributionCookie("invalid")).toEqual({});expect(attributionFromUrl(new URLSearchParams("ttclid=bad%3Cvalue%3E"))).toEqual({ttclid:"badvalue"});
+});
+it("emits one pricing ViewContent on initial load and on a later return, without URL/UTM data",()=>{
+ const state={ttq:{page:vi.fn(),track:vi.fn()}};
+ const route="/pricing?utm_source=tiktok&utm_campaign=private&email=private";
+ expect(trackPricingContent(state,route)).toBe(true);
+ expect(trackPricingContent(state,route)).toBe(false);
+ expect(state.ttq.track).toHaveBeenCalledExactlyOnceWith("ViewContent",{content_id:"easycoach-pricing",content_type:"product",content_name:"EasyCoach pricing"});
+ expect(trackPricingContent(state,"/login?register=1")).toBe(false);
+ expect(trackPricingContent(state,route)).toBe(true);
+ expect(state.ttq.track).toHaveBeenCalledTimes(2);
+ expect(state.ttq.page).not.toHaveBeenCalled();
+});
+it("does not consume a pricing content event before the pixel queue is available",()=>{
+ const state={};expect(trackPricingContent(state,"/pricing")).toBe(false);
+ const ready={...state,ttq:{page:vi.fn(),track:vi.fn()}};
+ expect(trackPricingContent(ready,"/pricing")).toBe(true);
 });

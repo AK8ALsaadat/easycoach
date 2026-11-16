@@ -58,7 +58,9 @@ try {
   await audit("/","landing-desktop");
   assert.equal(await page.getByText("المنصة مجانية لفترة محدودة",{exact:true}).count(),1);
   for (const route of ["/login","/login?register=1","/terms","/privacy","/contact"]) await audit(route);
-  for (const route of ["/pricing","/subscription","/subscription/confirm?plan=pro","/start","/payments/paylink/callback","/payments/paylink/cancel"]) {
+  const pricing = await fetch(base+"/pricing",{redirect:"manual"});
+  assert.equal(pricing.status,200);assert((await pricing.text()).includes("ابدأ مجاناً"));
+  for (const route of ["/subscription","/subscription/confirm?plan=pro","/start","/payments/paylink/callback","/payments/paylink/cancel"]) {
     const response=await fetch(base+route,{redirect:"manual"});assert.equal(response.status,307,route);assert.equal(new URL(response.headers.get("location"),base).pathname,"/");
   }
   for (const route of ["/api/platform/checkout","/api/platform/coupon","/api/payments/paylink/create-invoice","/api/payments/paylink/checkout","/api/payments/paylink/webhook"]) assert.equal((await fetch(base+route,{method:"POST"})).status,404,route);

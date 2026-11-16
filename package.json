@@ -15,6 +15,7 @@
     "db:local": "node --env-file-if-exists=.env.local --experimental-strip-types scripts/init-local.ts",
     "test:ui": "node scripts/browser-check.mjs",
     "test:quality": "node --experimental-strip-types scripts/qa-market-readiness.mjs --quality",
+    "test:pricing": "node scripts/qa-pricing.mjs",
     "check:exercise-index": "node scripts/build-exercise-index.mjs --check",
     "test:platform:ui": "node scripts/qa-platform-release.mjs",
     "test:platform:postgres": "node scripts/qa-platform-postgres.mjs"

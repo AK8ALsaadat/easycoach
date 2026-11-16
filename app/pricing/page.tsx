@@ -1,4 +1,7 @@
-import { redirect as freeRedirect } from "next/navigation";
+import type { Metadata } from "next";
+import { FreePricing } from "@/components/free-pricing";
+import { pricingSignupHref } from "@/lib/pricing-signup";
+import "./pricing.css";
 import { billingEnabled } from "@/lib/billing-mode";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
@@ -9,8 +12,13 @@ import { actor } from "@/lib/server";
 import { LegalLinks } from "@/components/legal-links";
 
 export const dynamic = "force-dynamic";
-export default async function PricingPage() {
-  if (!billingEnabled()) freeRedirect("/");
+export const metadata: Metadata = {
+  title: "الأسعار والخطة المجانية",
+  description: "ابدأ مع إيزي كوتش مجاناً لفترة محدودة. برامج تدريب وتغذية ومتابعة متدربين في مساحة عربية واحدة، بدون بطاقة دفع.",
+  alternates: { canonical: "/pricing" },
+};
+export default async function PricingPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  if (!billingEnabled()) return <FreePricing signupHref={pricingSignupHref(await searchParams)} />;
   const user = await actor();
   const [quotes, state] = await Promise.all([
     Promise.all(planCodes.map(code => platformQuote(code).catch(() => null))),
