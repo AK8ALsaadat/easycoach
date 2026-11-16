@@ -1,5 +1,6 @@
 "use client";
 import {createContext,useContext,useState,type ReactNode} from "react";
+import { PWA_THEME } from "@/lib/pwa";
 type Theme="light"|"dark";
 const ThemeContext=createContext({theme:"dark" as Theme,toggle:()=>{}});
 
@@ -8,6 +9,7 @@ export function ThemeProvider({initialTheme,children}:{initialTheme:Theme;childr
   function toggle(){
     const next=theme==="dark"?"light":"dark";
     document.documentElement.dataset.theme=next;
+    document.querySelectorAll('meta[name="theme-color"]').forEach(meta => meta.setAttribute("content", PWA_THEME[next]));
     document.cookie=`ec_theme=${next}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol==="https:"?"; Secure":""}`;
     setTheme(next);
   }

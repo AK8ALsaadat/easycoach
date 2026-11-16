@@ -2,7 +2,6 @@ import { billingEnabled } from "@/lib/billing-mode";
 import { NextResponse, type NextRequest } from "next/server";
 import { snapshot } from "@/lib/server";
 import { csvCell } from "@/lib/import-preview";
-import { exportWorkbook } from "@/lib/export-workbook";
 import { clientExport, clientExportCsv } from "@/lib/client-export";
 import { requireFeature } from "@/lib/platform/server";
 export async function GET(request: NextRequest) {
@@ -29,6 +28,7 @@ export async function GET(request: NextRequest) {
         });
   }
   if (type === "xlsx") {
+    const { exportWorkbook } = await import("@/lib/export-workbook");
     return new NextResponse(await exportWorkbook(data), {
       headers: {
         "Content-Type":

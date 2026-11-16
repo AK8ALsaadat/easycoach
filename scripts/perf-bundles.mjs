@@ -20,6 +20,6 @@ fs.mkdirSync('artifacts/performance', { recursive: true });
 fs.writeFileSync(`artifacts/performance/bundles-${process.argv[2] ?? 'sample'}.json`, JSON.stringify(results, null, 2));
 console.log(JSON.stringify(results, null, 2));
 if (process.argv.includes('--check')) {
-  assert(results['coach/[[...path]]'].gzip < 165000, 'Coach entry JS exceeds its gzip budget');
-  assert(results.me.gzip < 190000, 'Trainee entry JS exceeds its gzip budget');
+  assert(results['coach/[[...path]]'].gzip < 120000, 'Coach entry JS exceeds its gzip budget');
+  assert(results.me.gzip < 130000, 'Trainee entry JS exceeds its gzip budget');
 }

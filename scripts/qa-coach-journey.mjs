@@ -49,7 +49,7 @@ try {
   await form.locator('input[name="name"]').fill("Fictional journey second client");
   await form.locator('input[name="email"]').fill("journey-second@example.test");
   await form.locator('button[type="submit"]').click();
-  await page.getByText("Fictional journey second client", { exact: false }).first().waitFor();
+  await page.getByRole("heading", { name: "Fictional journey second client", exact: true }).waitFor();
 
   // 4. Free gating: programs and the exercise library start at the paid plan.
   await page.goto(base + "/coach/library");
@@ -119,4 +119,10 @@ try {
     attendance: { recorded: 1, overBalanceRefused: true, outOfRangeRefused: true },
     subscription: { plan: "free", usage: "2 / 5", missingOriginCheckout: 403 }, mobileOverflow: false, uncaughtErrors: 0, screenshots: dir,
   }));
+} catch (error) {
+  for (const context of browser.contexts()) for (const page of context.pages()) {
+    await page.screenshot({ path: dir + "/failure.png", fullPage: true }).catch(() => {});
+    console.error("Journey failure:", page.url(), (await page.locator("body").innerText()).slice(-6000));
+  }
+  throw error;
 } finally { await browser.close(); }

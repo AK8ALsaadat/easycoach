@@ -1,4 +1,5 @@
 "use client";
+import { preferredScrollBehavior } from "@/lib/scroll-behavior";
 import { useBillingEnabled, FreePlatformNotice } from "./billing-mode-provider";
 import { LegalLinks } from "./legal-links";
 import { useLocale } from "./locale-provider";
@@ -113,7 +114,7 @@ function WeeklyReviewStart({ clientId, records }: { clientId: string; records: C
   const mine = records.filter((record) => record.client_id === clientId && record.entry_date >= weekStart);
   const submitted = mine.find((record) => record.kind === "checkin");
   const open = () => {
-    document.getElementById("client-management-hub")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("client-management-hub")?.scrollIntoView({ behavior: preferredScrollBehavior(), block: "start" });
     window.dispatchEvent(new CustomEvent("easycoach:open-hub-tab", { detail: "checkins" }));
   };
   if (submitted)
@@ -158,7 +159,7 @@ function BottomNav() {
       setHubTab(tab);
       window.dispatchEvent(new CustomEvent("easycoach:open-hub-tab", { detail: tab }));
     }
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById(id)?.scrollIntoView({ behavior: preferredScrollBehavior(), block: "start" });
   };
   const items = [
     { id: "today", label: "اليوم", icon: CalendarDays },
@@ -441,7 +442,7 @@ export function Trainee({
                     )}
                     <button type="button" className="btn-secondary mt-4" onClick={() => {
                       window.dispatchEvent(new Event("easycoach:open-messages"));
-                      document.getElementById("client-management-hub")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      document.getElementById("client-management-hub")?.scrollIntoView({ behavior: preferredScrollBehavior(), block: "start" });
                     }}>{tr("التواصل مع المدرب")}</button>
                   </section>
                   <details className="card p-6">

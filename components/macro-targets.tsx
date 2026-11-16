@@ -8,7 +8,6 @@ import {
   caloriesFromMacros,
   gramsFromSplit,
   macroSplit,
-  macroTargetErrors,
   MACRO_LIMITS,
   parseAmount,
   validSplit,
@@ -18,10 +17,8 @@ import {
   type MacroTargets as Targets,
 } from "@/lib/macros";
 import { formatNumber } from "@/lib/plural";
+import { DecimalInput } from "./decimal-input";
 
-type Key = "calories" | "protein" | "carbs" | "fat";
-// Keep only characters that can form a decimal number (Western or Arabic-Indic digits).
-const cleanNumber = (raw: string) => raw.replace(/[^0-9٠-٩۰-۹.,٫]/g, "");
 
 /** Distribution of energy between protein, carbs and fat as a small bar plus text. */
 export function MacroSplitBar({ value, className = "" }: { value: { protein: number; carbs: number; fat: number }; className?: string }) {
@@ -53,42 +50,26 @@ export function MacroTargets({
   onChange,
   disabled = false,
   idPrefix,
+  onValidity,
 }: {
   value: Targets & { calories_mode: CaloriesMode };
   onChange: (next: Targets & { calories_mode: CaloriesMode }) => void;
   disabled?: boolean;
   /** Stable element ids (`${idPrefix}-calories`, …) for pages and tests that target them. */
   idPrefix?: string;
+  onValidity?: (id: string, valid: boolean) => void;
 }) {
   const { t: tr } = useLocale();
   const generated = useId();
   const uid = idPrefix ?? generated;
   const mode = value.calories_mode;
-  const [text, setText] = useState<Partial<Record<Key, string>>>({});
   const [split, setSplit] = useState<MacroSplit>(() => macroSplit(value) ?? { protein: 30, carbs: 45, fat: 25 });
   const [splitText, setSplitText] = useState<Partial<Record<keyof MacroSplit, string>>>({});
   const [reverseCalories, setReverseCalories] = useState(() => (value.calories ? String(value.calories) : ""));
-  const errors = macroTargetErrors(value);
   const computed = caloriesFromMacros(value);
   const mismatch = mode === "manual" ? calorieMismatch(value.calories, value) : null;
   const emit = (next: Targets) => onChange(withCaloriesMode({ ...next, calories_mode: mode }, mode));
 
-  // Show what the coach typed while it parses to the stored number; otherwise
-  // the stored value changed elsewhere (adopted total, meal sum) and wins.
-  const display = (key: Key) => {
-    const typed = text[key];
-    if (typed !== undefined) {
-      const parsed = parseAmount(typed);
-      if (Number.isNaN(parsed) || parsed === value[key]) return typed;
-    }
-    return key === "calories" && mode === "auto" ? String(computed) : String(value[key]);
-  };
-  const edit = (key: Key, raw: string) => {
-    const cleaned = cleanNumber(raw);
-    setText((old) => ({ ...old, [key]: cleaned }));
-    const parsed = parseAmount(cleaned);
-    if (!Number.isNaN(parsed)) emit({ ...value, [key]: parsed });
-  };
   const fields = [
     ["protein", "البروتين (غ)", MACRO_LIMITS.grams],
     ["carbs", "الكارب (غ)", MACRO_LIMITS.grams],
@@ -124,7 +105,7 @@ export function MacroTargets({
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <div>
           <label htmlFor={`${uid}-calories`}>{tr("السعرات (kcal)")}</label>
-          <input
+          <DecimalInput
             id={`${uid}-calories`}
             className="field mt-2"
             dir="ltr"
@@ -132,30 +113,28 @@ export function MacroTargets({
             autoComplete="off"
             readOnly={mode === "auto"}
             aria-readonly={mode === "auto"}
-            aria-invalid={Boolean(errors.calories)}
-            aria-describedby={errors.calories ? `${uid}-calories-error` : undefined}
             disabled={disabled}
-            value={display("calories")}
-            onChange={(event) => edit("calories", event.target.value)}
+            value={mode === "auto" ? computed : value.calories}
+            max={MACRO_LIMITS.calories}
+            onValidity={onValidity}
+            onValue={(calories) => emit({ ...value, calories })}
           />
-          {errors.calories && <p id={`${uid}-calories-error`} className="field-error">{tr(errors.calories)}</p>}
         </div>
         {fields.map(([key, label]) => (
           <div key={key}>
             <label htmlFor={`${uid}-${key}`}>{tr(label)}</label>
-            <input
+            <DecimalInput
               id={`${uid}-${key}`}
               className="field mt-2"
               dir="ltr"
               inputMode="decimal"
               autoComplete="off"
-              aria-invalid={Boolean(errors[key])}
-              aria-describedby={errors[key] ? `${uid}-${key}-error` : undefined}
               disabled={disabled}
-              value={display(key)}
-              onChange={(event) => edit(key, event.target.value)}
+              value={value[key]}
+              max={MACRO_LIMITS.grams}
+              onValidity={onValidity}
+              onValue={(amount) => emit({ ...value, [key]: amount })}
             />
-            {errors[key] && <p id={`${uid}-${key}-error`} className="field-error">{tr(errors[key])}</p>}
           </div>
         ))}
       </div>
@@ -191,7 +170,7 @@ export function MacroTargets({
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <label>
             {tr("السعرات المستهدفة")}
-            <input className="field mt-1" dir="ltr" inputMode="decimal" disabled={disabled} value={reverseCalories} aria-invalid={Boolean(reverseError)} onChange={(event) => setReverseCalories(cleanNumber(event.target.value))} />
+            <input className="field mt-1" dir="ltr" inputMode="decimal" disabled={disabled} value={reverseCalories} aria-invalid={Boolean(reverseError)} onChange={(event) => setReverseCalories(event.target.value)} />
             {reverseError && <span className="field-error">{tr(reverseError)}</span>}
           </label>
           {(["protein", "carbs", "fat"] as const).map((key) => (
@@ -204,10 +183,9 @@ export function MacroTargets({
                 disabled={disabled}
                 value={splitText[key] ?? String(split[key])}
                 onChange={(event) => {
-                  const cleaned = cleanNumber(event.target.value);
-                  setSplitText((old) => ({ ...old, [key]: cleaned }));
-                  const parsed = parseAmount(cleaned);
-                  if (!Number.isNaN(parsed)) setSplit((old) => ({ ...old, [key]: parsed }));
+                  const raw = event.target.value;
+                  setSplitText((old) => ({ ...old, [key]: raw }));
+                  setSplit((old) => ({ ...old, [key]: parseAmount(raw) }));
                 }}
               />
             </label>
@@ -215,7 +193,7 @@ export function MacroTargets({
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <span className={`badge ${Math.abs(splitTotal - 100) < 0.01 ? "" : "badge-warning"}`}>
-            {tr("المجموع")} <bdi dir="ltr">{splitTotal}%</bdi>
+            {tr("المجموع")} <bdi dir="ltr">{Number.isFinite(splitTotal) ? `${splitTotal}%` : "—"}</bdi>
           </span>
           <button
             type="button"
@@ -223,7 +201,6 @@ export function MacroTargets({
             disabled={disabled || !splitReady}
             onClick={() => {
               const next = { ...value, ...gramsFromSplit(reverseValue, split) };
-              setText({});
               onChange(mode === "auto" ? withCaloriesMode(next, "auto") : { ...next, calories: reverseValue });
             }}
           >

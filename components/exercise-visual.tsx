@@ -9,7 +9,7 @@ import {
   exerciseMedia,
   exerciseMediaUrl,
 } from "@/lib/exercise-media";
-import { exerciseName, type CatalogExercise } from "@/lib/catalog";
+import { exerciseName, type ExerciseIdentity } from "@/lib/exercise-names";
 
 export function ExerciseVisual({
   exercise,
@@ -17,7 +17,7 @@ export function ExerciseVisual({
   playable = false,
   portalHash,
 }: {
-  exercise: CatalogExercise;
+  exercise: ExerciseIdentity;
   className?: string;
   playable?: boolean;
   portalHash?: string;
@@ -26,7 +26,7 @@ export function ExerciseVisual({
 }
 
 function ExerciseVisualContent({ exercise, className, playable, portalHash }: {
-  exercise: CatalogExercise; className: string; playable: boolean; portalHash?: string;
+  exercise: ExerciseIdentity; className: string; playable: boolean; portalHash?: string;
 }) {
   const { t: tr, language: locale } = useLocale();
 

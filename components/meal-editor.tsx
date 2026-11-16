@@ -29,10 +29,12 @@ export function MealEditor({
   nutrition,
   onChange,
   includeTargets = true,
+  onValidity,
 }: {
   nutrition: Nutrition;
   onChange: (n: Nutrition) => void;
   includeTargets?: boolean;
+  onValidity?: (id: string, valid: boolean) => void;
 }) {
   const { t: tr } = useLocale();
   const auto = nutrition.calories_mode === "auto";
@@ -154,6 +156,7 @@ export function MealEditor({
                 <label key={k} className="text-xs text-muted">
                   {tr(label)}
                   <DecimalInput
+                    onValidity={onValidity}
                     aria-label={tr("{0} الوجبة {1}", String(tr(label)), String(i + 1))}
                     className="field mt-1"
                     max={k === "calories" ? MACRO_LIMITS.calories : MACRO_LIMITS.grams}

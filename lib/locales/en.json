@@ -1754,6 +1754,7 @@
   "التكرارات رقم أو مدى مثل 8-12": "Reps must be a number or a range like 8-12",
   "الراحة من 0 إلى 600 ثانية": "Rest must be 0–600 seconds",
   "صحّح المجموعات والتكرارات والراحة المظللة قبل الحفظ.": "Fix the highlighted sets, reps and rest before saving.",
+  "صحّح القيم المظللة في التمارين أو التغذية قبل الحفظ.": "Fix the highlighted exercise or nutrition values before saving.",
   "سمِّ كل التمارين قبل النشر؛ ما زال فيه تمرين باسم «تمرين جديد».": "Name every exercise before publishing; one is still called “New exercise”.",
   "أكمل الوجبات قبل النشر؛ فيه وجبة فارغة وكل قيمها صفر.": "Complete the meals before publishing; one meal is empty with all values at zero.",
   "اختر تاريخ الوزن": "Choose the weight date",

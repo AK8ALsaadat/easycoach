@@ -6,10 +6,12 @@ import { createWriteStream } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import assert from "node:assert/strict";
+import { createRequire } from "node:module";
 import { openDatabase, rpcLocal, passwordHash } from "../lib/local-db.ts";
 
 const scratch=await mkdtemp(path.join(os.tmpdir(),"easycoach-market-"));
-const base="http://127.0.0.1:3219", dist=".next-preview-market", dir="artifacts/market-readiness";
+const quality = process.argv.includes("--quality");
+const base="http://127.0.0.1:3219", dist=".next-preview-market", dir=quality ? "artifacts/quality-release" : "artifacts/market-readiness";
 const password="SyntheticTest!2026", coach="88888888-8888-4888-8888-888888888888", trainee="99999999-9999-4999-8999-999999999999", other="77777777-7777-4777-8777-777777777777";
 let client, foreign;
 const db=await openDatabase(path.join(scratch,"db"));
@@ -31,7 +33,7 @@ const server=spawn(process.execPath,["node_modules/next/dist/bin/next","dev","--
 });
 server.stdout.pipe(log);server.stderr.pipe(log);
 let browser;
-const results=[],errors=[];
+const results=[],errors=[],accessibility=[];
 try {
   let ready=false;
   for(let i=0;i<120;i++) {
@@ -42,6 +44,7 @@ try {
   assert(ready,"Local QA server ready: "+scratch);
   browser=await chromium.launch({headless:true,...(process.platform==="win32"?{channel:"msedge"}:{})});
   const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:"reduce"});
+  if (quality) await context.addInitScript({ path: createRequire(import.meta.url).resolve("axe-core/axe.min.js") });
   const page=await context.newPage(); page.setDefaultTimeout(60000);page.setDefaultNavigationTimeout(120000);
   page.on("pageerror",error=>errors.push(error.message));
   const snap=async()=>{const response=await page.request.get(base+"/api/export");assert.equal(response.status(),200);return response.json();};
@@ -57,6 +60,15 @@ try {
     if(overflow.scroll>overflow.width){await page.screenshot({path:`${dir}/overflow.png`,fullPage:true});throw Error(route+" horizontal overflow "+JSON.stringify(overflow));}
     assert.equal(await page.locator('a[href*="pricing"],a[href*="subscription"],a[href*="checkout"],a[href*="paylink"]').count(),0,route+" billing links");
     if(name)await page.screenshot({path:`${dir}/${name}.png`,fullPage:true});
+    if (quality) {
+      const violations = await page.evaluate(async () => {
+        const report = await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa"] } });
+        return report.violations.map(({id, impact, description, nodes}) => ({ id, impact, description, nodes: nodes.map(({target, failureSummary}) => ({target, failureSummary})) }));
+      });
+      accessibility.push({ route, name, width: page.viewportSize().width, violations });
+      await writeFile(`${dir}/accessibility.json`,JSON.stringify(accessibility,null,2));
+      console.log(`Audited ${name ?? route}: ${violations.length} accessibility rules failing`);
+    }
   }
   async function login(id,target) {
     await page.goto(base+"/login");await page.locator("#auth-email").fill(`${id}@market.example.test`);await page.locator("#auth-password").fill(password);
@@ -70,6 +82,13 @@ try {
   await page.locator("#auth-email[aria-invalid=true]").waitFor();assert((await page.locator(".field-error").first().innerText()).includes("إيميل"));
   await page.locator("#auth-email").fill(`${coach}@market.example.test`);assert.equal(await page.locator("#auth-email").getAttribute("aria-invalid"),null);
   results.push("Landing metadata, manifest/crawler routes and accessible inline validation");
+  if (quality) {
+    for (const width of [1440, 360]) for (const theme of ["light", "dark"]) {
+      await context.addCookies([{ name: "ec_theme", value: theme, url: base }]);
+      await page.setViewportSize({ width, height: 900 });
+      for (const [index, route] of ["/login", "/login?register=1", "/privacy", "/terms", "/contact"].entries()) await audit(route, `public-${width}-${theme}-${index}`);
+    }
+  }
   await login(coach,"/coach");
   await page.goto(base+"/coach/clients?add=1");
   const form=page.locator('form:has(input[name="email"])');
@@ -92,6 +111,35 @@ try {
   await page.getByRole("button",{name:"نشر للمتدرب",exact:true}).click();
   await until(async()=>(await snap()).programs.some(p=>p.client_id===client&&p.published_at&&p.content.days.some(d=>d.exercises.some(e=>e.name===exerciseName))),"Program not published");
   results.push("Create, save and publish a trainee program through the real editor");
+  if (quality) {
+    await page.goto(`${base}/coach/clients/${client}/edit?tab=nutrition`);
+    const editor = page.getByTestId("nutrition-target-editor");
+    const protein = editor.getByLabel("البروتين (غ)", { exact: true });
+    for (const raw of ["-25", "1..2", "12abc", "150.25"]) {
+      await protein.fill(raw);
+      assert.equal(await protein.inputValue(), raw, "Do not silently rewrite numeric input");
+      assert.equal(await protein.getAttribute("aria-invalid"), "true", raw);
+      assert(await protein.getAttribute("aria-describedby"), "Numeric error must be associated with its field");
+    }
+    await protein.fill("١٢٥٫٥");
+    assert.equal(await protein.getAttribute("aria-invalid"), "false");
+    await editor.getByLabel("الكارب (غ)", { exact: true }).fill("200");
+    await editor.getByLabel("الدهون (غ)", { exact: true }).fill("60");
+    const date = editor.locator('input[placeholder="DD/MM/YYYY"]').first();
+    const original = await date.inputValue();
+    await date.fill("31/02/2026"); await date.press("Tab");
+    assert.equal(await date.getAttribute("aria-invalid"), "true");
+    assert.equal(await date.evaluate(input => input.validity.valid), false);
+    await date.fill(original); await date.press("Tab");
+    assert.equal(await date.evaluate(input => input.validity.valid), true);
+    await editor.getByRole("button", { name: "حفظ السعرات للمتدرب", exact: true }).click();
+    await until(async () => (await snap()).management.records.some(r => r.client_id === client && r.kind === "nutrition_target" && r.payload.protein === 125.5 && r.payload.calories === 1842), "Valid Arabic macros did not persist");
+    await editor.locator("summary").click();
+    await editor.getByLabel("السعرات المستهدفة", { exact: true }).fill("2,000");
+    await editor.getByLabel("بروتين ٪", { exact: true }).fill("abc");
+    assert.equal(await editor.getByRole("button", { name: "احسب الجرامات", exact: true }).isEnabled(), false, "Invalid split must not use an older percentage");
+    results.push("Nutrition: preserve and reject negative/malformed/overprecision values; Arabic decimals persist; invalid dates and stale calculator percentages rejected");
+  }
   assert.equal((await page.request.get(`${base}/api/export?type=client-json&client=${foreign}`)).status(),404);
   await page.goto(`${base}/coach/clients/${foreign}`);assert(!(await page.locator("body").innerText()).includes("متدرب الحساب الآخر"));
   results.push("Foreign-client IDOR rejected by export and coach page");
@@ -110,6 +158,10 @@ try {
     assert((await page.locator("body").innerText()).includes(exerciseName));
   }
   results.push("Trainee login and published program visible on mobile/desktop, light/dark; billing stays hidden");
+  if (quality) {
+    const blocking = accessibility.flatMap(report => report.violations.filter(issue => issue.impact === "critical" || issue.impact === "serious").map(issue => ({name:report.name,id:issue.id,nodes:issue.nodes.length})));
+    assert.deepEqual(blocking, [], "Serious/critical accessibility issues; see accessibility.json");
+  }
   assert.deepEqual(errors,[],"Browser runtime errors");
   await writeFile(`${dir}/results.json`,JSON.stringify({passed:true,results,errors,viewports:[360,1440]},null,2));
   console.log("PASS\n"+results.join("\n"));

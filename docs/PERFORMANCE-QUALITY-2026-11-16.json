@@ -1,0 +1,56 @@
+{
+  "date": "2026-11-16",
+  "scope": "Local production build; Lighthouse mobile simulation in Edge; existing TikTok Pixel retained. Not hosted production or real-device field data.",
+  "lighthouseVersion": "13.6.0",
+  "scores": {
+    "performance": 99,
+    "accessibility": 100,
+    "best-practices": 77,
+    "seo": 100
+  },
+  "metrics": {
+    "largest-contentful-paint": {
+      "value": 917.0029999999999,
+      "unit": "millisecond"
+    },
+    "total-blocking-time": {
+      "value": 148,
+      "unit": "millisecond"
+    },
+    "cumulative-layout-shift": {
+      "value": 0.005782193304491413,
+      "unit": "unitless"
+    }
+  },
+  "clientEntryGzipBytes": {
+    "coach/[[...path]]": {
+      "before": 154368,
+      "after": 105787,
+      "reductionPercent": 31.5
+    },
+    "me": {
+      "before": 175033,
+      "after": 113157,
+      "reductionPercent": 35.4
+    }
+  },
+  "accessibility": {
+    "tool": "axe-core 4.14.0",
+    "tags": [
+      "wcag2a",
+      "wcag2aa",
+      "wcag21aa"
+    ],
+    "pageStates": 63,
+    "violations": 0
+  },
+  "dependencyAudit": {
+    "runtime": 0,
+    "development": 0
+  },
+  "knownLimit": "Best Practices remains 77 because existing TikTok tracking uses third-party cookies and triggers browser cookie Issues; tracking was preserved.",
+  "tests": {
+    "files": 99,
+    "passed": 594
+  }
+}

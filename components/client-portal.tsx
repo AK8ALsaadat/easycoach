@@ -1,4 +1,5 @@
 "use client";
+import { preferredScrollBehavior } from "@/lib/scroll-behavior";
 import { FreePlatformNotice } from "./billing-mode-provider";
 import { LegalLinks } from "./legal-links";
 import { useLocale } from "./locale-provider";
@@ -165,7 +166,7 @@ export function ClientPortal({ token, branding }: { token: string; branding?: Co
           <div className="flex flex-col items-start gap-3">
             <button type="button" className="btn-secondary" onClick={() => {
               window.dispatchEvent(new Event("easycoach:open-messages"));
-              document.getElementById("client-management-hub")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              document.getElementById("client-management-hub")?.scrollIntoView({ behavior: preferredScrollBehavior(), block: "start" });
             }}>{tr("التواصل مع المدرب")}</button>
             <button
               className="btn-secondary"

@@ -1,4 +1,5 @@
 "use client";
+import { preferredScrollBehavior } from "@/lib/scroll-behavior";
 import { useBillingEnabled, FreePlatformNotice } from "./billing-mode-provider";
 import { useLocale } from "./locale-provider";
 import { LanguageSwitch } from "./language-switch";
@@ -589,7 +590,7 @@ function Clients({
           </a>
         </section>
       ) : null}
-      <ClientRoster data={data} initialFilter={initialFilter} initialQuery={initialQuery} onAdd={()=>{setAdd(true);setImporting(false);window.scrollTo({top:0,behavior:"smooth"});}}/>
+      <ClientRoster data={data} initialFilter={initialFilter} initialQuery={initialQuery} onAdd={()=>{setAdd(true);setImporting(false);window.scrollTo({top:0,behavior: preferredScrollBehavior()});}}/>
     </>
   );
 }
@@ -1229,7 +1230,7 @@ function Library({ data, initialTab, initialTemplate }: { data: Snapshot; initia
                 onClick={() =>
                   document
                     .getElementById("template-management")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                    ?.scrollIntoView({ behavior: preferredScrollBehavior(), block: "start" })
                 }
               >
                 {tr("إدارة القوالب واستعادة قالب")}
@@ -1448,7 +1449,7 @@ function SettingsPage({ data }: { data: Snapshot }) {
       </div>
       <section className="card mt-7 overflow-hidden">
         <h2 className="p-6">{tr("آخر التغييرات الموثّقة")}</h2>
-        <div className="max-h-80 overflow-auto">
+        <div className="max-h-80 overflow-auto" role="region" tabIndex={0} aria-label={tr("آخر التغييرات الموثّقة")}>
           <table>
             <thead>
               <tr>

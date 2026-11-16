@@ -1,5 +1,4 @@
 import { parse } from "csv-parse/sync";
-import ExcelJS from "exceljs";
 import { unzipSync, Unzip, UnzipInflate } from "fflate";
 
 import type { ImportFile } from "./import-preview";
@@ -47,6 +46,7 @@ export async function readImportFile(
         bytes.subarray(offset, offset + 1024),
         offset + 1024 >= bytes.length,
       );
+    const { default: ExcelJS } = await import("exceljs");
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(
       Buffer.from(bytes) as unknown as Parameters<typeof workbook.xlsx.load>[0],

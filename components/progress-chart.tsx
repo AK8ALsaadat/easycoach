@@ -29,7 +29,7 @@ export function ProgressChart({
   const first = selected[0],
     last = selected.at(-1);
   return (
-    <section className="card p-5" role="region" aria-label={title}>
+    <section className="card progress-chart p-5" role="region" aria-label={title}>
       <div className="section-title">
         <h2>{title}</h2>
         <select
@@ -47,7 +47,7 @@ export function ProgressChart({
           <option value="all">{tr("كامل السجل")}</option>
         </select>
       </div>
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="progress-range grid grid-cols-2 gap-3 mb-4">
         <label>
           {tr("من")}
           <DateInput

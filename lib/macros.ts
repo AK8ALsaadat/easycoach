@@ -106,11 +106,16 @@ export function inferCaloriesMode(targets: Partial<MacroTargets> | undefined): C
 
 /** Parses typed numbers, accepting Arabic-Indic digits and the Arabic decimal separator. */
 export function parseAmount(text: string) {
-  const normalized = text
+  let normalized = text
     .trim()
     .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
     .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
-    .replace(/[٫,]/g, ".");
+    .replace(/−/g, "-")
+    .replace(/٫/g, ".");
+  // A grouping separator must have complete three-digit groups. A single comma
+  // followed by one or two digits remains a decimal comma (150,5 -> 150.5).
+  if (/^-?\d{1,3}(?:[,٬]\d{3})+(?:\.\d+)?$/.test(normalized)) normalized = normalized.replace(/[,٬]/g, "");
+  else normalized = normalized.replace(/,/g, ".");
   if (normalized === "") return 0;
   return /^-?\d*\.?\d*$/.test(normalized) && normalized !== "." && normalized !== "-" ? Number(normalized) : Number.NaN;
 }

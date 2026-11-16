@@ -1,4 +1,5 @@
 "use client";
+import { preferredScrollBehavior } from "@/lib/scroll-behavior";
 import { useBillingEnabled } from "./billing-mode-provider";
 import { DateInput } from "./date-input";
 import dynamic from "next/dynamic";
@@ -102,7 +103,7 @@ export function ClientHub({
     const active = tabList.current?.querySelector<HTMLElement>('[aria-selected="true"]');
     const strip = tabList.current;
     if (!active || !strip || strip.scrollWidth <= strip.clientWidth) return;
-    strip.scrollTo({ left: active.offsetLeft - (strip.clientWidth - active.clientWidth) / 2, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+    strip.scrollTo({ left: active.offsetLeft - (strip.clientWidth - active.clientWidth) / 2, behavior: preferredScrollBehavior() });
   }, [tab]);
   const [result, setResult] = useState<Result | null>(null),
     [busy, setBusy] = useState(false),

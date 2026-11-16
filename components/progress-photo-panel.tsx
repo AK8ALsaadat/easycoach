@@ -445,7 +445,7 @@ function ProgressPhotosPanel({
             </figure>
           ))}
         </div>
-        <div className="mt-4 overflow-x-auto rounded-xl border border-line">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-line" role="region" tabIndex={0} aria-label={tr("مقارنة صورتين")}>
           <table className="w-full text-sm">
             <thead><tr><th>{tr("المؤشر")}</th><th>{selectedFirstDate ? formatDate(selectedFirstDate, language) : tr("التاريخ الأول")}</th><th>{selectedSecondDate ? formatDate(selectedSecondDate, language) : tr("التاريخ الثاني")}</th><th>{tr("التغير")}</th></tr></thead>
             <tbody>{metricRows.map(([label, key, unit]) => {

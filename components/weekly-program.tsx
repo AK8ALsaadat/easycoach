@@ -1,4 +1,5 @@
 "use client";
+import { preferredScrollBehavior } from "@/lib/scroll-behavior";
 import { useId, useState } from "react";
 import dynamic from "next/dynamic";
 import { ChevronDown, Dumbbell, Timer } from "lucide-react";
@@ -6,7 +7,8 @@ import { useLocale } from "./locale-provider";
 import { ExerciseVideo, ExerciseVideoLink } from "./exercise-video";
 import { ChunkLoading } from "./chunk-loading";
 import { VisitedPanel } from "./visited-panel";
-import { catalogById, exerciseName } from "@/lib/catalog";
+import { exerciseIndex } from "@/lib/exercise-index";
+import { exerciseName } from "@/lib/exercise-names";
 import { displayDayName } from "@/lib/program-builder";
 import { formatDate, riyadhToday } from "@/lib/dates";
 import { countLabel, nouns } from "@/lib/plural";
@@ -31,7 +33,7 @@ export function WeeklyProgram({ program, portalHash, clientId }: { program: Prog
   };
   const openDay = (index: number) => {
     setOpenDays(current => new Set([...current, index]));
-    requestAnimationFrame(() => document.getElementById(`${id}-day-${index}`)?.scrollIntoView({ block: "start", behavior: "smooth" }));
+    requestAnimationFrame(() => document.getElementById(`${id}-day-${index}`)?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() }));
   };
   return <div className="weekly-program space-y-4" data-testid="weekly-program">
     <header className="card p-5">
@@ -53,7 +55,7 @@ export function WeeklyProgram({ program, portalHash, clientId }: { program: Prog
       <div className="weekly-day-content">
         {!day.exercises.length && <p role="status" className="empty">{tr("لا توجد تمارين لهذا اليوم بعد.")}</p>}
         {day.exercises.map((exercise, row) => {
-          const catalog = exercise.catalogId ? catalogById.get(exercise.catalogId) : undefined;
+          const catalog = exercise.catalogId ? exerciseIndex.get(exercise.catalogId) : undefined;
           const name = catalog && catalog.name === exercise.name ? exerciseName(catalog, language) : exercise.name;
           const mediaKey = `${index}:${row}`;
           return <details className="weekly-exercise" key={exercise.rowId ?? row} data-workout-exercise={row} onToggle={event => {

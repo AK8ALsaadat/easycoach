@@ -1,4 +1,5 @@
 "use client";
+import { preferredScrollBehavior } from "@/lib/scroll-behavior";
 import { useLocale } from "./locale-provider";
 import { countLabel, formatNumber, nouns } from "@/lib/plural";
 import { ExerciseVisual } from "./exercise-visual";
@@ -159,7 +160,7 @@ export function ProgramEditor({
       return null;
     }
     if (invalidCells.current.size) {
-      setResult({ ok: false, message: "صحّح المجموعات والتكرارات والراحة المظللة قبل الحفظ." });
+      setResult({ ok: false, message: "صحّح القيم المظللة في التمارين أو التغذية قبل الحفظ." });
       return null;
     }
     if (!check.success) {
@@ -394,6 +395,7 @@ export function ProgramEditor({
             </span>
           </div>
           <MacroTargets
+            onValidity={trackCell}
             idPrefix="nutrition"
             value={{ ...plan.nutrition, calories_mode: plan.nutrition.calories_mode ?? inferCaloriesMode(plan.nutrition) }}
             onChange={(targets) => edit((c) => ({ ...c, nutrition: { ...c.nutrition, ...targets } }))}
@@ -414,6 +416,7 @@ export function ProgramEditor({
             }
           />
           <MealEditor
+            onValidity={trackCell}
             includeTargets={showTargets}
             nutrition={showTargets ? { ...plan.nutrition, calories_mode: plan.nutrition.calories_mode ?? inferCaloriesMode(plan.nutrition) } : plan.nutrition}
             onChange={(nutrition) => edit((c) => ({ ...c, nutrition }))}
@@ -810,7 +813,7 @@ export function ProgramEditor({
               type="button"
               className="btn-secondary"
               disabled={active.exercises.length >= 40}
-              onClick={() => {customInput.current?.focus();customInput.current?.scrollIntoView({block:"center",behavior:"smooth"});}}
+              onClick={() => {customInput.current?.focus();customInput.current?.scrollIntoView({block:"center",behavior: preferredScrollBehavior()});}}
             >
               <Plus size={16} />
               {tr("تمرين جديد")}
@@ -850,7 +853,7 @@ export function ProgramEditor({
                   ? tr("كل التعديلات محفوظة ✓")
                   : tr("ما فيه تعديلات بعد")}
           </span>
-          {dirty && (nameError || invalidCount > 0 || result?.ok === false) && <span role="alert" className="field-error block mt-2">{tr(nameError ?? (invalidCount ? "صحّح المجموعات والتكرارات والراحة المظللة قبل الحفظ." : result?.message ?? "تعذر حفظ المسودة"))}</span>}
+          {dirty && (nameError || invalidCount > 0 || result?.ok === false) && <span role="alert" className="field-error block mt-2">{tr(nameError ?? (invalidCount ? "صحّح القيم المظللة في التمارين أو التغذية قبل الحفظ." : result?.message ?? "تعذر حفظ المسودة"))}</span>}
           <br />
           {clientId
             ? tr("جاهز؟ انشر التحديث على رابط المتدرب.")
@@ -949,7 +952,7 @@ export function ProgramEditor({
                     else setTab("nutrition");
                     window.setTimeout(() => {
                       const element = document.getElementById(target) as HTMLInputElement | null;
-                      element?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      element?.scrollIntoView({ behavior: preferredScrollBehavior(), block: "center" });
                       element?.focus({ preventScroll: true });
                       if (issue.kind === "exercise") element?.select();
                     }, 60);

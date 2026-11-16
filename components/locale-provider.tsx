@@ -1,20 +1,22 @@
 "use client";
 import { createContext, useContext, useMemo } from "react";
-import { translator, type Language } from "@/lib/i18n";
+import { createTranslator, type Language } from "@/lib/translate";
 const Context = createContext({
   language: "ar" as Language,
-  t: translator("ar"),
+  t: createTranslator("ar"),
 });
 export function LocaleProvider({
   language,
+  dictionary,
   children,
 }: {
   language: Language;
+  dictionary?: Record<string, string>;
   children: React.ReactNode;
 }) {
   const value = useMemo(
-    () => ({ language, t: translator(language) }),
-    [language],
+    () => ({ language, t: createTranslator(language, dictionary) }),
+    [language, dictionary],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

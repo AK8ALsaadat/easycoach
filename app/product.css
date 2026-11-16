@@ -1,6 +1,6 @@
 /* Shared product primitives; semantic colors always follow the active theme. */
 :root {
-  --ui-text-muted:#5b7379;
+  --ui-text-muted:#536c72;
   --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px; --space-8:32px;
   --radius-control:14px; --radius-card:20px; --touch-target:44px;
   --motion-fast:150ms; --motion-normal:200ms;
@@ -11,6 +11,10 @@
 .form-notice-error { background:var(--ui-danger-surface); color:var(--ui-danger-text); border-color:var(--ui-danger-border); }
 .form-notice-success { background:var(--ui-success-surface); color:var(--ui-success-text); border-color:var(--ui-success-border); }
 .field-error { margin-block:var(--space-1) 0; color:var(--ui-danger-text); font-size:.875rem; line-height:1.6; }
+.weekly-quick-days small { opacity:1; }
+[role="region"][tabindex="0"]:focus-visible { outline:2px solid var(--ui-primary); outline-offset:2px; }
+.progress-chart { container-type:inline-size; }
+@container (max-width:300px) { .progress-range { grid-template-columns:minmax(0,1fr); } }
 [aria-invalid="true"] { border-color:var(--ui-danger-border); }
 .skeleton-surface { background:var(--ui-surface-muted); animation:product-pulse 1.5s ease-in-out infinite; }
 .preview-title { font-size:1.0625rem; font-weight:600; line-height:1.45; }
