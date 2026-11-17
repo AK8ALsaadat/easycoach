@@ -5,7 +5,10 @@ test('registration starts clean and preserves a typed email when switching modes
   await expect(page.locator('#auth-email')).toHaveValue('');
   await expect(page.locator('#auth-password')).toHaveValue('');
   await page.locator('#auth-email').fill('person@example.test');
+  await page.getByRole('button', { name: 'إظهار كلمة المرور' }).click();
+  await expect(page.locator('#auth-password')).toHaveAttribute('type', 'text');
   await page.getByRole('button', { name: 'تسجيل الدخول', exact: true }).click();
+  await expect(page.locator('#auth-password')).toHaveAttribute('type', 'password');
   await page.getByRole('button', { name: 'إنشاء حساب', exact: true }).first().click();
   await expect(page.locator('#auth-email')).toHaveValue('person@example.test');
 });

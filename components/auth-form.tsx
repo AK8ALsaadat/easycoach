@@ -26,7 +26,7 @@ export function AuthForm({ next, local, google = false, initialRegister = false 
     const formRef = useRef<HTMLFormElement>(null), submitLock = useRef(false);
     const billing = useBillingEnabled();
     const freeTrial = billing && register && role === "coach";
-    function switchMode(value: boolean) { if (value === register) return; setRegister(value); setPassword(""); if (value && local && email === "coach@example.test") setEmail(""); setResult(null); }
+    function switchMode(value: boolean) { if (value === register) return; setRegister(value); setPassword(""); setShowPassword(false); if (value && local && email === "coach@example.test") setEmail(""); setResult(null); }
     return <div className="auth-form-wrap">
     <div className="auth-mode-switch" aria-label={tr("الدخول أو التسجيل")}><button type="button" aria-pressed={!register} onClick={() => switchMode(false)} disabled={busy}>{tr("تسجيل الدخول")}</button><button type="button" aria-pressed={register} onClick={() => switchMode(true)} disabled={busy}>{tr("إنشاء حساب")}</button></div>
     <div className="auth-form-heading">
@@ -67,14 +67,14 @@ export function AuthForm({ next, local, google = false, initialRegister = false 
         }}>
       <input type="hidden" name="next" value={next}/>
       {register && <><div><label htmlFor="auth-name">{tr("اسمك")}</label><input className="field" id="auth-name" name="name" autoComplete="name" placeholder={tr("كيف نناديك؟")} required minLength={2} maxLength={120} disabled={busy}/></div><input type="hidden" name="password_confirmation" value={password}/></>}
-      <div><label htmlFor="auth-email">{tr("البريد الإلكتروني")}</label><input id="auth-email" name="email" className="field" type="email" required autoComplete="email" inputMode="email" dir="ltr" placeholder="you@example.com" value={email} onChange={event => setEmail(event.target.value)} disabled={busy}/></div>
+      <div><label htmlFor="auth-email">{tr("البريد الإلكتروني")}</label><input id="auth-email" name="email" className="field" type="email" required autoComplete="email" autoCapitalize="none" spellCheck={false} inputMode="email" dir="ltr" placeholder="you@example.com" value={email} onChange={event => { setEmail(event.target.value); setResult(null); }} disabled={busy}/></div>
       <div><label htmlFor="auth-password">{tr("كلمة المرور")}</label><div className="password-field"><input id="auth-password" name="password" className="field" type={showPassword ? "text" : "password"} required minLength={register ? PASSWORD_MIN_LENGTH : 8} maxLength={128} autoComplete={register ? "new-password" : "current-password"} dir="ltr" value={password} onChange={event => { setPassword(event.target.value); setResult(null); }} disabled={busy} aria-describedby={register ? "password-hint" : undefined}/><button type="button" aria-label={showPassword ? tr("إخفاء كلمة المرور") : tr("إظهار كلمة المرور")} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div>{register && <p id="password-hint" className="field-hint">{tr("8 أحرف على الأقل، مع حرف إنجليزي كبير ورمز مثل !")}</p>}</div>
       {register && <details className="auth-role-details" open={next.startsWith("/invite/")}><summary>{role === "trainee" ? tr("حساب متدرب بدعوة من مدربي") : tr("تسجل كمتدرب؟")}</summary><label className="sr-only" htmlFor="auth-role">{tr("نوع الحساب")}</label><select className="field" id="auth-role" name="role" value={role} onChange={event => setRole(event.target.value)} disabled={busy}><option value="coach">{tr("مدرب · مساحة لإدارة متدربيّ")}</option><option value="trainee">{tr("متدرب · بدعوة من مدربي")}</option></select></details>}
       {register && <label className="policy-acceptance"><input type="checkbox" name="terms_acceptance" value={POLICY_VERSION} required disabled={busy}/><span>{tr("أوافق على") + " "}<Link href="/terms" target="_blank" rel="noopener">{tr("الشروط")}</Link>{" " + tr("و")}<Link href="/privacy" target="_blank" rel="noopener">{tr("الخصوصية")}</Link>{freeTrial ? tr(" وبدء تجربتي المجانية بعد تأكيد البريد، دون بطاقة أو تجديد تلقائي.") : "."}</span></label>}
       <Notice result={result}/>
       <button disabled={busy} className="btn auth-submit" type="submit">{busy ? tr("نجهّز مساحتك\u2026") : freeTrial ? tr("أنشئ حسابي وابدأ التجربة") : register ? tr("إنشاء حساب") : tr("الدخول إلى مساحتك")}{!busy && <ArrowLeft size={18}/>}</button>
       {!local && !register && <button type="button" disabled={busy} className="auth-magic-link" onClick={async () => { if (!formRef.current)
-        return; setBusy(true); try {
+        return; const emailInput = formRef.current.querySelector<HTMLInputElement>('#auth-email'); if (!emailInput?.reportValidity()) return; setBusy(true); setResult(null); try {
         setResult(await magicLinkAction(new FormData(formRef.current)));
     }
     catch {

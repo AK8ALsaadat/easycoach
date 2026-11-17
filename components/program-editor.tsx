@@ -3,7 +3,7 @@ import { preferredScrollBehavior } from "@/lib/scroll-behavior";
 import { useLocale } from "./locale-provider";
 import { countLabel, formatNumber, nouns } from "@/lib/plural";
 import { ExerciseVisual } from "./exercise-visual";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -45,6 +45,7 @@ import { caloriesFromMacros, inferCaloriesMode } from "@/lib/macros";
 import { templateNameError } from "@/lib/template-names";
 import { ProgramDayNav } from "./program-day-nav";
 import { appendExercise, copyExerciseAfter, customExercise, dayName, dayNameKey, displayDayName, isStarterExercise, transferExercise, repeatProgramDay, appendExercises } from "@/lib/program-builder";
+const subscribeHydration = () => () => {};
 function withRowIds(value: Content): Content {
   return {
     ...value,
@@ -92,6 +93,7 @@ export function ProgramEditor({
   organizationOwner?: string;
 }) {
   const { t: tr, language: locale } = useLocale();
+  const hydrated = useSyncExternalStore(subscribeHydration, () => true, () => false);
 
   const router = useRouter();
   const [name, setName] = useState(initialName);
@@ -326,7 +328,7 @@ export function ProgramEditor({
     }));
   }
   return (
-    <div className="space-y-5">
+    <fieldset disabled={!hydrated} aria-busy={!hydrated} className="min-w-0 w-full space-y-5 border-0 p-0">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-60 flex-1">
           <label htmlFor="plan-name">
@@ -1026,6 +1028,6 @@ export function ProgramEditor({
           </div>
         </div>
       ) : null}
-    </div>
+    </fieldset>
   );
 }

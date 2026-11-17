@@ -63,6 +63,7 @@ try {
   const page = await login("coach@example.test");
   await page.getByText("معاينة محلية · بيانات اصطناعية محفوظة في قاعدة بيانات على جهازك · لا رسائل حقيقية", { exact: true }).waitFor();
   await page.locator("aside nav").waitFor();
+  const billingEnabled = await page.locator('aside nav a[href="/coach/finance"]').count() > 0;
   await page.screenshot({
     path: path.join(artifact, "today-desktop.png"),
     fullPage: true,
@@ -78,7 +79,6 @@ try {
   await page.waitForURL(/\/coach\/clients\/[a-f0-9-]+$/);
   const clientId = page.url().split("/").at(-1);
   await page.goto(`${base}/coach/clients/${clientId}/edit`);
-  await page.waitForLoadState("networkidle");
   await page.locator("#plan-name").fill("برنامج محفوظ من المتصفح");
   await page.locator("#custom-exercise-name").fill("قرفصاء اصطناعية");
   await page.getByRole("button", { name: "إضافة التمرين", exact: true }).click();
@@ -100,6 +100,7 @@ try {
       (p) => p.client_id === clientId && p.published_at,
     );
   }, "Publish failed");
+  if (billingEnabled) {
   await page.goto(`${base}/coach/clients/${clientId}?tab=finance`);
   await page.getByRole("button", { name: "إضافة اشتراك", exact: true }).click();
   const subscription = page.getByRole("dialog");
@@ -141,6 +142,7 @@ try {
     (await snapshot(page)).subscriptions.find((s) => s.id === sub.id).end_date,
     shift(end, 3),
   );
+  }
   await page.goto(`${base}/coach/clients/${clientId}?tab=profile`);
   await page
     .getByRole("button", { name: /^(إنشاء دعوة آمنة|ربط حساب اختياري)$/ })
@@ -148,6 +150,8 @@ try {
   const inviteUrl = await page.locator("#generated-invite").inputValue();
   assert.match(inviteUrl, /\/invite\/[a-f0-9]{64}$/);
   await page.goto(base + "/coach/clients");
+  const existingTraineeName = (await snapshot(page)).clients.find(c => c.email === "trainee@example.test")?.name;
+  assert(existingTraineeName, "Expected the synthetic trainee fixture to exist");
   await page.getByRole("button", { name: "استيراد ملف", exact: true }).click();
   const importEmail = `import-${marker}@example.test`;
   const csv = `name,email,phone\nعميل مستورد,${importEmail},0501234567\nلا تستبدل اسمي,trainee@example.test,0509999999\nخاطئ,invalid,123\n`;
@@ -171,7 +175,7 @@ try {
     (await snapshot(page)).clients.find(
       (c) => c.email === "trainee@example.test",
     ).name,
-    "سلمان الحربي",
+    existingTraineeName,
   );
   const second = await login("coach2@example.test");
   assert(!(await snapshot(second)).clients.some((c) => c.id === clientId));
@@ -200,7 +204,7 @@ try {
   });
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: local auth, coach isolation, browser import, durable draft reload, publication, subscription dates, freeze replay, account invite generation, trainee access, mobile layout. Payment ledger is covered by SQL tests, not this UI script.",
+    `PASS: local auth, coach isolation, browser import, durable draft reload, publication, account invite generation, trainee access, mobile layout.${billingEnabled ? " Subscription dates and freeze replay passed." : " Subscription checks skipped: billing is disabled."} Payment ledger is covered by SQL tests, not this UI script.`,
   );
 } finally {
   for (const context of contexts) await context.close();
