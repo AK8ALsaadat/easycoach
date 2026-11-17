@@ -21,12 +21,12 @@ export function AuthForm({ next, local, google = false, initialRegister = false 
     const [role, setRole] = useState(next.startsWith("/invite/") ? "trainee" : "coach");
     const [busy, setBusy] = useState(false), [showPassword, setShowPassword] = useState(false);
     const [result, setResult] = useState<Result | null>(null);
-    const [email, setEmail] = useState(local ? "coach@example.test" : "");
-    const [password, setPassword] = useState(local ? "CoachPreview!2026" : "");
+    const [email, setEmail] = useState(local && !initialRegister ? "coach@example.test" : "");
+    const [password, setPassword] = useState(local && !initialRegister ? "CoachPreview!2026" : "");
     const formRef = useRef<HTMLFormElement>(null), submitLock = useRef(false);
     const billing = useBillingEnabled();
     const freeTrial = billing && register && role === "coach";
-    function switchMode(value: boolean) { setRegister(value); setPassword(""); setResult(null); }
+    function switchMode(value: boolean) { if (value === register) return; setRegister(value); setPassword(""); if (value && local && email === "coach@example.test") setEmail(""); setResult(null); }
     return <div className="auth-form-wrap">
     <div className="auth-mode-switch" aria-label={tr("الدخول أو التسجيل")}><button type="button" aria-pressed={!register} onClick={() => switchMode(false)} disabled={busy}>{tr("تسجيل الدخول")}</button><button type="button" aria-pressed={register} onClick={() => switchMode(true)} disabled={busy}>{tr("إنشاء حساب")}</button></div>
     <div className="auth-form-heading">
@@ -76,6 +76,9 @@ export function AuthForm({ next, local, google = false, initialRegister = false 
       {!local && !register && <button type="button" disabled={busy} className="auth-magic-link" onClick={async () => { if (!formRef.current)
         return; setBusy(true); try {
         setResult(await magicLinkAction(new FormData(formRef.current)));
+    }
+    catch {
+        setResult({ ok: false, message: tr("تعذّر الاتصال. حاول مرة أخرى، بياناتك في النموذج محفوظة.") });
     }
     finally {
         setBusy(false);

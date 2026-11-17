@@ -78,6 +78,7 @@ try {
   await page.waitForURL(/\/coach\/clients\/[a-f0-9-]+$/);
   const clientId = page.url().split("/").at(-1);
   await page.goto(`${base}/coach/clients/${clientId}/edit`);
+  await page.waitForLoadState("networkidle");
   await page.locator("#plan-name").fill("برنامج محفوظ من المتصفح");
   await page.locator("#custom-exercise-name").fill("قرفصاء اصطناعية");
   await page.getByRole("button", { name: "إضافة التمرين", exact: true }).click();
