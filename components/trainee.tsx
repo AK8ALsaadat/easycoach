@@ -317,9 +317,9 @@ export function Trainee({
                   value={clientId}
                   onChange={(e) => setClientId(e.target.value)}
                 >
-                  {clients.map((c) => (
+                  {clients.map((c, index) => (
                     <option value={c.id} key={c.id}>
-                      {c.name} · {c.coach_id.slice(0, 8)}
+                      {data.coach_branding?.find((branding) => branding.coach_id === c.coach_id)?.name || `${tr("مدرب")} ${index + 1}`}
                     </option>
                   ))}
                 </select>

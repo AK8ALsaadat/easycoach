@@ -15,7 +15,7 @@ export function LanguageSwitch() {
       type="button"
       className="btn-secondary language-switch"
       aria-label={
-        language === "ar" ? "Switch to English" : "التبديل إلى العربية"
+        language === "ar" ? "EN — Switch to English" : "العربية — التبديل إلى العربية"
       }
       disabled={busy}
       onClick={async () => {
