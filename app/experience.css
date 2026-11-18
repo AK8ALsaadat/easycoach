@@ -161,3 +161,6 @@ h1,h2,h3 { letter-spacing:0; }
 
 .free-platform-notice { display:inline-flex; align-items:center; padding: .5rem .85rem; border-radius:999px; background:var(--teal-soft, #d9f3e9); color:var(--teal, #087f70); font-size:.8rem; font-weight:600; }
 .coach-home .command-deck:not(:has(.revenue-card)) { grid-template-columns: minmax(0, 1fr); }
+
+@media(max-width:767px){.public-nav-actions>.btn{display:inline-flex;min-height:40px;font-size:.78rem;padding-inline:14px;box-shadow:none}.public-nav-actions>.btn svg{display:none}}
+@media(max-width:420px){.public-nav .text-xs{display:none}.public-nav-actions{gap:9px}.public-nav-actions>.btn{padding-inline:12px;font-size:.75rem}}
