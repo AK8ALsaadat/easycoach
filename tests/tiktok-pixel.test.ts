@@ -55,6 +55,7 @@ it("emits one pricing ViewContent on initial load and on a later return, without
  expect(state.ttq.page).not.toHaveBeenCalled();
 });
 it("emits a signup ViewContent when the registration form opens, without URL/UTM data",()=>{ const state={ttq:{page:vi.fn(),track:vi.fn()}}; expect(trackPricingContent(state,"/login?register=1&utm_source=tiktok&email=private")).toBe(true); expect(state.ttq.track).toHaveBeenCalledExactlyOnceWith("ViewContent",{content_id:"easycoach-signup",content_type:"product",content_name:"EasyCoach signup"}); expect(trackPricingContent(state,"/login")).toBe(false); expect(trackPricingContent(state,"/coach")).toBe(false); expect(state.ttq.track).toHaveBeenCalledTimes(1); });
+it("emits the same signup ViewContent on the campaign landing page, without URL/UTM data",()=>{ const state={ttq:{page:vi.fn(),track:vi.fn()}}; expect(trackPricingContent(state,"/join?utm_source=tiktok&ttclid=private")).toBe(true); expect(state.ttq.track).toHaveBeenCalledExactlyOnceWith("ViewContent",{content_id:"easycoach-signup",content_type:"product",content_name:"EasyCoach signup"}); expect(trackPricingContent(state,"/joining")).toBe(false); expect(state.ttq.track).toHaveBeenCalledTimes(1); });
 it("does not consume a pricing content event before the pixel queue is available",()=>{
  const state={};expect(trackPricingContent(state,"/pricing")).toBe(false);
  const ready={...state,ttq:{page:vi.fn(),track:vi.fn()}};
