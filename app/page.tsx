@@ -35,7 +35,7 @@ export default async function Home() {
         <span className="hero-kicker"><Sparkles size={16}/>{!billingEnabled() ? FREE_PLATFORM_NOTICE : trial?"14 يومًا مجانًا. كل المساحة لك.":"مساحة واحدة لكل شغلك"}</span>
         <h1>وقتك للتدريب.<br/><span>والباقي علينا.</span></h1>
         <p>متدربوك، برامجهم، وجباتهم وتقدّمهم. رتّب كل التفاصيل في مساحة عربية واحدة، وركّز على الفرق الذي تصنعه.</p>
-        <div className="hero-actions"><Link className="btn" href="/login?register=1">{trial?"ابدأ تجربتك مجانًا":"أنشئ مساحتك"}<ArrowLeft size={20}/></Link>{billingEnabled() && <Link className="text-link" href="/pricing">استكشف الباقات <ArrowLeft size={16}/></Link>}</div>
+        <div className="hero-actions"><Link className="btn" href="/login?register=1">{trial?"ابدأ تجربتك مجانًا":"جهّز أول متدرب في دقيقتين"}<ArrowLeft size={20}/></Link>{billingEnabled() && <Link className="text-link" href="/pricing">استكشف الباقات <ArrowLeft size={16}/></Link>}</div>
         <ul className="hero-assurances">{[trial?"14 يومًا بكل مزايا الأعمال":"مساحة عربية متكاملة",billingEnabled()?"بدون بطاقة بنكية":"كل أدواتك في مكان واحد","بياناتك تحت سيطرتك"].map(line=><li key={line}><Check size={15}/>{line}</li>)}</ul>
       </div>
       <div className="marketing-visual"><div className="visual-orbit" aria-hidden="true"/><span className="visual-floating-tag"><ShieldCheck size={17}/>كل متدرب. اهتمامه الخاص.</span><ProductPreview/><span className="visual-bottom-tag"><span className="live-dot"/>من أول برنامج إلى آخر إنجاز</span></div>
