@@ -6,7 +6,7 @@ declare global {
 const PRICING_CONTENT = { content_id: "easycoach-pricing", content_type: "product", content_name: "EasyCoach pricing" };
 const SIGNUP_CONTENT = { content_id: "easycoach-signup", content_type: "product", content_name: "EasyCoach signup" };
 // Static descriptors only: the route selects one, and never contributes data to it.
-function contentForRoute(route: string) { const [path, query = ""] = route.split("?"); if (path === "/pricing") return PRICING_CONTENT; if (path === "/login" && new URLSearchParams(query).get("register") === "1") return SIGNUP_CONTENT; return null; }
+function contentForRoute(route: string) { const [path, query = ""] = route.split("?"); if (path === "/pricing") return PRICING_CONTENT; if (path === "/join") return SIGNUP_CONTENT; if (path === "/login" && new URLSearchParams(query).get("register") === "1") return SIGNUP_CONTENT; return null; }
 /** A content view is not a registration/payment conversion and contains no URL data. */
 export function trackPricingContent(state: { ttq?: TikTokQueue; __ecTikTokContentRoute?: string }, route: string) {
  if (!state.ttq?.track || state.__ecTikTokContentRoute === route) return false;
